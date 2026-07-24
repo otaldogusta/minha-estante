@@ -100,11 +100,11 @@ export function Cabecalho({
           </span>
         </Link>
 
-        {/* Centro: Abas de Navegação (Track limpo sem container externo) */}
-        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-center overflow-x-auto no-scrollbar py-1">
+        {/* Centro: Abas de Navegação (Track limpo e alinhado via mx-auto sem corte na esquerda) */}
+        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center overflow-x-auto no-scrollbar py-1">
           <div
             ref={trackRef}
-            className="relative flex items-center gap-0.5 sm:gap-1 whitespace-nowrap"
+            className="relative mx-auto flex items-center gap-1 sm:gap-1.5 whitespace-nowrap px-1"
           >
             {/* Pill Ativo Deslizante */}
             {pillStyle.width > 0 && (
