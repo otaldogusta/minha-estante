@@ -158,15 +158,9 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
     } catch {
       // Coluna já existe
     }
-    try {
-      await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT DEFAULT (datetime('now'))").run();
-    } catch {
-      // Coluna já existe
-    }
 
     let rawResults: any = null;
 
-    // Nível 1: Consulta completa com status personalizado e atividade recente em 5 min
     try {
       rawResults = await db()
         .prepare(
@@ -174,43 +168,22 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
                   (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
                   (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
                    ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-                  (EXISTS (
-                    SELECT 1 FROM sessoes s
-                    WHERE s.usuario_id = us.id
-                      AND s.expira_em > datetime('now')
-                      AND (s.ultimo_acesso IS NULL OR s.ultimo_acesso >= datetime('now', '-5 minutes'))
-                  )) AS temSessao
+                  (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
            FROM usuarios us
            ORDER BY us.nome`
         )
         .all();
     } catch {
-      // Nível 2: Fallback sem a verificação de ultimo_acesso
       try {
         rawResults = await db()
           .prepare(
-            `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
-                    (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
-                    (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
-                     ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-                    (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
+            `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
              FROM usuarios us
              ORDER BY us.nome`
           )
           .all();
       } catch {
-        // Nível 3: Fallback básico essencial (garante retorno dos leitores)
-        try {
-          rawResults = await db()
-            .prepare(
-              `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
-               FROM usuarios us
-               ORDER BY us.nome`
-            )
-            .all();
-        } catch {
-          rawResults = [];
-        }
+        rawResults = [];
       }
     }
 
