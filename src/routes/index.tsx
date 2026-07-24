@@ -51,67 +51,80 @@ function CartaoLendoAgora({ livro }: { livro: Livro }) {
   }
 
   return (
-    <section className="surgir mx-auto mt-8 max-w-6xl px-4 sm:px-6">
-      <div className="overflow-hidden rounded-2xl border border-papel-3 bg-papel-2 textura-papel">
-        <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-8">
-          <Link to="/livro/$livroId" params={{ livroId: String(livro.id) }} className="mx-auto w-36 shrink-0 sm:mx-0 sm:w-44">
+    <section className="surgir mx-auto mt-6 max-w-6xl px-4 sm:px-6">
+      <div className="overflow-hidden rounded-2xl border border-papel-3 bg-papel-2 textura-papel p-5 sm:p-7 shadow-sm">
+        {/* Top Row: Capa na Esquerda + Título/Autor na Direita */}
+        <div className="flex items-start gap-4 sm:gap-6">
+          <Link
+            to="/livro/$livroId"
+            params={{ livroId: String(livro.id) }}
+            className="w-24 sm:w-36 md:w-40 shrink-0 spring-bounce"
+          >
             <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
           </Link>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-amora">Lendo agora</p>
-            <h1 className="mt-1 font-display text-3xl font-semibold leading-tight tracking-tight text-tinta md:text-4xl">
+          <div className="min-w-0 flex-1 pt-1">
+            <span className="inline-block rounded-full bg-amora-clara/60 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-amora">
+              Lendo agora
+            </span>
+            <h1 className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-semibold leading-snug tracking-tight text-tinta line-clamp-3">
               {livro.titulo}
             </h1>
-            <p className="mt-1 text-tinta-2">{livro.autor}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 font-num text-sm text-tinta-2">
-              {livro.inicio && <span>começou em {dataCurta(livro.inicio)}</span>}
-              {diasLendo !== null && (
-                <span>
-                  {diasLendo === 0 ? "hoje" : `${diasLendo} ${diasLendo === 1 ? "dia" : "dias"} de leitura`}
-                </span>
-              )}
-              {livro.paginas && <span>{livro.paginas} páginas</span>}
-            </div>
+            <p className="mt-1 text-xs sm:text-sm font-medium text-tinta-2">{livro.autor}</p>
+          </div>
+        </div>
 
-            <div className="mt-5 max-w-md">
-              <div className="fita-progresso">
-                <span style={{ width: `${progresso}%` }} />
-              </div>
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                <label className="flex items-center gap-2 text-sm text-tinta-2">
-                  na página
-                  <input
-                    inputMode="numeric"
-                    value={pagina}
-                    onChange={(e) => setPagina(e.target.value.replace(/\D/g, ""))}
-                    onKeyDown={(e) => e.key === "Enter" && salvarPagina()}
-                    className="w-20 rounded-lg border border-papel-3 bg-papel px-2 py-1 font-num text-sm text-tinta focus:border-amora focus:outline-none"
-                    placeholder="0"
-                    aria-label="Página atual"
-                  />
-                  <button
-                    onClick={salvarPagina}
-                    disabled={salvando}
-                    className="rounded-lg border border-tinta-3 px-3 py-1 text-sm text-tinta transition-colors hover:border-amora hover:text-amora active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {salvando ? "salvando" : "marcar"}
-                  </button>
-                  {livro.paginas ? <span className="font-num text-tinta-3">{progresso}%</span> : null}
-                </label>
-                <Link
-                  to="/livro/$livroId"
-                  params={{ livroId: String(livro.id) }}
-                  search={{ concluir: true }}
-                  className="group inline-flex items-center gap-1.5 text-sm font-medium text-amora"
+        {/* Bottom Section: Infos abaixo das páginas, progresso e marcação */}
+        <div className="mt-5 border-t border-papel-3/50 pt-4">
+          {/* Datas e Páginas */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-num text-xs sm:text-sm text-tinta-2">
+            {livro.inicio && <span>começou em {dataCurta(livro.inicio)}</span>}
+            {diasLendo !== null && (
+              <span>
+                {diasLendo === 0 ? "• hoje" : `• ${diasLendo} ${diasLendo === 1 ? "dia" : "dias"} de leitura`}
+              </span>
+            )}
+            {livro.paginas && <span>• {livro.paginas} páginas</span>}
+          </div>
+
+          {/* Progresso e formulário */}
+          <div className="mt-3.5">
+            <div className="fita-progresso">
+              <span style={{ width: `${progresso}%` }} />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <label className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-tinta-2">
+                <span>na página</span>
+                <input
+                  inputMode="numeric"
+                  value={pagina}
+                  onChange={(e) => setPagina(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && salvarPagina()}
+                  className="w-16 sm:w-20 rounded-lg border border-papel-3 bg-papel px-2 py-1 font-num text-xs sm:text-sm text-tinta focus:border-amora focus:outline-none"
+                  placeholder="0"
+                  aria-label="Página atual"
+                />
+                <button
+                  onClick={salvarPagina}
+                  disabled={salvando}
+                  className="rounded-lg border border-tinta-3 px-2.5 py-1 text-xs sm:text-sm text-tinta transition-colors hover:border-amora hover:text-amora active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
-                  <span className="border-b border-amora/40 pb-px transition-colors group-hover:border-amora">
-                    Terminei este livro
-                  </span>
-                  <span aria-hidden className="transition-transform duration-300 motion-safe:group-hover:translate-x-1">
-                    →
-                  </span>
-                </Link>
-              </div>
+                  {salvando ? "salvando" : "marcar"}
+                </button>
+                {livro.paginas ? <span className="font-num text-tinta-3 ml-1">{progresso}%</span> : null}
+              </label>
+              <Link
+                to="/livro/$livroId"
+                params={{ livroId: String(livro.id) }}
+                search={{ concluir: true }}
+                className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amora"
+              >
+                <span className="border-b border-amora/40 pb-px transition-colors group-hover:border-amora">
+                  Terminei este livro
+                </span>
+                <span aria-hidden className="transition-transform duration-300 motion-safe:group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
             </div>
           </div>
         </div>
