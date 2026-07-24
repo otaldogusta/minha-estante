@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter, useBlocker } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
@@ -89,6 +89,34 @@ function PaginaConta() {
   const [mensagem, setMensagem] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
   const [salvando, setSalvando] = useState(false);
 
+  const nomeInicial = sessao.autenticado ? sessao.nome : "";
+  const usuarioInicial = sessao.autenticado ? sessao.usuario : "";
+  const emailInicial = sessao.autenticado ? (sessao.email ?? "") : "";
+
+  const teveAlteracao =
+    nome.trim() !== nomeInicial ||
+    usuario.trim() !== usuarioInicial ||
+    email.trim() !== emailInicial ||
+    novaSenha !== "" ||
+    confirmar !== "";
+
+  // Bloqueador de navegação para alterações não salvas
+  const blocker = useBlocker({
+    shouldBlockFn: () => teveAlteracao,
+    withResolver: true,
+  });
+
+  // Alerta nativo se tentar fechar ou recarregar a aba com alterações
+  useEffect(() => {
+    if (!teveAlteracao) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [teveAlteracao]);
+
   async function salvar() {
     setMensagem(null);
     if (!senhaAtual) {
@@ -156,7 +184,7 @@ function PaginaConta() {
           className="mt-8 space-y-5 rounded-2xl border border-papel-3 card-surface p-6"
           onSubmit={(e) => {
             e.preventDefault();
-            salvar();
+            if (teveAlteracao) salvar();
           }}
         >
           <label className="block text-sm font-medium text-tinta-2">
@@ -219,8 +247,12 @@ function PaginaConta() {
 
           <button
             type="submit"
-            disabled={salvando}
-            className="w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60 cursor-pointer"
+            disabled={!teveAlteracao || salvando}
+            className={`w-full rounded-xl px-6 py-3 text-sm font-medium transition-all ${
+              !teveAlteracao || salvando
+                ? "bg-amora/35 text-papel/50 cursor-not-allowed opacity-60"
+                : "bg-amora text-papel hover:bg-amora-escura active:translate-y-[1px] cursor-pointer shadow-sm"
+            }`}
           >
             {salvando ? "Salvando..." : "Salvar mudanças"}
           </button>
@@ -241,6 +273,48 @@ function PaginaConta() {
           </Link>
         </p>
       </main>
+
+      {/* Modal de Confirmação para Descartar Alterações Não Salvas */}
+      {blocker.status === "blocked" && typeof document !== "undefined" && createPortal(
+        <div
+          className="modal-backdrop z-[70]"
+          onClick={() => blocker.reset()}
+        >
+          <div
+            className="relative w-full max-w-md my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-amora">
+              <div className="rounded-xl bg-amora-clara p-2.5">
+                <svg viewBox="0 0 24 24" className="h-6 w-6 text-amora" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-tinta">Descartar alterações?</h3>
+            </div>
+
+            <p className="text-sm text-tinta-2 leading-relaxed">
+              Você alterou dados da sua conta e não salvou as mudanças. Se sair agora, todas as edições serão perdidas.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => blocker.reset()}
+                className="rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora cursor-pointer"
+              >
+                Continuar editando
+              </button>
+              <button
+                onClick={() => blocker.proceed()}
+                className="rounded-xl bg-amora px-5 py-2.5 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] cursor-pointer"
+              >
+                Descartar e Sair
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
