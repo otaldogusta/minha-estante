@@ -16,11 +16,7 @@ export default defineConfig({
   plugins: [
     tsconfigPaths(),
     tailwindcss(),
-    tanstackStart({
-      server: {
-        preset: process.env.VERCEL ? "vercel" : "node",
-      },
-    }),
+    tanstackStart(),
     react(),
     svgr(),
   ],
