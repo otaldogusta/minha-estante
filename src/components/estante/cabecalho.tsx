@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { contarCartasNovas } from "../../lib/api/cartas.functions";
 
@@ -28,6 +28,7 @@ export function Cabecalho({
 }) {
   const [novas, setNovas] = useState(0);
   const [tema, setTema] = useState<"light" | "dark">("light");
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -45,6 +46,27 @@ export function Cabecalho({
       ativo = false;
     };
   }, []);
+
+  // Centralizar a aba ativa suavemente no mobile ao trocar de página
+  useEffect(() => {
+    if (!navRef.current) return;
+    const activeEl = navRef.current.querySelector<HTMLElement>("[data-active='true']");
+    if (activeEl) {
+      activeEl.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [paginaAtiva]);
+
+  const handleTabClick = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  };
 
   function alternarTema() {
     const novoTema = tema === "light" ? "dark" : "light";
@@ -70,13 +92,15 @@ export function Cabecalho({
         </Link>
 
         {/* Centro: > Scroll Abas < */}
-        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1">
-          <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+        <nav ref={navRef} className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1 scroll-smooth">
+          <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap px-1">
             <Link
               to="/"
+              data-active={paginaAtiva === "estante"}
+              onClick={handleTabClick}
               className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "estante"
-                  ? "font-semibold text-amora bg-amora-clara/65"
+                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
               }`}
             >
@@ -85,9 +109,11 @@ export function Cabecalho({
             <Link
               to="/retrospectiva/$ano"
               params={{ ano: String(new Date().getFullYear()) }}
+              data-active={paginaAtiva === "retrospectiva"}
+              onClick={handleTabClick}
               className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "retrospectiva"
-                  ? "font-semibold text-amora bg-amora-clara/65"
+                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
               }`}
             >
@@ -96,9 +122,11 @@ export function Cabecalho({
             <Link
               to="/cartas"
               aria-label="Cartas"
+              data-active={paginaAtiva === "cartas"}
+              onClick={handleTabClick}
               className={`relative spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "cartas"
-                  ? "font-semibold text-amora bg-amora-clara/65"
+                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
               }`}
             >
@@ -111,9 +139,11 @@ export function Cabecalho({
             </Link>
             <Link
               to="/leitores"
+              data-active={paginaAtiva === "leitores"}
+              onClick={handleTabClick}
               className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "leitores"
-                  ? "font-semibold text-amora bg-amora-clara/65"
+                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
               }`}
             >
