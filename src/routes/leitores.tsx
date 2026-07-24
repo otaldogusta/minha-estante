@@ -2,27 +2,30 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { listarLeitores } from "../lib/api/livros.functions";
-import { listarConvites, criarConvite, revogarConvite } from "../lib/api/auth.functions";
+import { listarConvites, criarConvite, revogarConvite, sessaoAtual } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { exigirLogin } from "../lib/exigir-login";
 
 export const Route = createFileRoute("/leitores")({
   beforeLoad: () => exigirLogin(),
   loader: async () => {
-    const [leitoresRes, convitesRes] = await Promise.allSettled([
+    const [leitoresRes, convitesRes, sessaoRes] = await Promise.allSettled([
       listarLeitores(),
       listarConvites(),
+      sessaoAtual(),
     ]);
     const leitores = leitoresRes.status === "fulfilled" ? leitoresRes.value ?? [] : [];
     const convites = convitesRes.status === "fulfilled" ? convitesRes.value ?? [] : [];
-    return { leitores, convites };
+    const sessao = sessaoRes.status === "fulfilled" ? sessaoRes.value : null;
+    return { leitores, convites, sessao };
   },
   component: PaginaLeitores,
 });
 
 function PaginaLeitores() {
-  const { leitores, convites } = Route.useLoaderData();
+  const { leitores, convites, sessao } = Route.useLoaderData();
   const [modalAberto, setModalAberto] = useState(false);
+  const usuarioLogado = sessao?.autenticado ? sessao.usuario : null;
 
   return (
     <div className="min-h-dvh pb-24">
@@ -49,6 +52,8 @@ function PaginaLeitores() {
             leitores.map((l) => {
               const nome = l.nome || l.usuario || "Leitor";
               const inicial = nome.charAt(0).toUpperCase();
+              const eVoce = Boolean(usuarioLogado && l.usuario === usuarioLogado);
+
               return (
                 <Link
                   key={l.usuario}
@@ -60,7 +65,14 @@ function PaginaLeitores() {
                     {inicial}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors">{nome}</p>
+                    <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors inline-flex items-center gap-2 flex-wrap">
+                      <span>{nome}</span>
+                      {eVoce && (
+                        <span className="font-sans text-xs font-normal text-amora border border-amora/30 bg-amora-clara/60 px-2 py-0.5 rounded-full">
+                          (você)
+                        </span>
+                      )}
+                    </p>
                     <p className="mt-0.5 truncate text-sm text-tinta-2">
                       {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
                       {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
