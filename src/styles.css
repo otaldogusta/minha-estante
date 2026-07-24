@@ -415,11 +415,10 @@ html[data-theme="dark"] {
     position: fixed;
     inset: 0;
     z-index: 50;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 1.5rem;
-    overflow-y: auto;
-    overscroll-behavior: contain;
     background: 
       radial-gradient(circle at 25% 25%, rgba(122, 59, 82, 0.16) 0%, transparent 50%),
       radial-gradient(circle at 75% 75%, rgba(68, 220, 234, 0.06) 0%, transparent 50%),

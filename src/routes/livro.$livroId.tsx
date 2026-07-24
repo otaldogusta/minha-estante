@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 
 import { obterLivro, excluirLivro } from "../lib/api/livros.functions";
@@ -28,6 +28,23 @@ function PaginaLivro() {
   const [celebrar, setCelebrar] = useState(false);
   const [cartasNovas, setCartasNovas] = useState<Array<{ id: number; remetente: string }>>([]);
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
+  const dias = diasDeLeitura(livro);
+
+  async function excluir() {
+    await excluirLivro({ data: { id: livro.id } });
+    navigate({ to: "/" });
+  }
+
+  const iniciaisEdicao = concluir
+    ? {
+        ...livro,
+        status: "lido" as const,
+        fim: livro.fim ?? new Date().toISOString().slice(0, 10),
+        ano_leitura: livro.ano_leitura ?? new Date().getFullYear(),
+      }
+    : livro;
+
   useEffect(() => {
     if (modalAberto) {
       document.body.style.overflow = "hidden";
