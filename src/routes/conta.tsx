@@ -170,14 +170,29 @@ function PaginaConta() {
     <div className="min-h-dvh pb-24">
       <Cabecalho paginaAtiva="conta" />
       <main className="mx-auto max-w-lg px-4 sm:px-6">
-        <div className="mt-10 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta flex items-center gap-3">
-              Minha conta
+        <div className="mt-10 flex items-center gap-4">
+          {/* Avatar do Leitor Logado com Ponto Online */}
+          <div className="relative shrink-0">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs">
+              {(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}
+            </span>
+            <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Online agora">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              </span>
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">
+                Minha conta
+              </h1>
               {sessao.autenticado && sessao.id === 1 && (
                 <BotaoAbrirPlanilha />
               )}
-            </h1>
+            </div>
             <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
           </div>
         </div>
