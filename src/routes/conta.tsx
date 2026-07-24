@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter, useBlocker } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import {
@@ -88,6 +88,19 @@ function PaginaConta() {
     sessao.autenticado && (sessao as any).statusPresenca ? (sessao as any).statusPresenca : "online"
   );
   const [salvandoStatus, setSalvandoStatus] = useState(false);
+  const [fabAberto, setFabAberto] = useState(false);
+  const fabRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!fabAberto) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (fabRef.current && !fabRef.current.contains(e.target as Node)) {
+        setFabAberto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [fabAberto]);
 
   async function mudarStatus(novoStatus: "online" | "lendo" | "ocupado" | "invisivel") {
     setStatusPresenca(novoStatus);
@@ -192,39 +205,83 @@ function PaginaConta() {
       <main className="mx-auto max-w-lg px-4 sm:px-6">
         <div className="mt-10 flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            {/* Avatar do Leitor Logado com Ponto de Presença */}
-            <div className="relative shrink-0">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs">
-                {(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}
-              </span>
-              {statusPresenca === "online" && (
-                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Online agora">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            {/* Avatar Interativo com FAB Popover Flutuante */}
+            <div className="relative shrink-0" ref={fabRef}>
+              <button
+                type="button"
+                onClick={() => setFabAberto((v) => !v)}
+                className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                title="Clique no avatar para alterar seu status de presença"
+              >
+                <span>{(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}</span>
+                {statusPresenca === "online" && (
+                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    </span>
                   </span>
-                </span>
-              )}
-              {statusPresenca === "lendo" && (
-                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Lendo no momento">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                )}
+                {statusPresenca === "lendo" && (
+                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                    </span>
                   </span>
-                </span>
-              )}
-              {statusPresenca === "ocupado" && (
-                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Não perturbe (Lendo em paz)">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+                )}
+                {statusPresenca === "ocupado" && (
+                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+                    </span>
                   </span>
-                </span>
-              )}
-              {statusPresenca === "invisivel" && (
-                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Invisível (Aparece offline)">
-                  <span className="h-2.5 w-2.5 rounded-full bg-tinta-3/50" />
-                </span>
+                )}
+                {statusPresenca === "invisivel" && (
+                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
+                    <span className="h-2.5 w-2.5 rounded-full bg-tinta-3/50" />
+                  </span>
+                )}
+              </button>
+
+              {/* Menu FAB Popover Flutuante de Alteração de Status */}
+              {fabAberto && (
+                <div className="absolute top-full left-0 mt-2 z-50 min-w-[200px] rounded-2xl border border-papel-3/90 card-surface p-2 shadow-2xl ring-1 ring-tinta/5 animate-in fade-in zoom-in-95 duration-150">
+                  <p className="px-3 py-1.5 text-[11px] font-bold tracking-wider text-tinta-3 uppercase">Status de presença</p>
+                  <div className="mt-0.5 space-y-1">
+                    {[
+                      { key: "online", label: "Online", desc: "Disponível na casa", dot: "bg-emerald-500" },
+                      { key: "lendo", label: "Lendo agora", desc: "Em leitura ativa", dot: "bg-amber-500" },
+                      { key: "ocupado", label: "Não perturbe", desc: "Lendo em paz", dot: "bg-rose-500" },
+                      { key: "invisivel", label: "Invisível", desc: "Aparece offline", dot: "bg-tinta-3/60" },
+                    ].map((st) => {
+                      const ativo = statusPresenca === st.key;
+                      return (
+                        <button
+                          key={st.key}
+                          type="button"
+                          onClick={() => {
+                            mudarStatus(st.key as any);
+                            setFabAberto(false);
+                          }}
+                          className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left text-xs transition-all cursor-pointer ${
+                            ativo
+                              ? "bg-amora-clara text-amora font-semibold shadow-xs"
+                              : "text-tinta hover:bg-papel-2/80"
+                          }`}
+                        >
+                          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${st.dot} ${ativo ? "ring-2 ring-amora/40 scale-110" : ""}`} />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium leading-tight">{st.label}</p>
+                            <p className="text-[10px] text-tinta-3 leading-tight mt-0.5">{st.desc}</p>
+                          </div>
+                          {ativo && <span className="text-amora font-bold text-xs">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
 
