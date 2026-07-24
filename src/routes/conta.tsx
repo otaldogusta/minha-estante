@@ -17,10 +17,12 @@ import { exigirLogin } from "../lib/exigir-login";
 export const Route = createFileRoute("/conta")({
   beforeLoad: () => exigirLogin(),
   loader: async () => {
-    const [sessao, pedidosRecuperacao] = await Promise.all([
+    const [sessaoRes, pedidosRes] = await Promise.allSettled([
       sessaoAtual(),
       listarPedidosRecuperacao(),
     ]);
+    const sessao = sessaoRes.status === "fulfilled" ? sessaoRes.value : { autenticado: false as const };
+    const pedidosRecuperacao = pedidosRes.status === "fulfilled" ? pedidosRes.value ?? [] : [];
     return { sessao, pedidosRecuperacao };
   },
   component: PaginaConta,
