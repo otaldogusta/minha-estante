@@ -66,10 +66,15 @@ function CartaoLendoAgora({ livro }: { livro: Livro }) {
             <span className="inline-block rounded-full bg-amora-clara/60 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-amora">
               Lendo agora
             </span>
-            <h1 className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-semibold leading-snug tracking-tight text-tinta line-clamp-3">
+            <h1
+              title={livro.titulo}
+              className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-semibold leading-snug tracking-tight text-tinta line-clamp-2 text-ellipsis overflow-hidden"
+            >
               {livro.titulo}
             </h1>
-            <p className="mt-1 text-xs sm:text-sm font-medium text-tinta-2">{livro.autor}</p>
+            <p title={livro.autor} className="mt-1 text-xs sm:text-sm font-medium text-tinta-2 truncate">
+              {livro.autor}
+            </p>
           </div>
         </div>
 
