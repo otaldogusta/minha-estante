@@ -286,7 +286,7 @@ function SecaoGoogleSheets() {
           onClick={() => setModalPlanilha(false)}
         >
           <div
-            className="relative w-full max-w-5xl rounded-2xl bg-papel shadow-2xl overflow-hidden flex flex-col h-[78vh] max-h-[750px]"
+            className="relative w-full max-w-5xl my-auto rounded-2xl bg-papel shadow-2xl overflow-hidden flex flex-col h-[75vh] max-h-[720px]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header do modal */}
