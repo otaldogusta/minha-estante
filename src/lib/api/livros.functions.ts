@@ -164,18 +164,11 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       // Coluna já existe
     }
 
-    let results: Array<{
-      usuario: string;
-      nome: string;
-      statusCustom: string | null;
-      lidos: number;
-      lendoAgora: string | null;
-      temSessao: number;
-    }> = [];
+    let rawResults: any = null;
 
     // Nível 1: Consulta completa com status personalizado e atividade recente em 5 min
     try {
-      const res = await db()
+      rawResults = await db()
         .prepare(
           `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
                   (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
@@ -185,17 +178,16 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
                     SELECT 1 FROM sessoes s
                     WHERE s.usuario_id = us.id
                       AND s.expira_em > datetime('now')
-                      AND (s.ultimo_acesso >= datetime('now', '-5 minutes'))
+                      AND (s.ultimo_acesso IS NULL OR s.ultimo_acesso >= datetime('now', '-5 minutes'))
                   )) AS temSessao
            FROM usuarios us
            ORDER BY us.nome`
         )
-        .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
-      results = res.results ?? [];
+        .all();
     } catch {
       // Nível 2: Fallback sem a verificação de ultimo_acesso
       try {
-        const res = await db()
+        rawResults = await db()
           .prepare(
             `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
                     (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
@@ -205,24 +197,33 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
              FROM usuarios us
              ORDER BY us.nome`
           )
-          .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
-        results = res.results ?? [];
+          .all();
       } catch {
         // Nível 3: Fallback básico essencial (garante retorno dos leitores)
         try {
-          const res = await db()
+          rawResults = await db()
             .prepare(
               `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
                FROM usuarios us
                ORDER BY us.nome`
             )
-            .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
-          results = res.results ?? [];
+            .all();
         } catch {
-          results = [];
+          rawResults = [];
         }
       }
     }
+
+    const results: Array<{
+      usuario: string;
+      nome: string;
+      statusCustom: string | null;
+      lidos: number;
+      lendoAgora: string | null;
+      temSessao: number;
+    }> = Array.isArray(rawResults)
+      ? rawResults
+      : (rawResults?.results ?? []);
 
     return results.map((r): LeitorResumo => {
       const estaOnline = Boolean(r.temSessao);
