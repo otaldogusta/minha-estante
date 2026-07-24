@@ -8,11 +8,12 @@ export function BotaoAdicionar() {
   return (
     <Link
       to="/novo"
-      className="group spring-bounce inline-flex items-center gap-2 rounded-full bg-amora py-1.5 px-2.5 sm:py-2 sm:pl-4 sm:pr-5 text-xs sm:text-sm font-medium text-papel shadow-[0_4px_14px_-4px_rgba(122,59,82,0.55)] hover:bg-amora-escura hover:shadow-[0_6px_18px_-4px_rgba(122,59,82,0.65)]"
+      className="group spring-bounce inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-amora px-2.5 sm:px-4 text-xs sm:text-sm font-medium text-papel shadow-[0_4px_14px_-4px_rgba(122,59,82,0.55)] hover:bg-amora-escura hover:shadow-[0_6px_18px_-4px_rgba(122,59,82,0.65)] shrink-0 cursor-pointer"
+      title="Adicionar livro"
     >
       <span
         aria-hidden
-        className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-base leading-none transition-transform duration-350 motion-safe:group-hover:rotate-90"
+        className="inline-flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-white/20 text-sm sm:text-base leading-none transition-transform duration-350 motion-safe:group-hover:rotate-90"
       >
         +
       </span>
@@ -28,7 +29,6 @@ export function Cabecalho({
 }) {
   const [novas, setNovas] = useState(0);
   const [tema, setTema] = useState<"light" | "dark">("light");
-  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -47,47 +47,6 @@ export function Cabecalho({
     };
   }, []);
 
-  const garantirAbaVisivel = (el: HTMLElement | null, smooth = true) => {
-    if (!el || !navRef.current) return;
-    const container = navRef.current;
-
-    const elLeft = el.offsetLeft;
-    const elRight = elLeft + el.offsetWidth;
-
-    const containerScrollLeft = container.scrollLeft;
-    const containerWidth = container.clientWidth;
-    const containerScrollRight = containerScrollLeft + containerWidth;
-
-    // Margem de segurança de 16px para nunca colar nos ícones laterais
-    const padding = 16;
-
-    let targetLeft = containerScrollLeft;
-
-    if (elLeft - padding < containerScrollLeft) {
-      targetLeft = elLeft - padding;
-    } else if (elRight + padding > containerScrollRight) {
-      targetLeft = elRight + padding - containerWidth;
-    } else {
-      return;
-    }
-
-    container.scrollTo({
-      left: Math.max(0, targetLeft),
-      behavior: smooth ? "smooth" : "auto",
-    });
-  };
-
-  // Acompanhar a aba ativa suavemente no mobile (sem pulo brusco)
-  useEffect(() => {
-    if (!navRef.current) return;
-    const activeEl = navRef.current.querySelector<HTMLElement>("[data-active='true']");
-    garantirAbaVisivel(activeEl, true);
-  }, [paginaAtiva]);
-
-  const handleTabClick = (e: React.MouseEvent<HTMLElement>) => {
-    garantirAbaVisivel(e.currentTarget, true);
-  };
-
   function alternarTema() {
     const novoTema = tema === "light" ? "dark" : "light";
     setTema(novoTema);
@@ -97,28 +56,26 @@ export function Cabecalho({
 
   return (
     <header className="sticky top-0 z-50 border-b border-papel-3/45 bg-papel/85 backdrop-blur-lg shadow-xs">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-1 px-2.5 sm:gap-3 sm:px-6">
+      <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between gap-1 px-2 sm:gap-3 sm:px-6">
         
         {/* Esquerda: Logo Minha Estante */}
         <Link to="/" className="flex items-center gap-1.5 spring-bounce shrink-0" title="Minha Estante - Página Inicial">
-          <span aria-hidden className="inline-flex gap-[3px]">
-            <span className="inline-block h-5 w-[5px] rounded-sm bg-amora" />
-            <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
-            <span className="inline-block h-5 w-[5px] rounded-sm bg-tinta" />
+          <span aria-hidden className="inline-flex gap-[2.5px]">
+            <span className="inline-block h-4.5 w-[4px] sm:h-5 sm:w-[5px] rounded-sm bg-amora" />
+            <span className="inline-block h-3.5 w-[4px] sm:h-4 sm:w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
+            <span className="inline-block h-4.5 w-[4px] sm:h-5 sm:w-[5px] rounded-sm bg-tinta" />
           </span>
           <span className="hidden md:inline font-display text-lg sm:text-xl font-semibold tracking-tight text-tinta">
             Minha Estante
           </span>
         </Link>
 
-        {/* Centro: > Scroll Abas < */}
-        <nav ref={navRef} className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1 scroll-smooth">
-          <div className="flex items-center gap-0.5 sm:gap-1.5 whitespace-nowrap px-0.5">
+        {/* Centro: Abas de Navegação */}
+        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-center sm:justify-center overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-0.5 sm:gap-1.5 whitespace-nowrap">
             <Link
               to="/"
-              data-active={paginaAtiva === "estante"}
-              onClick={handleTabClick}
-              className={`spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "estante"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -129,23 +86,19 @@ export function Cabecalho({
             <Link
               to="/retrospectiva/$ano"
               params={{ ano: String(new Date().getFullYear()) }}
-              data-active={paginaAtiva === "retrospectiva"}
-              onClick={handleTabClick}
-              className={`spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "retrospectiva"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
               }`}
             >
-              <span className="md:hidden">Retro</span>
-              <span className="hidden md:inline">Retrospectiva</span>
+              <span className="sm:hidden">Retro</span>
+              <span className="hidden sm:inline">Retrospectiva</span>
             </Link>
             <Link
               to="/cartas"
               aria-label="Cartas"
-              data-active={paginaAtiva === "cartas"}
-              onClick={handleTabClick}
-              className={`relative spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`relative spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "cartas"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -153,16 +106,14 @@ export function Cabecalho({
             >
               Cartas
               {novas > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amora px-1 font-num text-[10px] font-bold text-papel">
+                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-amora px-1 font-num text-[9px] font-bold text-papel">
                   {novas}
                 </span>
               )}
             </Link>
             <Link
               to="/leitores"
-              data-active={paginaAtiva === "leitores"}
-              onClick={handleTabClick}
-              className={`spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "leitores"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -174,7 +125,7 @@ export function Cabecalho({
         </nav>
 
         {/* Direita: ( Modo claro/escuro - Perfil - + Add ) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             onClick={alternarTema}
             className="spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border border-papel-3 text-tinta-2 hover:border-amora hover:text-amora hover:bg-papel-2/50 cursor-pointer shrink-0"
