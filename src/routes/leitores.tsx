@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-import { listarLeitores } from "../lib/api/livros.functions";
+import { listarLeitores, type StatusPresenca } from "../lib/api/livros.functions";
 import { listarConvites, criarConvite, revogarConvite, sessaoAtual } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { exigirLogin } from "../lib/exigir-login";
@@ -21,6 +21,38 @@ export const Route = createFileRoute("/leitores")({
   },
   component: PaginaLeitores,
 });
+
+function PontoPresenca({ status, eVoce }: { status: StatusPresenca; eVoce: boolean }) {
+  const statusEfetivo: StatusPresenca = eVoce ? "online" : status;
+
+  if (statusEfetivo === "online") {
+    return (
+      <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Online agora">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+        </span>
+      </span>
+    );
+  }
+
+  if (statusEfetivo === "lendo") {
+    return (
+      <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Lendo no momento">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Offline">
+      <span className="h-2.5 w-2.5 rounded-full bg-tinta-3/50" />
+    </span>
+  );
+}
 
 function PaginaLeitores() {
   const { leitores, convites, sessao } = Route.useLoaderData();
@@ -57,48 +89,41 @@ function PaginaLeitores() {
               })
               .map((l) => {
                 const nome = l.nome || l.usuario || "Leitor";
-              const inicial = nome.charAt(0).toUpperCase();
-              const eVoce = Boolean(usuarioLogado && l.usuario === usuarioLogado);
+                const inicial = nome.charAt(0).toUpperCase();
+                const eVoce = Boolean(usuarioLogado && l.usuario === usuarioLogado);
 
-              return (
-                <Link
-                  key={l.usuario}
-                  to="/leitor/$usuario"
-                  params={{ usuario: l.usuario }}
-                  className="card-surface spring-bounce group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
-                >
-                  <div className="relative shrink-0">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora font-semibold">
-                      {inicial}
-                    </span>
-                    {(l.online || eVoce) && (
-                      <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-papel ring-2 ring-papel" title="Online agora">
-                        <span className="relative flex h-2.5 w-2.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                        </span>
+                return (
+                  <Link
+                    key={l.usuario}
+                    to="/leitor/$usuario"
+                    params={{ usuario: l.usuario }}
+                    className="card-surface spring-bounce group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
+                  >
+                    <div className="relative shrink-0">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora font-semibold">
+                        {inicial}
                       </span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors inline-flex items-center gap-2 flex-wrap">
-                      <span>{nome}</span>
-                      {eVoce && (
-                        <span className="font-sans text-xs font-normal text-amora border border-amora/30 bg-amora-clara/60 px-2 py-0.5 rounded-full">
-                          (você)
-                        </span>
-                      )}
-                    </p>
-                    <p className="mt-0.5 truncate text-sm text-tinta-2">
-                      {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
-                      {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
-                    </p>
-                  </div>
-                  <span aria-hidden className="text-tinta-3 transition-transform duration-300 motion-safe:group-hover:translate-x-1">
-                    →
-                  </span>
-                </Link>
-              );
+                      <PontoPresenca status={l.statusPresenca} eVoce={eVoce} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors inline-flex items-center gap-2 flex-wrap">
+                        <span>{nome}</span>
+                        {eVoce && (
+                          <span className="font-sans text-xs font-normal text-amora border border-amora/30 bg-amora-clara/60 px-2 py-0.5 rounded-full">
+                            (você)
+                          </span>
+                        )}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm text-tinta-2">
+                        {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
+                        {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
+                      </p>
+                    </div>
+                    <span aria-hidden className="text-tinta-3 transition-transform duration-300 motion-safe:group-hover:translate-x-1">
+                      →
+                    </span>
+                  </Link>
+                );
             })
           )}
         </div>

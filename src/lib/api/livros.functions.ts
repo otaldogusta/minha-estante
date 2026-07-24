@@ -141,12 +141,14 @@ export const atualizarProgresso = createServerFn({ method: "POST" })
 
 // ------- Perfis públicos -------
 
+export type StatusPresenca = "online" | "lendo" | "offline";
+
 export type LeitorResumo = {
   usuario: string;
   nome: string;
   lidos: number;
   lendoAgora: string | null;
-  online: boolean;
+  statusPresenca: StatusPresenca;
 };
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
@@ -157,12 +159,31 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
               (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
               (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
                ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-              (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS online
+              (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
        FROM usuarios us
        ORDER BY us.nome`
     )
-    .all<Omit<LeitorResumo, "online"> & { online: number }>();
-  return results.map((r) => ({ ...r, online: Boolean(r.online) }));
+    .all<{ usuario: string; nome: string; lidos: number; lendoAgora: string | null; temSessao: number }>();
+
+  return results.map((r): LeitorResumo => {
+    const estaOnline = Boolean(r.temSessao);
+    const temLeitura = Boolean(r.lendoAgora);
+
+    let statusPresenca: StatusPresenca = "offline";
+    if (estaOnline) {
+      statusPresenca = "online";
+    } else if (temLeitura) {
+      statusPresenca = "lendo";
+    }
+
+    return {
+      usuario: r.usuario,
+      nome: r.nome,
+      lidos: r.lidos,
+      lendoAgora: r.lendoAgora,
+      statusPresenca,
+    };
+  });
 });
 
 // Perfil público: apenas livros não privados, sem valores gastos.
