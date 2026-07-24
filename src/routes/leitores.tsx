@@ -43,7 +43,7 @@ function PaginaLeitores() {
               key={l.usuario}
               to="/leitor/$usuario"
               params={{ usuario: l.usuario }}
-              className="group flex items-center gap-4 rounded-2xl border border-papel-3 bg-papel-3 p-5 transition-all hover:border-amora"
+              className="card-surface group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora">
                 {l.nome.charAt(0).toUpperCase()}
