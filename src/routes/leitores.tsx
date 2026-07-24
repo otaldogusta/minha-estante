@@ -127,6 +127,13 @@ function ModalConvites({
     }
   }
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const pendentesAtivos = convites.filter((c) => !c.usado_em && c.expirado === 0);
   const pendentesExpirados = convites.filter((c) => !c.usado_em && c.expirado === 1);
   const usados = convites.filter((c) => c.usado_em);
@@ -138,7 +145,7 @@ function ModalConvites({
       onClick={fechar}
     >
       <div 
-        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-papel-3 bg-papel textura-papel shadow-2xl surgir max-h-[90vh] flex flex-col"
+        className="relative w-full max-w-md my-auto overflow-hidden rounded-3xl border border-papel-3 bg-papel textura-papel shadow-2xl surgir max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho do Modal */}

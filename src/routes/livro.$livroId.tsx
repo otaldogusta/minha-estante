@@ -28,22 +28,14 @@ function PaginaLivro() {
   const [celebrar, setCelebrar] = useState(false);
   const [cartasNovas, setCartasNovas] = useState<Array<{ id: number; remetente: string }>>([]);
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
-  const [modalAberto, setModalAberto] = useState(false);
-  const dias = diasDeLeitura(livro);
-
-  async function excluir() {
-    await excluirLivro({ data: { id: livro.id } });
-    navigate({ to: "/" });
-  }
-
-  const iniciaisEdicao = concluir
-    ? {
-        ...livro,
-        status: "lido" as const,
-        fim: livro.fim ?? new Date().toISOString().slice(0, 10),
-        ano_leitura: livro.ano_leitura ?? new Date().getFullYear(),
-      }
-    : livro;
+  useEffect(() => {
+    if (modalAberto) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [modalAberto]);
 
   return (
     <div className="min-h-dvh pb-24">
@@ -222,7 +214,7 @@ function PaginaLivro() {
           onClick={() => setModalAberto(false)}
         >
           <div 
-            className="w-full max-w-2xl rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl flex flex-col max-h-[80vh] surgir"
+            className="w-full max-w-2xl my-auto rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl flex flex-col max-h-[80vh] surgir"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-papel-3/50 pb-3">

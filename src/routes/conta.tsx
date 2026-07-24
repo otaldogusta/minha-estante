@@ -250,6 +250,15 @@ function SecaoGoogleSheets() {
   const [status, setStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null);
   const [modalPlanilha, setModalPlanilha] = useState(false);
 
+  useEffect(() => {
+    if (modalPlanilha) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [modalPlanilha]);
+
   async function sincronizar() {
     setSincronizando(true);
     setStatus(null);
@@ -277,8 +286,8 @@ function SecaoGoogleSheets() {
           onClick={() => setModalPlanilha(false)}
         >
           <div
-            className="relative w-full max-w-5xl rounded-2xl bg-papel shadow-2xl overflow-hidden flex flex-col"
-            style={{ height: "85vh" }}
+            className="relative w-full max-w-5xl my-auto rounded-2xl bg-papel shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+            style={{ height: "82vh" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header do modal */}
