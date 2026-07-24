@@ -205,43 +205,39 @@ function PaginaConta() {
       <main className="mx-auto max-w-lg px-4 sm:px-6">
         <div className="mt-10 flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            {/* Avatar Interativo com FAB Popover Flutuante */}
+            {/* Avatar do Leitor Logado com Ponto de Presença Interativo */}
             <div className="relative shrink-0" ref={fabRef}>
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs select-none">
+                {(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}
+              </span>
+
+              {/* Botão Clicável EXCLUSIVO no Pontinho de Status */}
               <button
                 type="button"
                 onClick={() => setFabAberto((v) => !v)}
-                className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                title="Clique no avatar para alterar seu status de presença"
+                className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs transition-transform hover:scale-125 active:scale-95 cursor-pointer z-10"
+                title="Clique no pontinho para alterar seu status de presença"
               >
-                <span>{(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}</span>
                 {statusPresenca === "online" && (
-                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                    </span>
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
                   </span>
                 )}
                 {statusPresenca === "lendo" && (
-                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
-                    </span>
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-500" />
                   </span>
                 )}
                 {statusPresenca === "ocupado" && (
-                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
-                    </span>
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-rose-500" />
                   </span>
                 )}
                 {statusPresenca === "invisivel" && (
-                  <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs">
-                    <span className="h-2.5 w-2.5 rounded-full bg-tinta-3/50" />
-                  </span>
+                  <span className="h-3 w-3 rounded-full bg-tinta-3/50" />
                 )}
               </button>
 
