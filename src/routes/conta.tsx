@@ -241,11 +241,10 @@ function PaginaConta() {
                 )}
               </button>
 
-              {/* Menu FAB Popover Flutuante de Alteração de Status */}
+              {/* Menu FAB Popover Flutuante Opaco de Alteração de Status */}
               {fabAberto && (
-                <div className="absolute top-full left-0 mt-2 z-50 min-w-[200px] rounded-2xl border border-papel-3/90 card-surface p-2 shadow-2xl ring-1 ring-tinta/5 animate-in fade-in zoom-in-95 duration-150">
-                  <p className="px-3 py-1.5 text-[11px] font-bold tracking-wider text-tinta-3 uppercase">Status de presença</p>
-                  <div className="mt-0.5 space-y-1">
+                <div className="absolute top-full left-0 mt-2 z-50 min-w-[210px] rounded-2xl border border-papel-3 bg-papel p-2 shadow-2xl ring-1 ring-tinta/10 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="space-y-1">
                     {[
                       { key: "online", label: "Online", desc: "Disponível na casa", dot: "bg-emerald-500" },
                       { key: "lendo", label: "Lendo agora", desc: "Em leitura ativa", dot: "bg-amber-500" },
@@ -261,7 +260,7 @@ function PaginaConta() {
                             mudarStatus(st.key as any);
                             setFabAberto(false);
                           }}
-                          className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left text-xs transition-all cursor-pointer ${
+                          className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs transition-all cursor-pointer ${
                             ativo
                               ? "bg-amora-clara text-amora font-semibold shadow-xs"
                               : "text-tinta hover:bg-papel-2/80"
