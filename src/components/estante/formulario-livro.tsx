@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useBlocker } from "@tanstack/react-router";
+import { createPortal } from "react-dom";
 
 import { salvarLivro } from "../../lib/api/livros.functions";
 import { GENEROS, FORMATOS, type Livro } from "../../lib/livros";
@@ -8,8 +10,38 @@ import { CapaLivro } from "./capa-livro";
 export type ValoresLivro = Partial<Omit<Livro, "id">> & { id?: number };
 
 const campo =
-  "w-full rounded-lg border border-papel-3 bg-papel px-3 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none";
+  "w-full rounded-lg border border-papel-3 bg-papel px-3 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none transition-colors";
 const rotulo = "block text-sm font-medium text-tinta-2 mb-1";
+
+function verificarAlteracao(v: ValoresLivro, i: ValoresLivro) {
+  const normStr = (val: any) => (val === null || val === undefined ? "" : String(val).trim());
+  const normNum = (val: any) => (val === null || val === undefined ? "" : String(val));
+  const normBool = (val: any) => (val ? 1 : 0);
+
+  return (
+    normStr(v.titulo) !== normStr(i.titulo) ||
+    normStr(v.autor) !== normStr(i.autor) ||
+    normStr(v.capa) !== normStr(i.capa) ||
+    normStr(v.status) !== normStr(i.status) ||
+    normStr(v.genero) !== normStr(i.genero) ||
+    normStr(v.formato) !== normStr(i.formato) ||
+    normStr(v.editora) !== normStr(i.editora) ||
+    normStr(v.pais) !== normStr(i.pais) ||
+    normNum(v.ano) !== normNum(i.ano) ||
+    normNum(v.paginas) !== normNum(i.paginas) ||
+    normNum(v.valor) !== normNum(i.valor) ||
+    normNum(v.ano_leitura) !== normNum(i.ano_leitura) ||
+    normStr(v.inicio) !== normStr(i.inicio) ||
+    normStr(v.fim) !== normStr(i.fim) ||
+    normNum(v.pagina_atual) !== normNum(i.pagina_atual) ||
+    normNum(v.nota) !== normNum(i.nota) ||
+    normStr(v.palavra) !== normStr(i.palavra) ||
+    normStr(v.resenha) !== normStr(i.resenha) ||
+    normBool(v.adaptacao) !== normBool(i.adaptacao) ||
+    normBool(v.vi_adaptacao) !== normBool(i.vi_adaptacao) ||
+    normBool(v.privado) !== normBool(i.privado)
+  );
+}
 
 export function FormularioLivro({
   inicial,
@@ -18,7 +50,7 @@ export function FormularioLivro({
   inicial: ValoresLivro;
   aoSalvar: (id: number) => void;
 }) {
-  const [v, setV] = useState<ValoresLivro>({
+  const [inicialState] = useState<ValoresLivro>({
     status: "lido",
     formato: "Kindle",
     ano_leitura: new Date().getFullYear(),
@@ -26,8 +58,29 @@ export function FormularioLivro({
     vi_adaptacao: 0,
     ...inicial,
   });
+
+  const [v, setV] = useState<ValoresLivro>({ ...inicialState });
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const teveAlteracao = verificarAlteracao(v, inicialState);
+
+  // Bloqueador de navegação para alterações não salvas no livro
+  const blocker = useBlocker({
+    shouldBlockFn: () => teveAlteracao && !salvando,
+    withResolver: true,
+  });
+
+  // Alerta nativo se tentar fechar ou recarregar a aba com alterações
+  useEffect(() => {
+    if (!teveAlteracao || salvando) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [teveAlteracao, salvando]);
 
   function set<K extends keyof ValoresLivro>(k: K, val: ValoresLivro[K]) {
     setV((prev) => ({ ...prev, [k]: val }));
@@ -36,6 +89,7 @@ export function FormularioLivro({
   const num = (s: string) => (s.trim() === "" ? null : Number(s));
 
   async function enviar() {
+    if (!teveAlteracao) return;
     if (!v.titulo?.trim() || !v.autor?.trim()) {
       setErro("Título e autor são obrigatórios.");
       return;
@@ -106,7 +160,7 @@ export function FormularioLivro({
               key={s.valor}
               type="button"
               onClick={() => set("status", s.valor)}
-              className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+              className={`rounded-full px-4 py-1.5 text-sm transition-colors cursor-pointer ${
                 v.status === s.valor ? "bg-amora text-papel" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
               }`}
             >
@@ -253,7 +307,7 @@ export function FormularioLivro({
         </label>
 
         <div className="flex flex-wrap items-center gap-6">
-          <label className="flex items-center gap-2 text-sm text-tinta-2">
+          <label className="flex items-center gap-2 text-sm text-tinta-2 cursor-pointer">
             <input
               type="checkbox"
               checked={!!v.adaptacao}
@@ -263,7 +317,7 @@ export function FormularioLivro({
             Tem adaptação (filme/série)
           </label>
           {!!v.adaptacao && (
-            <label className="flex items-center gap-2 text-sm text-tinta-2">
+            <label className="flex items-center gap-2 text-sm text-tinta-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={!!v.vi_adaptacao}
@@ -273,7 +327,7 @@ export function FormularioLivro({
               Já assisti
             </label>
           )}
-          <label className="flex items-center gap-2 text-sm text-tinta-2">
+          <label className="flex items-center gap-2 text-sm text-tinta-2 cursor-pointer">
             <input
               type="checkbox"
               checked={!!v.privado}
@@ -289,12 +343,58 @@ export function FormularioLivro({
         <button
           type="button"
           onClick={enviar}
-          disabled={salvando}
-          className="rounded-xl bg-amora px-8 py-3 text-sm font-medium text-papel transition-all hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60"
+          disabled={!teveAlteracao || salvando}
+          className={`rounded-xl px-8 py-3 text-sm font-medium transition-all ${
+            !teveAlteracao || salvando
+              ? "bg-amora/35 text-papel/50 cursor-not-allowed opacity-60"
+              : "bg-amora text-papel hover:bg-amora-escura active:translate-y-[1px] cursor-pointer shadow-sm"
+          }`}
         >
           {salvando ? "Guardando na estante..." : "Salvar"}
         </button>
       </div>
+
+      {/* Modal de Confirmação para Descartar Alterações Não Salvas no Livro */}
+      {blocker.status === "blocked" && typeof document !== "undefined" && createPortal(
+        <div
+          className="modal-backdrop z-[70]"
+          onClick={() => blocker.reset()}
+        >
+          <div
+            className="relative w-full max-w-md my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-amora">
+              <div className="rounded-xl bg-amora-clara p-2.5">
+                <svg viewBox="0 0 24 24" className="h-6 w-6 text-amora" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-tinta">Descartar alterações?</h3>
+            </div>
+
+            <p className="text-sm text-tinta-2 leading-relaxed">
+              Você alterou dados deste livro e não salvou as mudanças. Se sair agora, todas as edições serão perdidas.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => blocker.reset()}
+                className="rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora cursor-pointer"
+              >
+                Continuar editando
+              </button>
+              <button
+                onClick={() => blocker.proceed()}
+                className="rounded-xl bg-amora px-5 py-2.5 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] cursor-pointer"
+              >
+                Descartar e Sair
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
