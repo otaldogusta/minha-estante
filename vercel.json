@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "regions": ["gru1"],
   "env": {
     "DATABASE_URL": "postgresql://postgres.lwmdotggpvcwhetqkyju:aZ6w5IOtjyiqyg5E@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
   },
