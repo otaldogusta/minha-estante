@@ -258,18 +258,19 @@ function BotaoAbrirPlanilha() {
   const [sincronizando, setSincronizando] = useState(false);
   const [status, setStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null);
   const [modalPlanilha, setModalPlanilha] = useState(false);
+  const [confirmarSync, setConfirmarSync] = useState(false);
   const [linkPlanilha, setLinkPlanilha] = useState(
     "https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/edit"
   );
 
   useEffect(() => {
-    if (modalPlanilha) {
+    if (modalPlanilha || confirmarSync) {
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = "";
       };
     }
-  }, [modalPlanilha]);
+  }, [modalPlanilha, confirmarSync]);
 
   async function sincronizar() {
     setSincronizando(true);
@@ -338,7 +339,7 @@ function BotaoAbrirPlanilha() {
               {/* Ações: Sincronizar, Abrir no Google e Fechar */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={sincronizar}
+                  onClick={() => setConfirmarSync(true)}
                   disabled={sincronizando}
                   className="rounded-lg bg-amora px-3 py-1.5 text-xs font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60 flex items-center gap-1.5 cursor-pointer"
                 >
@@ -398,6 +399,55 @@ function BotaoAbrirPlanilha() {
                 className="w-full h-full border-0"
                 title="Planilha Controle de Livros"
               />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal de Confirmação de Sincronização */}
+      {confirmarSync && typeof document !== "undefined" && createPortal(
+        <div
+          className="modal-backdrop z-[60]"
+          onClick={() => setConfirmarSync(false)}
+        >
+          <div
+            className="relative w-full max-w-md my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-amora">
+              <div className="rounded-xl bg-amora-clara p-2.5">
+                <svg viewBox="0 0 24 24" className="h-6 w-6 text-amora" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-tinta">Sincronizar estante?</h3>
+            </div>
+
+            <p className="text-sm text-tinta-2 leading-relaxed">
+              Isso atualizará os dados da sua estante com a planilha do Google Sheets. Novos livros serão importados e alterações de progresso serão sincronizadas.
+            </p>
+            <p className="text-xs text-tinta-3">
+              ✨ Suas capas personalizadas e resenhas cadastradas aqui continuarão preservadas.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setConfirmarSync(false)}
+                className="rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmarSync(false);
+                  await sincronizar();
+                }}
+                disabled={sincronizando}
+                className="rounded-xl bg-amora px-5 py-2.5 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] cursor-pointer"
+              >
+                Confirmar e Sincronizar
+              </button>
             </div>
           </div>
         </div>,
