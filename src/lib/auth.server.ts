@@ -81,6 +81,23 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
 
   const now = Date.now();
   const cached = sessionCache.get(token);
+
+  if (!cached || cached.expires <= now) {
+    try {
+      await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT DEFAULT (datetime('now'))").run();
+    } catch {
+      // Coluna já existe
+    }
+    try {
+      await db()
+        .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
+        .bind(token)
+        .run();
+    } catch {
+      // Silencioso
+    }
+  }
+
   if (cached && cached.expires > now) {
     return cached.user;
   }
@@ -95,7 +112,7 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
     .first<Usuario>();
 
   const user = row ?? null;
-  sessionCache.set(token, { user, expires: now + 60_000 });
+  sessionCache.set(token, { user, expires: now + 30_000 });
   return user;
 }
 
