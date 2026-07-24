@@ -1,0 +1,11 @@
+node_modules/
+dist/
+data/
+.env
+.env.local
+*.db
+*.sqlite
+covers_result.txt
+fix_all_covers.py
+enrich_with_editora.py
+fix-encoding.ps1
