@@ -58,19 +58,19 @@ export function Cabecalho({
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6">
         
         {/* Esquerda: Logo Minha Estante */}
-        <Link to="/" className="flex items-center gap-2 spring-bounce shrink-0">
+        <Link to="/" className="flex items-center gap-2 spring-bounce shrink-0" title="Minha Estante - Página Inicial">
           <span aria-hidden className="inline-flex gap-[3px]">
             <span className="inline-block h-5 w-[5px] rounded-sm bg-amora" />
             <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
             <span className="inline-block h-5 w-[5px] rounded-sm bg-tinta" />
           </span>
-          <span className="hidden min-[420px]:inline font-display text-base sm:text-xl font-semibold tracking-tight text-tinta">
+          <span className="hidden md:inline font-display text-lg sm:text-xl font-semibold tracking-tight text-tinta">
             Minha Estante
           </span>
         </Link>
 
         {/* Centro: > Scroll Abas < */}
-        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1">
+        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1">
           <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
             <Link
               to="/"
