@@ -67,24 +67,25 @@ function PaginaLeitores() {
                   params={{ usuario: l.usuario }}
                   className="card-surface spring-bounce group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
                 >
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora font-semibold">
-                    {inicial}
-                  </span>
+                  <div className="relative shrink-0">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora font-semibold">
+                      {inicial}
+                    </span>
+                    {(l.online || eVoce) && (
+                      <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-papel ring-2 ring-papel" title="Online agora">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                        </span>
+                      </span>
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors inline-flex items-center gap-2 flex-wrap">
                       <span>{nome}</span>
                       {eVoce && (
                         <span className="font-sans text-xs font-normal text-amora border border-amora/30 bg-amora-clara/60 px-2 py-0.5 rounded-full">
                           (você)
-                        </span>
-                      )}
-                      {(l.online || eVoce) && (
-                        <span className="font-sans inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/20">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                          </span>
-                          online
                         </span>
                       )}
                     </p>
