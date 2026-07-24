@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
@@ -191,9 +191,24 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function TopProgressBar() {
   const isPending = useRouterState({ select: (s) => s.status === "pending" });
-  if (!isPending) return null;
+  const [mostrar, setMostrar] = useState(false);
+
+  useEffect(() => {
+    if (!isPending) {
+      setMostrar(false);
+      return;
+    }
+    // Só exibe a barra se o carregamento demorar mais de 180ms
+    const timer = setTimeout(() => {
+      setMostrar(true);
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [isPending]);
+
+  if (!mostrar) return null;
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-amora animate-pulse shadow-[0_0_10px_#7A3B52]" />
+    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-amora animate-pulse shadow-[0_0_10px_#7A3B52] transition-opacity duration-200" />
   );
 }
 
