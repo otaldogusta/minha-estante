@@ -15,26 +15,33 @@ export const Route = createFileRoute("/retrospectiva/$ano")({
   component: PaginaRetrospectiva,
 });
 
-// Contador animado (fica estático com prefers-reduced-motion).
+// Contador animado (re-executa em toda navegação ou quando o ano muda).
 function Contador({ ate, formatar }: { ate: number; formatar?: (n: number) => string }) {
-  const [valor, setValor] = useState(ate);
-  const rodou = useRef(false);
+  const [valor, setValor] = useState(0);
 
   useEffect(() => {
-    if (rodou.current) return;
-    rodou.current = true;
-    if (typeof window === "undefined") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const duracao = 1100;
+    if (typeof window === "undefined") {
+      setValor(ate);
+      return;
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || ate === 0) {
+      setValor(ate);
+      return;
+    }
+
+    const duracao = 1000;
     const t0 = performance.now();
-    setValor(0);
     let raf = 0;
+
     const passo = (t: number) => {
       const p = Math.min(1, (t - t0) / duracao);
       const eased = 1 - Math.pow(1 - p, 3);
       setValor(Math.round(ate * eased));
-      if (p < 1) raf = requestAnimationFrame(passo);
+      if (p < 1) {
+        raf = requestAnimationFrame(passo);
+      }
     };
+
     raf = requestAnimationFrame(passo);
     return () => cancelAnimationFrame(raf);
   }, [ate]);
