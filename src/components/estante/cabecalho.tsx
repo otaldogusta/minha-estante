@@ -54,66 +54,76 @@ export function Cabecalho({
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-papel-3/45 bg-papel/75 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-papel-3/45 bg-papel/85 backdrop-blur-lg shadow-xs">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6">
+        
+        {/* Esquerda: Logo Minha Estante */}
         <Link to="/" className="flex items-center gap-2 spring-bounce shrink-0">
           <span aria-hidden className="inline-flex gap-[3px]">
             <span className="inline-block h-5 w-[5px] rounded-sm bg-amora" />
             <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
             <span className="inline-block h-5 w-[5px] rounded-sm bg-tinta" />
           </span>
-          <span className="hidden xs:inline sm:inline font-display text-lg sm:text-xl font-semibold tracking-tight text-tinta">Minha Estante</span>
+          <span className="hidden min-[420px]:inline font-display text-base sm:text-xl font-semibold tracking-tight text-tinta">
+            Minha Estante
+          </span>
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-1 sm:overflow-visible">
-          <Link
-            to="/"
-            className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
-              paginaAtiva === "estante" 
-                ? "font-semibold text-amora bg-amora-clara/60" 
-                : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
-            }`}
-          >
-            Estante
-          </Link>
-          <Link
-            to="/retrospectiva/$ano"
-            params={{ ano: String(new Date().getFullYear()) }}
-            className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
-              paginaAtiva === "retrospectiva" 
-                ? "font-semibold text-amora bg-amora-clara/60" 
-                : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
-            }`}
-          >
-            Retrospectiva
-          </Link>
-          <Link
-            to="/cartas"
-            aria-label="Cartas"
-            className={`relative spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
-              paginaAtiva === "cartas" 
-                ? "font-semibold text-amora bg-amora-clara/60" 
-                : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
-            }`}
-          >
-            Cartas
-            {novas > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amora px-1 font-num text-[10px] font-bold text-papel">
-                {novas}
-              </span>
-            )}
-          </Link>
-          <Link
-            to="/leitores"
-            className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
-              paginaAtiva === "leitores" 
-                ? "font-semibold text-amora bg-amora-clara/60" 
-                : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
-            }`}
-          >
-            Leitores
-          </Link>
 
-          {/* Alternador de Tema */}
+        {/* Centro: > Scroll Abas < */}
+        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1">
+          <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+            <Link
+              to="/"
+              className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+                paginaAtiva === "estante"
+                  ? "font-semibold text-amora bg-amora-clara/65"
+                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              }`}
+            >
+              Estante
+            </Link>
+            <Link
+              to="/retrospectiva/$ano"
+              params={{ ano: String(new Date().getFullYear()) }}
+              className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+                paginaAtiva === "retrospectiva"
+                  ? "font-semibold text-amora bg-amora-clara/65"
+                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              }`}
+            >
+              Retrospectiva
+            </Link>
+            <Link
+              to="/cartas"
+              aria-label="Cartas"
+              className={`relative spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+                paginaAtiva === "cartas"
+                  ? "font-semibold text-amora bg-amora-clara/65"
+                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              }`}
+            >
+              Cartas
+              {novas > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amora px-1 font-num text-[10px] font-bold text-papel">
+                  {novas}
+                </span>
+              )}
+            </Link>
+            <Link
+              to="/leitores"
+              className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+                paginaAtiva === "leitores"
+                  ? "font-semibold text-amora bg-amora-clara/65"
+                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              }`}
+            >
+              Leitores
+            </Link>
+          </div>
+        </nav>
+
+        {/* Direita: ( Modo claro/escuro - Perfil - + Add ) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={alternarTema}
             className="spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border border-papel-3 text-tinta-2 hover:border-amora hover:text-amora hover:bg-papel-2/50 cursor-pointer shrink-0"
@@ -135,9 +145,9 @@ export function Cabecalho({
             to="/conta"
             aria-label="Minha conta"
             title="Minha conta"
-            className={`spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border text-tinta-2 shrink-0 ${
-              paginaAtiva === "conta" 
-                ? "border-amora text-amora bg-amora-clara/60" 
+            className={`spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border text-tinta-2 shrink-0 cursor-pointer ${
+              paginaAtiva === "conta"
+                ? "border-amora text-amora bg-amora-clara/65"
                 : "border-papel-3 hover:border-amora hover:text-amora hover:bg-papel-2/50"
             }`}
           >
@@ -146,10 +156,12 @@ export function Cabecalho({
               <path d="M4.5 19.5c1.6-3.2 4.3-4.6 7.5-4.6s5.9 1.4 7.5 4.6" strokeLinecap="round" />
             </svg>
           </Link>
-          <div className="ml-1 sm:ml-2 shrink-0">
+
+          <div className="shrink-0">
             <BotaoAdicionar />
           </div>
-        </nav>
+        </div>
+
       </div>
     </header>
   );
