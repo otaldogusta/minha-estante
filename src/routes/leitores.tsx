@@ -169,6 +169,14 @@ function ModalConvites({
   const [copiado, setCopiado] = useState<string | null>(null);
   const [revogando, setRevogando] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!aberto) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [aberto]);
+
   if (!aberto) return null;
 
   const linkDe = (codigo: string) =>
@@ -203,13 +211,6 @@ function ModalConvites({
       // sem clipboard
     }
   }
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
 
   const pendentesAtivos = convites.filter((c) => !c.usado_em && c.expirado === 0);
   const pendentesExpirados = convites.filter((c) => !c.usado_em && c.expirado === 1);
