@@ -131,11 +131,11 @@ function FaixaNumeros({ livros }: { livros: Livro[] }) {
   ];
   return (
     <section className="mx-auto mt-8 max-w-6xl px-4 sm:px-6">
-      <div className="grid grid-cols-2 gap-y-6 border-y border-papel-3 py-6 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-6 border-y border-papel-3 py-6 sm:grid-cols-4">
         {itens.map((i) => (
-          <div key={i.rotulo} className="text-center">
-            <p className="font-num text-2xl text-tinta md:text-3xl">{i.valor}</p>
-            <p className="mt-1 text-sm text-tinta-2">{i.rotulo}</p>
+          <div key={i.rotulo} className="text-center px-1 min-w-0">
+            <p className="font-num text-xl sm:text-2xl md:text-3xl text-tinta truncate">{i.valor}</p>
+            <p className="mt-1 text-xs sm:text-sm text-tinta-2">{i.rotulo}</p>
           </div>
         ))}
       </div>

@@ -8,7 +8,7 @@ export function BotaoAdicionar() {
   return (
     <Link
       to="/novo"
-      className="group spring-bounce inline-flex items-center gap-2 rounded-full bg-amora py-2 pl-4 pr-5 text-sm font-medium text-papel shadow-[0_4px_14px_-4px_rgba(122,59,82,0.55)] hover:bg-amora-escura hover:shadow-[0_6px_18px_-4px_rgba(122,59,82,0.65)]"
+      className="group spring-bounce inline-flex items-center gap-2 rounded-full bg-amora py-1.5 px-2.5 sm:py-2 sm:pl-4 sm:pr-5 text-xs sm:text-sm font-medium text-papel shadow-[0_4px_14px_-4px_rgba(122,59,82,0.55)] hover:bg-amora-escura hover:shadow-[0_6px_18px_-4px_rgba(122,59,82,0.65)]"
     >
       <span
         aria-hidden
@@ -16,7 +16,7 @@ export function BotaoAdicionar() {
       >
         +
       </span>
-      Adicionar livro
+      <span className="hidden sm:inline">Adicionar livro</span>
     </Link>
   );
 }
@@ -55,19 +55,19 @@ export function Cabecalho({
 
   return (
     <header className="sticky top-0 z-40 border-b border-papel-3/45 bg-papel/75 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link to="/" className="flex items-baseline gap-2 spring-bounce">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
+        <Link to="/" className="flex items-center gap-2 spring-bounce shrink-0">
           <span aria-hidden className="inline-flex gap-[3px]">
             <span className="inline-block h-5 w-[5px] rounded-sm bg-amora" />
             <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
             <span className="inline-block h-5 w-[5px] rounded-sm bg-tinta" />
           </span>
-          <span className="font-display text-xl font-semibold tracking-tight text-tinta">Minha Estante</span>
+          <span className="hidden xs:inline sm:inline font-display text-lg sm:text-xl font-semibold tracking-tight text-tinta">Minha Estante</span>
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
           <Link
             to="/"
-            className={`spring-bounce rounded-full px-3 py-1.5 text-sm ${
+            className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
               paginaAtiva === "estante" 
                 ? "font-semibold text-amora bg-amora-clara/60" 
                 : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -78,7 +78,7 @@ export function Cabecalho({
           <Link
             to="/retrospectiva/$ano"
             params={{ ano: String(new Date().getFullYear()) }}
-            className={`spring-bounce rounded-full px-3 py-1.5 text-sm ${
+            className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
               paginaAtiva === "retrospectiva" 
                 ? "font-semibold text-amora bg-amora-clara/60" 
                 : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -89,7 +89,7 @@ export function Cabecalho({
           <Link
             to="/cartas"
             aria-label="Cartas"
-            className={`relative spring-bounce rounded-full px-3 py-1.5 text-sm ${
+            className={`relative spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
               paginaAtiva === "cartas" 
                 ? "font-semibold text-amora bg-amora-clara/60" 
                 : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -104,7 +104,7 @@ export function Cabecalho({
           </Link>
           <Link
             to="/leitores"
-            className={`spring-bounce rounded-full px-3 py-1.5 text-sm ${
+            className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${
               paginaAtiva === "leitores" 
                 ? "font-semibold text-amora bg-amora-clara/60" 
                 : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -116,7 +116,7 @@ export function Cabecalho({
           {/* Alternador de Tema */}
           <button
             onClick={alternarTema}
-            className="spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border border-papel-3 text-tinta-2 hover:border-amora hover:text-amora hover:bg-papel-2/50 cursor-pointer"
+            className="spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border border-papel-3 text-tinta-2 hover:border-amora hover:text-amora hover:bg-papel-2/50 cursor-pointer shrink-0"
             title={tema === "light" ? "Mudar para Modo Noturno" : "Mudar para Modo Claro"}
           >
             {tema === "light" ? (
@@ -135,7 +135,7 @@ export function Cabecalho({
             to="/conta"
             aria-label="Minha conta"
             title="Minha conta"
-            className={`spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border text-tinta-2 ${
+            className={`spring-bounce inline-flex h-8 w-8 items-center justify-center rounded-full border text-tinta-2 shrink-0 ${
               paginaAtiva === "conta" 
                 ? "border-amora text-amora bg-amora-clara/60" 
                 : "border-papel-3 hover:border-amora hover:text-amora hover:bg-papel-2/50"
@@ -146,7 +146,7 @@ export function Cabecalho({
               <path d="M4.5 19.5c1.6-3.2 4.3-4.6 7.5-4.6s5.9 1.4 7.5 4.6" strokeLinecap="round" />
             </svg>
           </Link>
-          <div className="ml-1 sm:ml-2">
+          <div className="ml-1 sm:ml-2 shrink-0">
             <BotaoAdicionar />
           </div>
         </nav>

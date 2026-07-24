@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { entrar, sessaoAtual } from "../lib/api/auth.functions";
 import { CampoSenha } from "../components/estante/campo-senha";
@@ -17,6 +17,19 @@ function PaginaEntrar() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [tema, setTema] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const t = (localStorage.getItem("minha-estante-theme") as "light" | "dark") || "light";
+    setTema(t);
+  }, []);
+
+  function alternarTema() {
+    const novoTema = tema === "light" ? "dark" : "light";
+    setTema(novoTema);
+    localStorage.setItem("minha-estante-theme", novoTema);
+    document.documentElement.setAttribute("data-theme", novoTema);
+  }
 
   // Ja autenticado (visita direta a /entrar): vai para a estante.
   // Durante o envio do login, quem decide o destino e o enviar() (carta ou estante).
@@ -48,7 +61,24 @@ function PaginaEntrar() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-papel px-4 textura-papel">
+    <div className="relative flex min-h-dvh items-center justify-center bg-papel px-4 textura-papel">
+      {/* Botão de Tema (Modo Escuro/Claro) */}
+      <button
+        onClick={alternarTema}
+        className="absolute top-4 right-4 spring-bounce inline-flex h-9 w-9 items-center justify-center rounded-full border border-papel-3 text-tinta-2 hover:border-amora hover:text-amora hover:bg-papel-2/50 cursor-pointer shadow-sm transition-all"
+        title={tema === "light" ? "Mudar para Modo Noturno" : "Mudar para Modo Claro"}
+      >
+        {tema === "light" ? (
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+            <circle cx="12" cy="12" r="5" />
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
       <div className="surgir w-full max-w-sm">
         <div className="text-center">
           <span aria-hidden className="inline-flex gap-[4px]">
