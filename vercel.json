@@ -4,24 +4,27 @@
   "env": {
     "DATABASE_URL": "postgresql://postgres.lwmdotggpvcwhetqkyju:aZ6w5IOtjyiqyg5E@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
   },
-  "headers": [
+  "routes": [
     {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
+      "src": "/assets/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
     },
     {
-      "source": "/(.*\\.(?:js|css|woff2?|ttf|eot|png|jpg|jpeg|gif|svg|ico|webp))",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    }
-  ],
-  "rewrites": [
+      "src": "/(.*\\.(?:js|css|woff2?|ttf|eot|png|jpg|jpeg|gif|svg|ico|webp))",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
+    },
     {
-      "source": "/(.*)",
-      "destination": "/api/index"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index"
     }
   ]
 }

@@ -59,8 +59,14 @@ export default async function handler(req, res) {
 
     // Write response
     res.statusCode = response.status;
+    let hasCacheControl = false;
     for (const [key, value] of response.headers.entries()) {
+      if (key.toLowerCase() === "cache-control") hasCacheControl = true;
       res.setHeader(key, value);
+    }
+
+    if (req.method === "GET" && !hasCacheControl && response.status === 200) {
+      res.setHeader("Cache-Control", "public, s-maxage=5, stale-while-revalidate=59");
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
