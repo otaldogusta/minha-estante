@@ -58,6 +58,8 @@ export async function verificarSenha(senha: string, armazenado: string): Promise
 
 export type Usuario = { id: number; nome: string; usuario: string };
 
+const sessionCache = new Map<string, { user: Usuario | null; expires: number }>();
+
 export async function criarSessao(usuarioId: number): Promise<void> {
   const token = hex(crypto.getRandomValues(new Uint8Array(32)));
   const expira = new Date(Date.now() + DIAS_SESSAO * 86400000).toISOString();
@@ -76,6 +78,13 @@ export async function criarSessao(usuarioId: number): Promise<void> {
 export async function usuarioDaSessao(): Promise<Usuario | null> {
   const token = getCookie(COOKIE);
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
+
+  const now = Date.now();
+  const cached = sessionCache.get(token);
+  if (cached && cached.expires > now) {
+    return cached.user;
+  }
+
   const row = await db()
     .prepare(
       `SELECT u.id, u.nome, u.usuario FROM sessoes s
@@ -84,7 +93,10 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
     )
     .bind(token)
     .first<Usuario>();
-  return row ?? null;
+
+  const user = row ?? null;
+  sessionCache.set(token, { user, expires: now + 60_000 });
+  return user;
 }
 
 export async function exigirUsuario(): Promise<Usuario> {
@@ -95,6 +107,9 @@ export async function exigirUsuario(): Promise<Usuario> {
 
 export async function encerrarSessao(): Promise<void> {
   const token = getCookie(COOKIE);
-  if (token) await db().prepare("DELETE FROM sessoes WHERE token = ?").bind(token).run();
+  if (token) {
+    sessionCache.delete(token);
+    await db().prepare("DELETE FROM sessoes WHERE token = ?").bind(token).run();
+  }
   deleteCookie(COOKIE, { path: "/" });
 }
