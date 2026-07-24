@@ -64,7 +64,7 @@ export function Cabecalho({
           </span>
           <span className="hidden xs:inline sm:inline font-display text-lg sm:text-xl font-semibold tracking-tight text-tinta">Minha Estante</span>
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+        <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-1 sm:overflow-visible">
           <Link
             to="/"
             className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 ${

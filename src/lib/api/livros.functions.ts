@@ -27,7 +27,7 @@ export const listarLivros = createServerFn({ method: "GET" }).handler(async () =
 });
 
 export const obterLivro = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ id: z.number().int() }))
+  .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     const livro = await db()
@@ -65,7 +65,7 @@ const livroInput = z.object({
 });
 
 export const salvarLivro = createServerFn({ method: "POST" })
-  .inputValidator(livroInput)
+  .validator(livroInput)
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     const d = {
@@ -120,7 +120,7 @@ export const salvarLivro = createServerFn({ method: "POST" })
   });
 
 export const excluirLivro = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.number().int() }))
+  .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     await db().prepare("DELETE FROM livros WHERE id = ? AND usuario_id = ?").bind(data.id, u.id).run();
@@ -129,7 +129,7 @@ export const excluirLivro = createServerFn({ method: "POST" })
 
 // Atualização rápida do marcador de página (cartão "Lendo agora").
 export const atualizarProgresso = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.number().int(), pagina_atual: z.number().int().min(0).max(20000) }))
+  .validator(z.object({ id: z.number().int(), pagina_atual: z.number().int().min(0).max(20000) }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     await db()
@@ -165,7 +165,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
 
 // Perfil público: apenas livros não privados, sem valores gastos.
 export const obterPerfilPublico = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ usuario: z.string().min(1).max(80) }))
+  .validator(z.object({ usuario: z.string().min(1).max(80) }))
   .handler(async ({ data }) => {
     const eu = await exigirUsuario();
     const dono = await db()
@@ -203,7 +203,7 @@ export type ResultadoBusca = {
 };
 
 export const buscarLivroExterno = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ q: z.string().min(2).max(200) }))
+  .validator(z.object({ q: z.string().min(2).max(200) }))
   .handler(async ({ data }): Promise<ResultadoBusca[]> => {
     await exigirUsuario();
     const out: ResultadoBusca[] = [];

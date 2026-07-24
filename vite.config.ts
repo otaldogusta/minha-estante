@@ -7,6 +7,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import path from "node:path";
 
 export default defineConfig({
+  server: {
+    port: 3000,
+  },
   resolve: {
     alias: {
       // Redireciona o módulo do runtime Cloudflare para o shim local

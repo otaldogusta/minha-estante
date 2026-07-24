@@ -89,7 +89,7 @@ export const dadosParaEscrever = createServerFn({ method: "GET" }).handler(async
 });
 
 export const enviarCarta = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       para: z.number().int(),
       corpo: z.string().min(1).max(8000),
@@ -120,7 +120,7 @@ export const enviarCarta = createServerFn({ method: "POST" })
 
 // Editar/excluir: só o remetente, e só enquanto não foi lida.
 export const editarCarta = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.number().int(), corpo: z.string().min(1).max(8000) }))
+  .validator(z.object({ id: z.number().int(), corpo: z.string().min(1).max(8000) }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     const res = await db()
@@ -131,7 +131,7 @@ export const editarCarta = createServerFn({ method: "POST" })
   });
 
 export const excluirCarta = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.number().int() }))
+  .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     const res = await db()
@@ -142,7 +142,7 @@ export const excluirCarta = createServerFn({ method: "POST" })
   });
 
 export const lerCarta = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.number().int() }))
+  .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     await db()
@@ -171,7 +171,7 @@ export const contarCartasNovas = createServerFn({ method: "GET" }).handler(async
 
 // Usado na celebração: cartas que acabaram de destravar com este livro.
 export const cartasDesbloqueadasPorLivro = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ livroId: z.number().int() }))
+  .validator(z.object({ livroId: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     const { results } = await db()

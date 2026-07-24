@@ -26,7 +26,7 @@ export const sessaoAtual = createServerFn({ method: "GET" }).handler(async () =>
 });
 
 export const entrar = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ usuario: z.string().min(1).max(80), senha: z.string().min(1).max(200) }))
+  .validator(z.object({ usuario: z.string().min(1).max(80), senha: z.string().min(1).max(200) }))
   .handler(async ({ data }) => {
     const row = await db()
       .prepare("SELECT id, nome, usuario, senha_hash, carta_vista FROM usuarios WHERE usuario = ?")
@@ -102,7 +102,7 @@ export const listarConvites = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const revogarConvite = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ codigo: z.string().regex(/^[0-9a-f]{24}$/) }))
+  .validator(z.object({ codigo: z.string().regex(/^[0-9a-f]{24}$/) }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     // Só permite revogar convites não usados criados pelo próprio usuário logado
@@ -115,7 +115,7 @@ export const revogarConvite = createServerFn({ method: "POST" })
 
 // Público: valida um convite (para a tela de cadastro).
 export const validarConvite = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ codigo: z.string().regex(/^[0-9a-f]{24}$/) }))
+  .validator(z.object({ codigo: z.string().regex(/^[0-9a-f]{24}$/) }))
   .handler(async ({ data }) => {
     const row = await db()
       .prepare(
@@ -135,7 +135,7 @@ export const validarConvite = createServerFn({ method: "GET" })
 
 // Público: cria a conta a partir de um convite válido e já entra.
 export const cadastrarComConvite = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       codigo: z.string().regex(/^[0-9a-f]{24}$/),
       nome: z.string().min(1).max(80),
@@ -186,7 +186,7 @@ function gerarToken(): string {
 // configurado (RESEND_API_KEY) e email cadastrado; o pedido também fica
 // visível para os outros leitores da casa ajudarem.
 export const solicitarRecuperacao = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ identificador: z.string().min(1).max(200) }))
+  .validator(z.object({ identificador: z.string().min(1).max(200) }))
   .handler(async ({ data }) => {
     const ident = data.identificador.trim().toLowerCase();
     const user = await db()
@@ -237,7 +237,7 @@ export const solicitarRecuperacao = createServerFn({ method: "POST" })
 
 // Público: valida um token de redefinição (para a página /redefinir).
 export const validarRedefinicao = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ token: z.string().regex(/^[0-9a-f]{48}$/) }))
+  .validator(z.object({ token: z.string().regex(/^[0-9a-f]{48}$/) }))
   .handler(async ({ data }) => {
     const row = await db()
       .prepare(
@@ -254,7 +254,7 @@ export const validarRedefinicao = createServerFn({ method: "GET" })
 
 // Público: redefine a senha com um token válido e encerra as sessões antigas.
 export const redefinirSenha = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ token: z.string().regex(/^[0-9a-f]{48}$/), novaSenha: z.string().min(6).max(200) }))
+  .validator(z.object({ token: z.string().regex(/^[0-9a-f]{48}$/), novaSenha: z.string().min(6).max(200) }))
   .handler(async ({ data }) => {
     const row = await db()
       .prepare("SELECT usuario_id, usado, expira_em FROM redefinicoes WHERE token = ?")
@@ -287,7 +287,7 @@ export const listarPedidosRecuperacao = createServerFn({ method: "GET" }).handle
 });
 
 export const atualizarConta = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       senhaAtual: z.string().min(1).max(200),
       nome: z.string().min(1).max(80).optional(),
