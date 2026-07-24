@@ -292,36 +292,6 @@ function PaginaConta() {
               <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
             </div>
           </div>
-
-          {/* Seletor Interativo de Status de Presença */}
-          <div className="rounded-2xl border border-papel-3/80 card-surface p-3.5 flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs font-medium text-tinta-2">Seu status:</span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {[
-                { key: "online", label: "Online", dot: "bg-emerald-500", activeBg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" },
-                { key: "lendo", label: "Lendo agora", dot: "bg-amber-500", activeBg: "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400" },
-                { key: "ocupado", label: "Não perturbe", dot: "bg-rose-500", activeBg: "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400" },
-                { key: "invisivel", label: "Invisível", dot: "bg-tinta-3/60", activeBg: "bg-papel-3/50 border-tinta-3/30 text-tinta-2" },
-              ].map((st) => {
-                const ativo = statusPresenca === st.key;
-                return (
-                  <button
-                    key={st.key}
-                    type="button"
-                    onClick={() => mudarStatus(st.key as any)}
-                    className={`spring-bounce inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
-                      ativo
-                        ? `${st.activeBg} ring-2 ring-amora/30 font-semibold shadow-xs`
-                        : "border-papel-3 bg-papel-2/60 text-tinta-2 hover:border-papel-3 hover:bg-papel-3/50"
-                    }`}
-                  >
-                    <span className={`h-2 w-2 rounded-full ${st.dot} ${ativo ? "scale-110" : "opacity-60"}`} />
-                    {st.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         <form
