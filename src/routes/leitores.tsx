@@ -49,8 +49,14 @@ function PaginaLeitores() {
               <p className="mt-1 text-sm text-tinta-2">Use o botão "+ Convidar" para convidar pessoas para a sua estante.</p>
             </div>
           ) : (
-            leitores.map((l) => {
-              const nome = l.nome || l.usuario || "Leitor";
+            [...leitores]
+              .sort((a, b) => {
+                if (usuarioLogado && a.usuario === usuarioLogado) return -1;
+                if (usuarioLogado && b.usuario === usuarioLogado) return 1;
+                return (a.nome || a.usuario).localeCompare(b.nome || b.usuario);
+              })
+              .map((l) => {
+                const nome = l.nome || l.usuario || "Leitor";
               const inicial = nome.charAt(0).toUpperCase();
               const eVoce = Boolean(usuarioLogado && l.usuario === usuarioLogado);
 
