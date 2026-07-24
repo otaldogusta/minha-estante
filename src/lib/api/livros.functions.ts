@@ -146,6 +146,7 @@ export type LeitorResumo = {
   nome: string;
   lidos: number;
   lendoAgora: string | null;
+  online: boolean;
 };
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
@@ -155,12 +156,13 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       `SELECT us.usuario, us.nome,
               (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
               (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
-               ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora
+               ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
+              (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS online
        FROM usuarios us
        ORDER BY us.nome`
     )
-    .all<LeitorResumo>();
-  return results;
+    .all<Omit<LeitorResumo, "online"> & { online: number }>();
+  return results.map((r) => ({ ...r, online: Boolean(r.online) }));
 });
 
 // Perfil público: apenas livros não privados, sem valores gastos.

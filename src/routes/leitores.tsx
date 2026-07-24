@@ -78,6 +78,15 @@ function PaginaLeitores() {
                           (você)
                         </span>
                       )}
+                      {(l.online || eVoce) && (
+                        <span className="font-sans inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/20">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                          </span>
+                          online
+                        </span>
+                      )}
                     </p>
                     <p className="mt-0.5 truncate text-sm text-tinta-2">
                       {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
