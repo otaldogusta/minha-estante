@@ -165,3 +165,17 @@ Para suportar o crescimento da rede com múltiplos leitores e interações socia
    - `X-Frame-Options: SAMEORIGIN` (Proteção Anti-Clickjacking)
    - `X-XSS-Protection: 1; mode=block`
    - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
+---
+
+## 10. 🛑 Regra de Ouro: Confirmação Prévia em Qualquer Alteração (Confirmation Modal Rule)
+
+1. **Modal de Confirmação Obrigatório:**
+   Toda e qualquer ação que possa alterar, sobrescrever, importar, sincronizar em lote ou excluir dados (sincronização com o Google Sheets, exclusão de livros/resenhas, revogação de convites ou alterações de conta) **DEVE OBRIGATORIAMENTE** exibir um modal de confirmação prévio e explícito explicando os impactos da ação antes de executar a mutação no banco de dados.
+
+2. **Montagem via React Portal (`createPortal`):**
+   Todos os modais do sistema devem ser renderizados montados diretamente no `document.body` via `createPortal(modalJSX, document.body)`. Isso impede que o modal seja distorcido por containers pais com `transform` ou `overflow` e garante que permaneça **100% fixo e centralizado no viewport do usuário** independente da posição do scroll da página.
+
+3. **Bloqueio de Rolagem do Fundo (`Body Scroll Lock`):**
+   A abertura de qualquer modal ativa `document.body.style.overflow = "hidden"` no mount e restaura no unmount para eliminar completamente o vazamento de scroll (*scroll bleed*).
+
