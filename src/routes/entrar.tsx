@@ -31,12 +31,11 @@ function PaginaEntrar() {
     document.documentElement.setAttribute("data-theme", novoTema);
   }
 
-  // Ja autenticado (visita direta a /entrar): vai para a estante.
-  // Durante o envio do login, quem decide o destino e o enviar() (carta ou estante).
-  if (sessao.autenticado && !enviando) {
-    navigate({ to: "/" });
-    return null;
-  }
+  useEffect(() => {
+    if (sessao.autenticado && !enviando) {
+      window.location.href = "/";
+    }
+  }, [sessao.autenticado, enviando]);
 
   async function enviar() {
     if (!usuario.trim() || !senha) return;
@@ -45,17 +44,13 @@ function PaginaEntrar() {
     try {
       const res = await entrar({ data: { usuario, senha } });
       if (res.ok) {
-        // Recarrega as rotas (agora autenticadas) e entao navega.
-        // O redirect de render acima fica suprimido enquanto enviando=true,
-        // entao o destino (carta ou estante) e decidido so aqui.
-        await router.invalidate();
-        await navigate({ to: res.cartaPendente ? "/carta" : "/" });
+        window.location.href = res.cartaPendente ? "/carta" : "/";
       } else {
         setErro(res.erro);
         setEnviando(false);
       }
     } catch {
-      setErro("Nao foi possivel entrar. Tente de novo.");
+      setErro("Não foi possível entrar. Tente de novo.");
       setEnviando(false);
     }
   }

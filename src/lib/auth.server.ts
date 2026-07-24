@@ -109,7 +109,15 @@ export async function encerrarSessao(): Promise<void> {
   const token = getCookie(COOKIE);
   if (token) {
     sessionCache.delete(token);
-    await db().prepare("DELETE FROM sessoes WHERE token = ?").bind(token).run();
+    try {
+      await db().prepare("DELETE FROM sessoes WHERE token = ?").bind(token).run();
+    } catch {
+      // Ignorar erro se DB estiver indisponível durante logout
+    }
   }
-  deleteCookie(COOKIE, { path: "/" });
+  deleteCookie(COOKIE, {
+    path: "/",
+    secure: true,
+    sameSite: "lax",
+  });
 }

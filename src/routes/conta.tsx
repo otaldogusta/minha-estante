@@ -159,9 +159,11 @@ function PaginaConta() {
   }
 
   async function encerrar() {
-    await sair();
-    await router.invalidate();
-    navigate({ to: "/entrar" });
+    try {
+      await sair();
+    } finally {
+      window.location.href = "/entrar";
+    }
   }
 
   return (
