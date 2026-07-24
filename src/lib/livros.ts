@@ -89,8 +89,24 @@ export type Estatisticas = {
   maiorLivro: { titulo: string; paginas: number } | null;
 };
 
-export function calcularEstatisticas(livros: Livro[], ano: number): Estatisticas {
-  const doAno = livros.filter((l) => l.status === "lido" && l.ano_leitura === ano);
+export function obterAnoLeitura(l: Pick<Livro, "ano_leitura" | "fim" | "inicio">): number | null {
+  if (l.ano_leitura !== null && l.ano_leitura !== undefined && Number(l.ano_leitura) > 1900) {
+    return Number(l.ano_leitura);
+  }
+  if (l.fim && l.fim.length >= 4) {
+    const y = Number(l.fim.slice(0, 4));
+    if (!isNaN(y) && y > 1900) return y;
+  }
+  if (l.inicio && l.inicio.length >= 4) {
+    const y = Number(l.inicio.slice(0, 4));
+    if (!isNaN(y) && y > 1900) return y;
+  }
+  return null;
+}
+
+export function calcularEstatisticas(livros: Livro[], anoInput: number | string): Estatisticas {
+  const ano = Number(anoInput);
+  const doAno = livros.filter((l) => l.status === "lido" && obterAnoLeitura(l) === ano);
   const paginas = doAno.reduce((s, l) => s + (l.paginas ?? 0), 0);
   const gasto = doAno.reduce((s, l) => s + (l.valor ?? 0), 0);
   const notas = doAno.filter((l) => l.nota !== null);

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { listarLivros } from "../lib/api/livros.functions";
-import { calcularEstatisticas, notaFmt, brl, type Livro } from "../lib/livros";
+import { calcularEstatisticas, obterAnoLeitura, notaFmt, brl, type Livro } from "../lib/livros";
 import { compartilharPoster } from "../lib/poster";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { CapaLivro } from "../components/estante/capa-livro";
@@ -58,6 +58,8 @@ function PaginaRetrospectiva() {
   const anoNum = Number(ano) || new Date().getFullYear();
   const [gerandoPoster, setGerandoPoster] = useState(false);
 
+  const est = calcularEstatisticas(livros, anoNum);
+
   async function compartilhar() {
     setGerandoPoster(true);
     try {
@@ -67,12 +69,20 @@ function PaginaRetrospectiva() {
     }
   }
 
-  const anosDisponiveis = [...new Set(livros.filter((l) => l.ano_leitura).map((l) => l.ano_leitura as number))].sort(
-    (a, b) => b - a
-  );
-  const est = calcularEstatisticas(livros, anoNum);
+  const anosDisponiveis = [
+    ...new Set(
+      livros
+        .filter((l) => l.status === "lido")
+        .map((l) => obterAnoLeitura(l))
+        .filter((a): a is number => a !== null)
+    ),
+  ].sort((a, b) => b - a);
+
+  // Garantir que 2026, 2025, 2024 estejam sempre presentes nas abas se houverem livros
+  const abasAnos = anosDisponiveis.length > 0 ? anosDisponiveis : [new Date().getFullYear()];
+
   const doAno = livros
-    .filter((l) => l.status === "lido" && l.ano_leitura === anoNum)
+    .filter((l) => l.status === "lido" && obterAnoLeitura(l) === anoNum)
     .sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
 
   const generos = new Map<string, number>();
@@ -92,7 +102,7 @@ function PaginaRetrospectiva() {
             <h1 className="font-display text-5xl font-semibold tracking-tight text-amora md:text-6xl">{anoNum}</h1>
           </div>
           <div className="flex gap-2">
-            {anosDisponiveis.map((a) => (
+            {abasAnos.map((a) => (
               <Link
                 key={a}
                 to="/retrospectiva/$ano"
