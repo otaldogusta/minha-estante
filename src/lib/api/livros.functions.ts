@@ -153,46 +153,27 @@ export type LeitorResumo = {
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
-  } catch {
-    // Coluna já existe
-  }
-  try {
-    await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT DEFAULT (datetime('now'))").run();
-  } catch {
-    // Coluna já existe
-  }
+    try {
+      await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
+    } catch {
+      // Coluna já existe
+    }
+    try {
+      await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT DEFAULT (datetime('now'))").run();
+    } catch {
+      // Coluna já existe
+    }
 
-  let results: Array<{
-    usuario: string;
-    nome: string;
-    statusCustom: string | null;
-    lidos: number;
-    lendoAgora: string | null;
-    temSessao: number;
-  }> = [];
+    let results: Array<{
+      usuario: string;
+      nome: string;
+      statusCustom: string | null;
+      lidos: number;
+      lendoAgora: string | null;
+      temSessao: number;
+    }> = [];
 
-  // Nível 1: Consulta completa com status personalizado e atividade recente em 5 min
-  try {
-    const res = await db()
-      .prepare(
-        `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
-                (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
-                (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
-                 ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-                (EXISTS (
-                  SELECT 1 FROM sessoes s
-                  WHERE s.usuario_id = us.id
-                    AND s.expira_em > datetime('now')
-                    AND (s.ultimo_acesso >= datetime('now', '-5 minutes'))
-                )) AS temSessao
-         FROM usuarios us
-         ORDER BY us.nome`
-      )
-      .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
-    results = res.results ?? [];
-  } catch {
-    // Nível 2: Fallback sem a verificação de ultimo_acesso
+    // Nível 1: Consulta completa com status personalizado e atividade recente em 5 min
     try {
       const res = await db()
         .prepare(
@@ -200,52 +181,76 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
                   (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
                   (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
                    ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-                  (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
+                  (EXISTS (
+                    SELECT 1 FROM sessoes s
+                    WHERE s.usuario_id = us.id
+                      AND s.expira_em > datetime('now')
+                      AND (s.ultimo_acesso >= datetime('now', '-5 minutes'))
+                  )) AS temSessao
            FROM usuarios us
            ORDER BY us.nome`
         )
         .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
       results = res.results ?? [];
     } catch {
-      // Nível 3: Fallback básico essencial (garante retorno dos leitores)
+      // Nível 2: Fallback sem a verificação de ultimo_acesso
       try {
         const res = await db()
           .prepare(
-            `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
+            `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
+                    (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
+                    (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
+                     ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
+                    (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
              FROM usuarios us
              ORDER BY us.nome`
           )
           .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
         results = res.results ?? [];
       } catch {
-        results = [];
+        // Nível 3: Fallback básico essencial (garante retorno dos leitores)
+        try {
+          const res = await db()
+            .prepare(
+              `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
+               FROM usuarios us
+               ORDER BY us.nome`
+            )
+            .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
+          results = res.results ?? [];
+        } catch {
+          results = [];
+        }
       }
     }
+
+    return results.map((r): LeitorResumo => {
+      const estaOnline = Boolean(r.temSessao);
+      const customStatus = r.statusCustom as StatusPresenca | null;
+
+      let statusPresenca: StatusPresenca = "offline";
+      if (customStatus === "invisivel") {
+        statusPresenca = "offline";
+      } else if (customStatus && customStatus !== "online") {
+        statusPresenca = customStatus;
+      } else if (estaOnline) {
+        statusPresenca = "online";
+      } else if (r.lendoAgora) {
+        statusPresenca = "lendo";
+      }
+
+      return {
+        usuario: r.usuario,
+        nome: r.nome,
+        lidos: r.lidos,
+        lendoAgora: r.lendoAgora,
+        statusPresenca,
+      };
+    });
+  } catch (e) {
+    console.error("[listarLeitores] Erro ao buscar leitores:", e);
+    return [];
   }
-
-  return results.map((r): LeitorResumo => {
-    const estaOnline = Boolean(r.temSessao);
-    const customStatus = r.statusCustom as StatusPresenca | null;
-
-    let statusPresenca: StatusPresenca = "offline";
-    if (customStatus === "invisivel") {
-      statusPresenca = "offline";
-    } else if (customStatus && customStatus !== "online") {
-      statusPresenca = customStatus;
-    } else if (estaOnline) {
-      statusPresenca = "online";
-    } else if (r.lendoAgora) {
-      statusPresenca = "lendo";
-    }
-
-    return {
-      usuario: r.usuario,
-      nome: r.nome,
-      lidos: r.lidos,
-      lendoAgora: r.lendoAgora,
-      statusPresenca,
-    };
-  });
 });
 
 // Perfil público: apenas livros não privados, sem valores gastos.
