@@ -271,7 +271,7 @@ function PaginaEstante() {
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar título ou autor"
             aria-label="Buscar na estante"
-            className="w-full max-w-xs rounded-full border border-papel-3 bg-white/60 px-4 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none"
+            className="w-full max-w-xs rounded-full border border-papel-3 bg-papel-2/70 px-4 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:bg-papel focus:outline-none transition-colors"
           />
         </div>
 
