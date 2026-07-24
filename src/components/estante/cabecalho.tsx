@@ -29,7 +29,6 @@ export function Cabecalho({
 }) {
   const [novas, setNovas] = useState(0);
   const [tema, setTema] = useState<"light" | "dark">("light");
-  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -47,56 +46,6 @@ export function Cabecalho({
       ativo = false;
     };
   }, []);
-
-  // Animação ultra-suave 60fps de scroll da aba ativa (sem flicker / sem pulo)
-  useEffect(() => {
-    if (!navRef.current) return;
-    const container = navRef.current;
-    const activeEl = container.querySelector<HTMLElement>("[data-active='true']");
-    if (!activeEl) return;
-
-    const elLeft = activeEl.offsetLeft;
-    const elWidth = activeEl.offsetWidth;
-    const containerWidth = container.clientWidth;
-    const containerScrollLeft = container.scrollLeft;
-
-    const elRight = elLeft + elWidth;
-    const containerScrollRight = containerScrollLeft + containerWidth;
-    const padding = 12;
-
-    let targetLeft = containerScrollLeft;
-
-    if (elLeft - padding < containerScrollLeft) {
-      targetLeft = Math.max(0, elLeft - padding);
-    } else if (elRight + padding > containerScrollRight) {
-      targetLeft = elRight + padding - containerWidth;
-    } else {
-      return;
-    }
-
-    const startLeft = containerScrollLeft;
-    const distance = targetLeft - startLeft;
-    if (Math.abs(distance) < 2) return;
-
-    const startTime = performance.now();
-    const duration = 300;
-
-    let animId: number;
-    function step(now: number) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - (1 - progress) * (1 - progress);
-      if (container) {
-        container.scrollLeft = startLeft + distance * ease;
-      }
-      if (progress < 1) {
-        animId = requestAnimationFrame(step);
-      }
-    }
-    animId = requestAnimationFrame(step);
-
-    return () => cancelAnimationFrame(animId);
-  }, [paginaAtiva]);
 
   function alternarTema() {
     const novoTema = tema === "light" ? "dark" : "light";
@@ -121,13 +70,12 @@ export function Cabecalho({
           </span>
         </Link>
 
-        {/* Centro: Abas de Navegação */}
-        <nav ref={navRef} className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-0.5">
+        {/* Centro: Abas de Navegação (Scroll horizontal nativo igual prateleira de livros) */}
+        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-0.5 snap-x snap-mandatory scroll-smooth">
           <div className="flex items-center gap-0.5 sm:gap-1.5 whitespace-nowrap">
             <Link
               to="/"
-              data-active={paginaAtiva === "estante"}
-              className={`transition-all duration-300 ease-out spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`snap-start shrink-0 transition-colors duration-200 spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "estante"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -138,8 +86,7 @@ export function Cabecalho({
             <Link
               to="/retrospectiva/$ano"
               params={{ ano: String(new Date().getFullYear()) }}
-              data-active={paginaAtiva === "retrospectiva"}
-              className={`transition-all duration-300 ease-out spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`snap-start shrink-0 transition-colors duration-200 spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "retrospectiva"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -151,8 +98,7 @@ export function Cabecalho({
             <Link
               to="/cartas"
               aria-label="Cartas"
-              data-active={paginaAtiva === "cartas"}
-              className={`transition-all duration-300 ease-out relative spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`snap-start shrink-0 transition-colors duration-200 relative spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "cartas"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -167,8 +113,7 @@ export function Cabecalho({
             </Link>
             <Link
               to="/leitores"
-              data-active={paginaAtiva === "leitores"}
-              className={`transition-all duration-300 ease-out spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`snap-start shrink-0 transition-colors duration-200 spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "leitores"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
