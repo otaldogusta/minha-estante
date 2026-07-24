@@ -30,17 +30,34 @@ export const sessaoAtual = createServerFn({ method: "GET" }).handler(async () =>
   const u = await usuarioDaSessao();
   if (!u) return { autenticado: false as const };
   await garantirColunaStatusPresenca();
-  const row = await db()
-    .prepare("SELECT email, status_presenca FROM usuarios WHERE id = ?")
-    .bind(u.id)
-    .first<{ email: string | null; status_presenca: string | null }>();
+
+  let email: string | null = null;
+  let statusPresenca: "online" | "lendo" | "ocupado" | "invisivel" = "online";
+
+  try {
+    const row = await db()
+      .prepare("SELECT email, status_presenca FROM usuarios WHERE id = ?")
+      .bind(u.id)
+      .first<{ email: string | null; status_presenca: string | null }>();
+    email = row?.email ?? null;
+    if (row?.status_presenca) {
+      statusPresenca = row.status_presenca as any;
+    }
+  } catch {
+    const row = await db()
+      .prepare("SELECT email FROM usuarios WHERE id = ?")
+      .bind(u.id)
+      .first<{ email: string | null }>();
+    email = row?.email ?? null;
+  }
+
   return {
     autenticado: true as const,
     id: u.id,
     nome: u.nome,
     usuario: u.usuario,
-    email: row?.email ?? null,
-    statusPresenca: (row?.status_presenca as "online" | "lendo" | "ocupado" | "invisivel") || "online",
+    email,
+    statusPresenca,
   };
 });
 
@@ -363,9 +380,21 @@ export const atualizarStatusPresenca = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     await garantirColunaStatusPresenca();
-    await db()
-      .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
-      .bind(data.status, u.id)
-      .run();
+    try {
+      await db()
+        .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
+        .bind(data.status, u.id)
+        .run();
+    } catch {
+      try {
+        await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
+        await db()
+          .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
+          .bind(data.status, u.id)
+          .run();
+      } catch {
+        // Silencioso
+      }
+    }
     return { ok: true as const, status: data.status };
   });
