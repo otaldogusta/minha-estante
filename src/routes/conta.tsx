@@ -141,8 +141,29 @@ function PaginaConta() {
     <div className="min-h-dvh pb-24">
       <Cabecalho paginaAtiva="conta" />
       <main className="mx-auto max-w-lg px-4 sm:px-6">
-        <h1 className="mt-10 font-display text-3xl font-semibold tracking-tight text-tinta">Minha conta</h1>
-        <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
+        <div className="mt-10 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta flex items-center gap-3">
+              Minha conta
+              {sessao.autenticado && sessao.id === 1 && (
+                <button
+                  onClick={() => {
+                    const el = document.getElementById("btn-abrir-modal-planilha");
+                    if (el) el.click();
+                  }}
+                  className="spring-bounce inline-flex items-center gap-1.5 rounded-full border border-papel-3 bg-papel-2/60 px-3 py-1 text-xs text-tinta-2 shadow-sm transition-all hover:border-amora hover:text-amora cursor-pointer"
+                  title="Abrir Planilha do Google Drive"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#0F9D58]" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                  </svg>
+                  <span className="font-medium text-tinta">Google Drive</span>
+                </button>
+              )}
+            </h1>
+            <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
+          </div>
+        </div>
 
         <form
           className="mt-8 space-y-5 rounded-2xl border border-papel-3 card-surface p-6"
@@ -244,11 +265,22 @@ function PaginaConta() {
   );
 }
 
+function extrairEmbedUrl(urlStr: string) {
+  const match = urlStr.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if (match && match[1]) {
+    return `https://docs.google.com/spreadsheets/d/${match[1]}/htmlembed?widget=true&headers=false&chrome=false`;
+  }
+  return "https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/htmlembed?widget=true&headers=false&chrome=false";
+}
+
 function SecaoGoogleSheets() {
   const router = useRouter();
   const [sincronizando, setSincronizando] = useState(false);
   const [status, setStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null);
   const [modalPlanilha, setModalPlanilha] = useState(false);
+  const [linkPlanilha, setLinkPlanilha] = useState(
+    "https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/edit"
+  );
 
   useEffect(() => {
     if (modalPlanilha) {
@@ -277,6 +309,8 @@ function SecaoGoogleSheets() {
     }
   }
 
+  const embedUrl = extrairEmbedUrl(linkPlanilha);
+
   return (
     <>
       {/* Modal da planilha */}
@@ -286,32 +320,67 @@ function SecaoGoogleSheets() {
           onClick={() => setModalPlanilha(false)}
         >
           <div
-            className="relative w-full max-w-5xl my-auto rounded-2xl bg-papel shadow-2xl overflow-hidden flex flex-col h-[75vh] max-h-[720px]"
+            className="relative w-full max-w-5xl my-auto rounded-2xl bg-papel shadow-2xl overflow-hidden flex flex-col h-[78vh] max-h-[750px]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header do modal */}
-            <div className="flex items-center justify-between border-b border-papel-3 px-5 py-4 shrink-0">
-              <div className="flex items-center gap-3">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-amora" fill="currentColor">
+            {/* Header Completo do Modal */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-papel-3 px-5 py-3.5 shrink-0 bg-papel-2/40">
+              <div className="flex items-center gap-2.5">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#0F9D58] shrink-0" fill="currentColor">
                   <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
                 </svg>
-                <div>
-                  <h3 className="font-display text-lg font-semibold text-tinta">Controle de Livros</h3>
-                  <p className="text-xs text-tinta-3">Planilha original da Julia</p>
-                </div>
+                <h3 className="font-display text-base font-semibold text-tinta hidden xs:block sm:block">Planilha Google</h3>
               </div>
+
+              {/* Barra para colocar link */}
+              <div className="flex-1 min-w-[200px] max-w-md">
+                <input
+                  type="url"
+                  value={linkPlanilha}
+                  onChange={(e) => setLinkPlanilha(e.target.value)}
+                  placeholder="Cole o link da sua planilha..."
+                  className="w-full rounded-lg border border-papel-3 bg-papel px-3 py-1.5 text-xs text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none"
+                  title="Link da Planilha do Google Sheets"
+                />
+              </div>
+
+              {/* Ações: Sincronizar, Abrir no Google e Fechar */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={sincronizar}
+                  disabled={sincronizando}
+                  className="rounded-lg bg-amora px-3 py-1.5 text-xs font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60 flex items-center gap-1.5 cursor-pointer"
+                >
+                  {sincronizando ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 text-papel" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Sincronizando...
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.2 8H18" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Sincronizar
+                    </>
+                  )}
+                </button>
+
                 <a
-                  href="https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/edit"
+                  href={linkPlanilha}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-papel-3 px-3 py-1.5 text-xs text-tinta-2 transition-colors hover:border-amora hover:text-amora flex items-center gap-1.5"
+                  className="rounded-lg border border-papel-3 px-2.5 py-1.5 text-xs text-tinta-2 transition-colors hover:border-amora hover:text-amora flex items-center gap-1 hidden sm:flex"
                 >
                   <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  Abrir no Google
+                  Abrir
                 </a>
+
                 <button
                   onClick={() => setModalPlanilha(false)}
                   className="rounded-full p-1.5 text-tinta-2 transition-colors hover:bg-papel-2 hover:text-tinta"
@@ -324,10 +393,17 @@ function SecaoGoogleSheets() {
               </div>
             </div>
 
-            {/* Iframe */}
+            {/* Banner de status se houver sincronização recente */}
+            {status && (
+              <div className={`px-5 py-2 text-xs border-b border-papel-3 ${status.tipo === "ok" ? "bg-tinta/5 text-tinta font-medium" : "bg-amora-clara text-amora-escura"}`}>
+                {status.msg}
+              </div>
+            )}
+
+            {/* Iframe da planilha */}
             <div className="flex-1 bg-white overflow-hidden">
               <iframe
-                src="https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/htmlembed?widget=true&headers=false&chrome=false"
+                src={embedUrl}
                 className="w-full h-full border-0"
                 title="Planilha Controle de Livros"
               />
@@ -354,8 +430,9 @@ function SecaoGoogleSheets() {
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <button
+            id="btn-abrir-modal-planilha"
             onClick={() => setModalPlanilha(true)}
-            className="flex-1 rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora flex items-center justify-center gap-2 cursor-pointer"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round"/>
