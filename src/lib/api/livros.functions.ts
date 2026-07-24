@@ -158,23 +158,53 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
   } catch {
     // Coluna já existe
   }
+  try {
+    await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT DEFAULT (datetime('now'))").run();
+  } catch {
+    // Coluna já existe
+  }
 
-  const { results } = await db()
-    .prepare(
-      `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
-              (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
-              (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
-               ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-              (EXISTS (
-                SELECT 1 FROM sessoes s
-                WHERE s.usuario_id = us.id
-                  AND s.expira_em > datetime('now')
-                  AND (s.ultimo_acesso >= datetime('now', '-5 minutes'))
-              )) AS temSessao
-       FROM usuarios us
-       ORDER BY us.nome`
-    )
-    .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
+  let results: Array<{
+    usuario: string;
+    nome: string;
+    statusCustom: string | null;
+    lidos: number;
+    lendoAgora: string | null;
+    temSessao: number;
+  }> = [];
+
+  try {
+    const res = await db()
+      .prepare(
+        `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
+                (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
+                (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
+                 ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
+                (EXISTS (
+                  SELECT 1 FROM sessoes s
+                  WHERE s.usuario_id = us.id
+                    AND s.expira_em > datetime('now')
+                    AND (s.ultimo_acesso >= datetime('now', '-5 minutes'))
+                )) AS temSessao
+         FROM usuarios us
+         ORDER BY us.nome`
+      )
+      .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
+    results = res.results;
+  } catch {
+    const res = await db()
+      .prepare(
+        `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
+                (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
+                (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
+                 ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
+                (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
+         FROM usuarios us
+         ORDER BY us.nome`
+      )
+      .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
+    results = res.results;
+  }
 
   return results.map((r): LeitorResumo => {
     const estaOnline = Boolean(r.temSessao);
