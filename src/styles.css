@@ -429,6 +429,30 @@ html[data-theme="dark"] {
     -webkit-backdrop-filter: blur(14px);
   }
 
+  /* Correção de Autopreenchimento de Navegadores (Chrome / Safari / Edge Autofill) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #1c1822 inset !important;
+    -webkit-text-fill-color: #f4ecf8 !important;
+    caret-color: #f4ecf8 !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  html[data-theme="light"] input:-webkit-autofill,
+  html[data-theme="light"] input:-webkit-autofill:hover,
+  html[data-theme="light"] input:-webkit-autofill:focus,
+  html[data-theme="light"] input:-webkit-autofill:active,
+  html[data-theme="light"] textarea:-webkit-autofill,
+  html[data-theme="light"] select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #f3ecdd inset !important;
+    -webkit-text-fill-color: #221d16 !important;
+    caret-color: #221d16 !important;
+  }
+
   /* Utilitário para ocultar barras de scroll totalmente */
   .no-scrollbar::-webkit-scrollbar {
     display: none !important;
