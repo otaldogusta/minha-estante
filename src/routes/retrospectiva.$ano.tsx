@@ -235,8 +235,8 @@ function BotaoSocialKokonut({
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className={`relative flex items-center justify-center min-h-[42px] overflow-hidden rounded-full border border-amora bg-papel-2/90 backdrop-blur-md shadow-xs transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          hovered ? "px-3 py-1.5 bg-amora-clara/30 border-amora shadow-md" : "px-5 py-2.5"
+        className={`relative flex h-10 items-center justify-center overflow-hidden rounded-full border border-amora bg-papel-2/90 backdrop-blur-md shadow-xs transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          hovered ? "px-3 bg-amora-clara/30 border-amora shadow-md" : "px-5"
         }`}
       >
         {/* Texto Inicial / Botão Base (Sumir suavemente ao passar o mouse) */}
