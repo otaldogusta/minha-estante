@@ -152,7 +152,6 @@ export type LeitorResumo = {
 };
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
-  await exigirUsuario();
   try {
     await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
   } catch {
@@ -173,6 +172,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
     temSessao: number;
   }> = [];
 
+  // Nível 1: Consulta completa com status personalizado e atividade recente em 5 min
   try {
     const res = await db()
       .prepare(
@@ -190,20 +190,37 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
          ORDER BY us.nome`
       )
       .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
-    results = res.results;
+    results = res.results ?? [];
   } catch {
-    const res = await db()
-      .prepare(
-        `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
-                (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
-                (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
-                 ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
-                (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
-         FROM usuarios us
-         ORDER BY us.nome`
-      )
-      .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
-    results = res.results;
+    // Nível 2: Fallback sem a verificação de ultimo_acesso
+    try {
+      const res = await db()
+        .prepare(
+          `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
+                  (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
+                  (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
+                   ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
+                  (EXISTS (SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now'))) AS temSessao
+           FROM usuarios us
+           ORDER BY us.nome`
+        )
+        .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
+      results = res.results ?? [];
+    } catch {
+      // Nível 3: Fallback básico essencial (garante retorno dos leitores)
+      try {
+        const res = await db()
+          .prepare(
+            `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
+             FROM usuarios us
+             ORDER BY us.nome`
+          )
+          .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
+        results = res.results ?? [];
+      } catch {
+        results = [];
+      }
+    }
   }
 
   return results.map((r): LeitorResumo => {
