@@ -22,8 +22,6 @@ export function BotaoAdicionar() {
   );
 }
 
-let posScrollCabecalhoGlobal = 0;
-
 export function Cabecalho({
   paginaAtiva,
 }: {
@@ -31,20 +29,8 @@ export function Cabecalho({
 }) {
   const [novas, setNovas] = useState(0);
   const [tema, setTema] = useState<"light" | "dark">("light");
-  const navRef = useRef<HTMLElement>(null);
-
-  // Restaurar posição de scroll ao trocar de página sem resetar
-  useEffect(() => {
-    if (navRef.current && posScrollCabecalhoGlobal > 0) {
-      navRef.current.scrollLeft = posScrollCabecalhoGlobal;
-    }
-  }, []);
-
-  const salvarScroll = () => {
-    if (navRef.current) {
-      posScrollCabecalhoGlobal = navRef.current.scrollLeft;
-    }
-  };
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
 
   useEffect(() => {
     let ativo = true;
@@ -63,36 +49,32 @@ export function Cabecalho({
     };
   }, []);
 
-  // Deslizar suavemente apenas se a aba ativa estiver cortada nas bordas
-  useEffect(() => {
-    if (!navRef.current) return;
-    const container = navRef.current;
-    const activeEl = container.querySelector<HTMLElement>("[data-active='true']");
-    if (!activeEl) return;
-
-    const elLeft = activeEl.offsetLeft;
-    const elWidth = activeEl.offsetWidth;
-    const containerWidth = container.clientWidth;
-    const containerScrollLeft = container.scrollLeft;
-
-    const elRight = elLeft + elWidth;
-    const containerScrollRight = containerScrollLeft + containerWidth;
-    const padding = 12;
-
-    let targetLeft = containerScrollLeft;
-
-    if (elLeft - padding < containerScrollLeft) {
-      targetLeft = Math.max(0, elLeft - padding);
-    } else if (elRight + padding > containerScrollRight) {
-      targetLeft = elRight + padding - containerWidth;
-    } else {
-      return;
+  // Recalcular posição do pill ativo de fundo com animação suave deslizando
+  useLayoutEffect(() => {
+    if (!trackRef.current) return;
+    const activeEl = trackRef.current.querySelector<HTMLElement>("[data-active='true']");
+    if (activeEl) {
+      setPillStyle({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+      });
     }
+  }, [paginaAtiva]);
 
-    container.scrollTo({
-      left: Math.max(0, targetLeft),
-      behavior: "smooth",
-    });
+  // Recalcular no resize da janela
+  useEffect(() => {
+    const handleResize = () => {
+      if (!trackRef.current) return;
+      const activeEl = trackRef.current.querySelector<HTMLElement>("[data-active='true']");
+      if (activeEl) {
+        setPillStyle({
+          left: activeEl.offsetLeft,
+          width: activeEl.offsetWidth,
+        });
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [paginaAtiva]);
 
   function alternarTema() {
@@ -104,11 +86,11 @@ export function Cabecalho({
 
   return (
     <header className="sticky top-0 z-50 border-b border-papel-3/45 bg-papel/85 backdrop-blur-lg shadow-xs">
-      <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between gap-1 px-2 sm:gap-3 sm:px-6">
+      <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6">
         
         {/* Esquerda: Logo Minha Estante */}
-        <Link to="/" className="flex items-center gap-1.5 shrink-0" title="Minha Estante - Página Inicial">
-          <span aria-hidden className="inline-flex gap-[2.5px]">
+        <Link to="/" className="flex items-center gap-2 spring-bounce shrink-0" title="Minha Estante - Página Inicial">
+          <span aria-hidden className="inline-flex gap-[3px]">
             <span className="inline-block h-4.5 w-[4px] sm:h-5 sm:w-[5px] rounded-sm bg-amora" />
             <span className="inline-block h-3.5 w-[4px] sm:h-4 sm:w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
             <span className="inline-block h-4.5 w-[4px] sm:h-5 sm:w-[5px] rounded-sm bg-tinta" />
@@ -118,20 +100,29 @@ export function Cabecalho({
           </span>
         </Link>
 
-        {/* Centro: Abas de Navegação (Scroll horizontal suave sem corte nem pulo) */}
-        <nav
-          ref={navRef}
-          onScroll={salvarScroll}
-          className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-1.5 scroll-smooth"
-        >
-          <div className="flex items-center gap-0.5 sm:gap-1.5 whitespace-nowrap">
+        {/* Centro: Abas de Navegação (Track com indicador pill deslizante de 300ms cubic-bezier) */}
+        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-center overflow-x-auto no-scrollbar py-1">
+          <div
+            ref={trackRef}
+            className="relative flex items-center gap-0.5 sm:gap-1 p-1 rounded-full bg-papel-2/60 border border-papel-3/40 whitespace-nowrap"
+          >
+            {/* Pill Ativo Deslizante */}
+            {pillStyle.width > 0 && (
+              <span
+                aria-hidden
+                className="absolute top-1 bottom-1 rounded-full bg-amora-clara/80 shadow-xs transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
+                style={{
+                  left: `${pillStyle.left}px`,
+                  width: `${pillStyle.width}px`,
+                }}
+              />
+            )}
+
             <Link
               to="/"
               data-active={paginaAtiva === "estante"}
-              className={`shrink-0 transition-colors duration-200 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
-                paginaAtiva === "estante"
-                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
-                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              className={`relative z-10 shrink-0 rounded-full px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm cursor-pointer transition-colors duration-200 ${
+                paginaAtiva === "estante" ? "font-semibold text-amora" : "text-tinta-2 hover:text-tinta"
               }`}
             >
               Estante
@@ -140,10 +131,8 @@ export function Cabecalho({
               to="/retrospectiva/$ano"
               params={{ ano: String(new Date().getFullYear()) }}
               data-active={paginaAtiva === "retrospectiva"}
-              className={`shrink-0 transition-colors duration-200 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
-                paginaAtiva === "retrospectiva"
-                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
-                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              className={`relative z-10 shrink-0 rounded-full px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm cursor-pointer transition-colors duration-200 ${
+                paginaAtiva === "retrospectiva" ? "font-semibold text-amora" : "text-tinta-2 hover:text-tinta"
               }`}
             >
               <span className="sm:hidden">Retro</span>
@@ -153,10 +142,8 @@ export function Cabecalho({
               to="/cartas"
               aria-label="Cartas"
               data-active={paginaAtiva === "cartas"}
-              className={`shrink-0 transition-colors duration-200 relative rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
-                paginaAtiva === "cartas"
-                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
-                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              className={`relative z-10 shrink-0 rounded-full px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm cursor-pointer transition-colors duration-200 ${
+                paginaAtiva === "cartas" ? "font-semibold text-amora" : "text-tinta-2 hover:text-tinta"
               }`}
             >
               Cartas
@@ -169,10 +156,8 @@ export function Cabecalho({
             <Link
               to="/leitores"
               data-active={paginaAtiva === "leitores"}
-              className={`shrink-0 transition-colors duration-200 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
-                paginaAtiva === "leitores"
-                  ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
-                  : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
+              className={`relative z-10 shrink-0 rounded-full px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm cursor-pointer transition-colors duration-200 ${
+                paginaAtiva === "leitores" ? "font-semibold text-amora" : "text-tinta-2 hover:text-tinta"
               }`}
             >
               Leitores
