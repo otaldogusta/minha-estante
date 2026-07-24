@@ -439,7 +439,10 @@ html[data-theme="dark"] {
     -webkit-box-shadow: 0 0 0 1000px #1c1822 inset !important;
     -webkit-text-fill-color: #f4ecf8 !important;
     caret-color: #f4ecf8 !important;
-    transition: background-color 5000s ease-in-out 0s;
+    border-color: #2c2535 !important;
+    border-radius: 0.5rem !important;
+    background-clip: padding-box !important;
+    transition: background-color 600000s ease-in-out 0s;
   }
 
   html[data-theme="light"] input:-webkit-autofill,
@@ -451,6 +454,9 @@ html[data-theme="dark"] {
     -webkit-box-shadow: 0 0 0 1000px #f3ecdd inset !important;
     -webkit-text-fill-color: #221d16 !important;
     caret-color: #221d16 !important;
+    border-color: #ece3cf !important;
+    border-radius: 0.5rem !important;
+    background-clip: padding-box !important;
   }
 
   /* Utilitário para ocultar barras de scroll totalmente */
