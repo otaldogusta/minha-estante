@@ -104,8 +104,16 @@ export function getLocalDB(): any {
   if (_instance) return _instance;
 
   const DEFAULT_SUPABASE_URL = "postgresql://postgres.lwmdotggpvcwhetqkyju:aZ6w5IOtjyiqyg5E@aws-0-sa-east-1.pooler.supabase.com:6543/postgres";
-  const pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_URL || (process.env.VERCEL || process.env.NODE_ENV === "production" ? DEFAULT_SUPABASE_URL : undefined);
+  let pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_URL || (process.env.VERCEL || process.env.NODE_ENV === "production" ? DEFAULT_SUPABASE_URL : undefined);
+  
   if (pgUrl) {
+    // Auto-convert slow direct connections (5432) to transaction pooler (6543)
+    if (pgUrl.includes(":5432/") && pgUrl.includes("supabase.co")) {
+      const projectRef = "lwmdotggpvcwhetqkyju";
+      pgUrl = pgUrl
+        .replace("db.lwmdotggpvcwhetqkyju.supabase.co:5432", "aws-0-sa-east-1.pooler.supabase.com:6543")
+        .replace("postgres:", `postgres.${projectRef}:`);
+    }
     _instance = new PostgresD1Database(pgUrl);
     return _instance;
   }

@@ -27,6 +27,38 @@ function convertSqliteToPg(sql: string): string {
   return result;
 }
 
+function sanitizeRow<T>(row: T): T {
+  if (!row) return row;
+  const newRow = { ...row } as any;
+  const numericColumns = [
+    "id",
+    "usuario_id",
+    "ano",
+    "paginas",
+    "ano_leitura",
+    "nota",
+    "pagina_atual",
+    "privado",
+    "adaptacao",
+    "vi_adaptacao",
+    "valor",
+    "carta_vista"
+  ];
+  for (const key of Object.keys(newRow)) {
+    const val = newRow[key];
+    if (val === null || val === undefined) continue;
+    if (numericColumns.includes(key)) {
+      if (typeof val === "string") {
+        const num = Number(val);
+        if (!isNaN(num)) {
+          newRow[key] = num;
+        }
+      }
+    }
+  }
+  return newRow as T;
+}
+
 class PostgresStatement {
   private sql: string;
   private sqlClient: postgres.Sql;
@@ -46,7 +78,8 @@ class PostgresStatement {
     try {
       const pgSql = convertSqliteToPg(this.sql);
       const rows = await this.sqlClient.unsafe(pgSql, this.params);
-      return { results: Array.from(rows) as T[], success: true };
+      const sanitized = Array.from(rows).map(row => sanitizeRow(row as T));
+      return { results: sanitized, success: true };
     } catch (e) {
       console.error("Postgres all() error:", e, "SQL:", this.sql);
       return { results: [], success: false };
@@ -57,7 +90,7 @@ class PostgresStatement {
     try {
       const pgSql = convertSqliteToPg(this.sql);
       const rows = await this.sqlClient.unsafe(pgSql, this.params);
-      return (rows[0] as T) ?? null;
+      return rows[0] ? sanitizeRow(rows[0] as T) : null;
     } catch (e) {
       console.error("Postgres first() error:", e, "SQL:", this.sql);
       return null;
