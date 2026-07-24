@@ -139,3 +139,29 @@ Usado em leitores, cartas e formulários:
 - **Scrollbar Global:** Pílula flutuante sem fundo (`transparent !important`) e sem setas.
 - **Modo Sem Scrollbar (`.no-scrollbar`):** Esconde barras de rolagens sem quebrar a funcionalidade de scroll.
 - **Responsividade:** Telas completas usam `max-w-6xl px-4 sm:px-6`. Formulários focados usam `max-w-md` ou `max-w-lg`.
+
+---
+
+## 9. 🛡️ Segurança, Privacidade & Plataforma Social (Multi-Tenant)
+
+Para suportar o crescimento da rede com múltiplos leitores e interações sociais com total segurança:
+
+1. **Proteção Anti-IDOR (Isolamento entre Contas):**
+   Toda requisição de escrita/deleção (`UPDATE`, `DELETE`) **exige** a cláusula `WHERE usuario_id = u.id` diretamente na query SQL. Nenhum leitor pode alterar dados de outro leitor.
+
+2. **Privacidade Absoluta de Cartas Lacradas:**
+   Cartas condicionadas a um livro têm o corpo substituído por `NULL` diretamente no servidor (`CASE WHEN desbloqueada THEN corpo ELSE NULL END`). O texto da carta **nunca trafega pela rede** enquanto o livro não for concluído.
+
+3. **Livros Privados (`privado = 1`):**
+   Livros marcados como privados são filtrados no SQL em perfis públicos (`WHERE privado = 0`). O valor financeiro investido (`valor`) e anotações privadas jamais vazam para outros usuários.
+
+4. **Autenticação Criptográfica:**
+   - **Senhas:** Criptografadas com Web Crypto API PBKDF2 (100.000 iterações + salt de 16 bytes).
+   - **Timing Attacks:** Comparação de senha em tempo constante (`diff |= a[i] ^ b[i]`).
+   - **Sessão:** Tokens de 256 bits em cookies `HttpOnly`, `Secure` e `SameSite=Lax`.
+
+5. **Cabeçalhos OWASP no Vercel Edge:**
+   - `X-Content-Type-Options: nosniff`
+   - `X-Frame-Options: SAMEORIGIN` (Proteção Anti-Clickjacking)
+   - `X-XSS-Protection: 1; mode=block`
+   - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
