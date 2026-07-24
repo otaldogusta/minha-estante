@@ -60,8 +60,11 @@ export default async function handler(req, res) {
     // Write response
     res.statusCode = response.status;
     let hasCacheControl = false;
-    for (const [key, value] of response.headers.entries()) {
+    for (let [key, value] of response.headers.entries()) {
       if (key.toLowerCase() === "cache-control") hasCacheControl = true;
+      if (key.toLowerCase() === "content-type" && !value.toLowerCase().includes("charset")) {
+        value = `${value}; charset=utf-8`;
+      }
       res.setHeader(key, value);
     }
 
