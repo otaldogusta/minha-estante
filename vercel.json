@@ -2,14 +2,6 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/assets/:path*",
-      "destination": "/dist/client/assets/:path*"
-    },
-    {
-      "source": "/:file(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map))",
-      "destination": "/dist/client/:file"
-    },
-    {
       "source": "/(.*)",
       "destination": "/api/index"
     }
