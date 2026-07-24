@@ -4,7 +4,21 @@ import postgres from "postgres";
 
 function convertSqliteToPg(sql: string): string {
   let paramIdx = 1;
-  return sql.replace(/\?/g, () => `$${paramIdx++}`);
+  let result = sql;
+
+  // 1. Convert ? placeholders to $1, $2, …
+  result = result.replace(/\?/g, () => `$${paramIdx++}`);
+
+  // 2. datetime('now', '-N hours/minutes/days') → (NOW() + INTERVAL '-N hours')
+  result = result.replace(
+    /datetime\s*\(\s*'now'\s*,\s*'([+-]?\d+)\s+(hours?|minutes?|days?|seconds?)'\s*\)/gi,
+    (_, amount, unit) => `(NOW() + INTERVAL '${amount} ${unit}')`
+  );
+
+  // 3. datetime('now') → NOW()
+  result = result.replace(/datetime\s*\(\s*'now'\s*\)/gi, "NOW()");
+
+  return result;
 }
 
 class PostgresStatement {
@@ -65,8 +79,10 @@ export class PostgresD1Database {
   constructor(connectionString: string) {
     this.sqlClient = postgres(connectionString, {
       ssl: "require",
-      max: 10,
-      idle_timeout: 20,
+      // Serverless-friendly: limit connections and release quickly
+      max: 1,
+      idle_timeout: 10,
+      connect_timeout: 10,
     });
   }
 
