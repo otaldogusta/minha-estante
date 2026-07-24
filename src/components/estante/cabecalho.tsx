@@ -47,25 +47,45 @@ export function Cabecalho({
     };
   }, []);
 
+  const garantirAbaVisivel = (el: HTMLElement | null, smooth = true) => {
+    if (!el || !navRef.current) return;
+    const container = navRef.current;
+
+    const elLeft = el.offsetLeft;
+    const elRight = elLeft + el.offsetWidth;
+
+    const containerScrollLeft = container.scrollLeft;
+    const containerWidth = container.clientWidth;
+    const containerScrollRight = containerScrollLeft + containerWidth;
+
+    // Margem de segurança de 16px para nunca colar nos ícones laterais
+    const padding = 16;
+
+    let targetLeft = containerScrollLeft;
+
+    if (elLeft - padding < containerScrollLeft) {
+      targetLeft = elLeft - padding;
+    } else if (elRight + padding > containerScrollRight) {
+      targetLeft = elRight + padding - containerWidth;
+    } else {
+      return;
+    }
+
+    container.scrollTo({
+      left: Math.max(0, targetLeft),
+      behavior: smooth ? "smooth" : "auto",
+    });
+  };
+
   // Acompanhar a aba ativa suavemente no mobile (sem pulo brusco)
   useEffect(() => {
     if (!navRef.current) return;
     const activeEl = navRef.current.querySelector<HTMLElement>("[data-active='true']");
-    if (activeEl) {
-      activeEl.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
-    }
+    garantirAbaVisivel(activeEl, true);
   }, [paginaAtiva]);
 
   const handleTabClick = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
+    garantirAbaVisivel(e.currentTarget, true);
   };
 
   function alternarTema() {
