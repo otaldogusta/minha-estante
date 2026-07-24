@@ -1,7 +1,7 @@
 # 🛡️ Regras Obrigatórias de Desenvolvimento, Segurança & UI/UX — Minha Estante
 
 ## 1. 🛑 Confirmação Prévia de Alterações Críticas (Confirmation Modal Rule)
-Sempre que uma ação puder alterar, sobrescrever, importar, sincronizar em lote ou excluir dados (ex: sincronização com a planilha do Google Sheets, exclusão de livros, revogação de convites ou alteração de conta), **É OBRIGATÓRIO** exibir um modal de confirmação prévio e explícito explicando os impactos da ação antes de disparar a mutação no banco de dados.
+Sempre que uma ação puder alterar, sobrescrever, importar, sincronizar em lote ou excluir dados (ex: sincronização com a planilha do Google Sheets, exclusão de livros, revogação de convites ou alteração de conta/dados), **É OBRIGATÓRIO** exibir um modal de confirmação prévio e explícito explicando os impactos da ação antes de disparar a mutação no banco de dados.
 
 ---
 
@@ -15,3 +15,11 @@ Sempre que uma ação puder alterar, sobrescrever, importar, sincronizar em lote
 ## 3. 🎨 Tokens Semânticos & Contraste de Tema
 - **Proibição de Cores Brutas:** Nunca utilize classes estáticas como `bg-white/60`, `bg-gray-200` ou `text-black` em inputs ou caixas de texto.
 - **Compatibilidade Noturna:** Use sempre os tokens semânticos (`.card-surface`, `bg-papel`, `bg-papel-2`, `border-papel-3`, `text-tinta`, `text-tinta-2`) definidos em `DESIGN_SYSTEM.md`, garantindo contraste nítido em ambos os temas.
+
+---
+
+## 4. 🖱️ Micro-interações de Hover, Cursor & Física de Mola (Hover & Spring Rule)
+- **Cursor Pointer Obrigatório:** Todo e qualquer elemento interativo (botões, links, ícones, cards, checkboxes e pills) **DEVE** incluir a classe `cursor-pointer`.
+- **Física de Mola (`.spring-bounce`):** Botões e elementos clicáveis devem utilizar micro-interações táteis no hover (`translateY(-2px) scale(1.02)`) com física de mola cúbica e afundamento realista ao pressionar (`translateY(1px) scale(0.97)`).
+- **Cards Interativos (`.card-surface`):** Cards e cartões clicáveis devem ter transição suave de borda para a cor da marca (`hover:border-amora`), elevação de sombra e levitação suave ao passar o cursor.
+- **Efeito 3D nas Capas (`.livro-capa`):** As capas dos livros em estantes e galerias devem aplicar projeção 3D realista com vinco de lombada e inclinação tridimensional (`transform: perspective(700px) rotateY(-14deg) translateY(-8px) scale(1.03)`).

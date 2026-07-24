@@ -179,3 +179,7 @@ Para suportar o crescimento da rede com múltiplos leitores e interações socia
 3. **Bloqueio de Rolagem do Fundo (`Body Scroll Lock`):**
    A abertura de qualquer modal ativa `document.body.style.overflow = "hidden"` no mount e restaura no unmount para eliminar completamente o vazamento de scroll (*scroll bleed*).
 
+4. **Micro-interações de Hover & Física de Mola (`.spring-bounce` & `.livro-capa`):**
+   Todos os elementos interativos (botões, links, cards, ícones, checkboxes e pílulas de filtro) **DEVEM OBRIGATORIAMENTE INCLUIR `cursor-pointer`**, efeito de elevação/levitação suave no hover (`translateY(-2px) scale(1.02)`) com física de mola cúbica e inclinação 3D nas capas de livros (`transform: perspective(700px) rotateY(-14deg) translateY(-8px) scale(1.03)`).
+
+
