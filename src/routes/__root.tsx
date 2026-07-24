@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -188,11 +189,20 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function TopProgressBar() {
+  const isPending = useRouterState({ select: (s) => s.status === "pending" });
+  if (!isPending) return null;
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-amora animate-pulse shadow-[0_0_10px_#7A3B52]" />
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <TopProgressBar />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <div className="page-layout-transition">
         <Outlet />
