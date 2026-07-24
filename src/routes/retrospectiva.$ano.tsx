@@ -374,24 +374,38 @@ function PaginaRetrospectiva() {
     <div className="min-h-dvh pb-24">
       <Cabecalho paginaAtiva="retrospectiva" />
       <main className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="mt-10 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-tinta-2">Retrospectiva de leitura</p>
-            <SeletorAnoVertical anoAtual={anoNum} anos={abasAnos} />
+        {/* Top Header Row */}
+        <div className="mt-8 flex flex-col gap-3 sm:gap-4">
+          {/* Linha 1: "Retrospectiva de leitura" (esquerda) + Botão Compartilhar (direita) */}
+          <div className="flex items-center justify-between gap-3 min-h-[42px]">
+            <p className="text-sm sm:text-base font-medium text-tinta-2">Retrospectiva de leitura</p>
+            {est.livros > 0 && (
+              <BotaoSocialKokonut
+                onBaixarPoster={compartilhar}
+                gerandoPoster={gerandoPoster}
+                livrosCount={est.livros}
+                anoNum={anoNum}
+              />
+            )}
           </div>
-          <div className="flex gap-2">
-            {abasAnos.map((a) => (
-              <Link
-                key={a}
-                to="/retrospectiva/$ano"
-                params={{ ano: String(a) }}
-                className={`rounded-full px-4 py-1.5 font-num text-sm transition-colors ${
-                  a === anoNum ? "bg-amora text-papel" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
-                }`}
-              >
-                {a}
-              </Link>
-            ))}
+
+          {/* Linha 2: Seletor de Ano grande (esquerda) + Pills de Anos (direita) */}
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <SeletorAnoVertical anoAtual={anoNum} anos={abasAnos} />
+            <div className="flex gap-2">
+              {abasAnos.map((a) => (
+                <Link
+                  key={a}
+                  to="/retrospectiva/$ano"
+                  params={{ ano: String(a) }}
+                  className={`rounded-full px-4 py-1.5 font-num text-sm transition-colors ${
+                    a === anoNum ? "bg-amora text-papel" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
+                  }`}
+                >
+                  {a}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -402,7 +416,7 @@ function PaginaRetrospectiva() {
           </div>
         ) : (
           <>
-            <div className="surgir mt-10 grid grid-cols-4 gap-1 sm:gap-4 rounded-3xl bg-tinta px-1.5 py-6 text-papel sm:px-6 sm:py-8">
+            <div className="surgir mt-8 grid grid-cols-4 gap-1 sm:gap-4 rounded-3xl bg-tinta px-1.5 py-6 text-papel sm:px-6 sm:py-8">
               {[
                 { rotulo: "livros lidos", n: est.livros, f: undefined as ((n: number) => string) | undefined },
                 { rotulo: "páginas viradas", n: est.paginas, f: undefined },
@@ -416,15 +430,6 @@ function PaginaRetrospectiva() {
                   <p className="mt-1 text-[10px] sm:text-sm text-papel/75 leading-tight">{i.rotulo}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <BotaoSocialKokonut
-                onBaixarPoster={compartilhar}
-                gerandoPoster={gerandoPoster}
-                livrosCount={est.livros}
-                anoNum={anoNum}
-              />
             </div>
 
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
