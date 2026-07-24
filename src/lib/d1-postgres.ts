@@ -79,10 +79,13 @@ export class PostgresD1Database {
   constructor(connectionString: string) {
     this.sqlClient = postgres(connectionString, {
       ssl: "require",
-      // Serverless-friendly: limit connections and release quickly
+      // Serverless-friendly settings for Vercel + Supabase Transaction Pooler
       max: 1,
       idle_timeout: 10,
       connect_timeout: 10,
+      // Required for Transaction Pooler (port 6543): it doesn't support
+      // named prepared statements (only simple query protocol).
+      prepare: false,
     });
   }
 
