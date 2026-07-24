@@ -47,32 +47,24 @@ export function Cabecalho({
     };
   }, []);
 
-  // Centralizar a aba ativa suavemente no mobile ao trocar de página
+  // Acompanhar a aba ativa suavemente no mobile (sem pulo brusco)
   useEffect(() => {
     if (!navRef.current) return;
     const activeEl = navRef.current.querySelector<HTMLElement>("[data-active='true']");
     if (activeEl) {
-      const container = navRef.current;
-      const elLeft = activeEl.offsetLeft;
-      const elWidth = activeEl.offsetWidth;
-      const containerWidth = container.offsetWidth;
-      container.scrollTo({
-        left: Math.max(0, elLeft - containerWidth / 2 + elWidth / 2),
+      activeEl.scrollIntoView({
         behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
       });
     }
   }, [paginaAtiva]);
 
   const handleTabClick = (e: React.MouseEvent<HTMLElement>) => {
-    if (!navRef.current) return;
-    const container = navRef.current;
-    const target = e.currentTarget;
-    const elLeft = target.offsetLeft;
-    const elWidth = target.offsetWidth;
-    const containerWidth = container.offsetWidth;
-    container.scrollTo({
-      left: Math.max(0, elLeft - containerWidth / 2 + elWidth / 2),
+    e.currentTarget.scrollIntoView({
       behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
     });
   };
 
