@@ -103,7 +103,8 @@ let _instance: any = null;
 export function getLocalDB(): any {
   if (_instance) return _instance;
 
-  const pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_URL;
+  const DEFAULT_SUPABASE_URL = "postgresql://postgres.lwmdotggpvcwhetqkyju:aZ6w5IOtjyiqyg5E@aws-0-sa-east-1.pooler.supabase.com:6543/postgres";
+  const pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_URL || (process.env.VERCEL || process.env.NODE_ENV === "production" ? DEFAULT_SUPABASE_URL : undefined);
   if (pgUrl) {
     _instance = new PostgresD1Database(pgUrl);
     return _instance;
