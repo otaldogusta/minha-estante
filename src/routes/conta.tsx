@@ -7,6 +7,7 @@ import {
   sair,
   sessaoAtual,
   listarPedidosRecuperacao,
+  atualizarStatusPresenca,
 } from "../lib/api/auth.functions";
 import { sincronizarPlanilhaGoogle } from "../lib/api/livros.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
@@ -170,30 +171,85 @@ function PaginaConta() {
     <div className="min-h-dvh pb-24">
       <Cabecalho paginaAtiva="conta" />
       <main className="mx-auto max-w-lg px-4 sm:px-6">
-        <div className="mt-10 flex items-center gap-4">
-          {/* Avatar do Leitor Logado com Ponto Online */}
-          <div className="relative shrink-0">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs">
-              {(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}
-            </span>
-            <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Online agora">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+        <div className="mt-10 flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            {/* Avatar do Leitor Logado com Ponto de Presença */}
+            <div className="relative shrink-0">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amora-clara font-display text-2xl text-amora font-semibold shadow-xs">
+                {(sessao.autenticado ? sessao.nome : "L").charAt(0).toUpperCase()}
               </span>
-            </span>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">
-                Minha conta
-              </h1>
-              {sessao.autenticado && sessao.id === 1 && (
-                <BotaoAbrirPlanilha />
+              {statusPresenca === "online" && (
+                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Online agora">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  </span>
+                </span>
+              )}
+              {statusPresenca === "lendo" && (
+                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Lendo no momento">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                  </span>
+                </span>
+              )}
+              {statusPresenca === "ocupado" && (
+                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Não perturbe (Lendo em paz)">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+                  </span>
+                </span>
+              )}
+              {statusPresenca === "invisivel" && (
+                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Invisível (Aparece offline)">
+                  <span className="h-2.5 w-2.5 rounded-full bg-tinta-3/50" />
+                </span>
               )}
             </div>
-            <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">
+                  Minha conta
+                </h1>
+                {sessao.autenticado && sessao.id === 1 && (
+                  <BotaoAbrirPlanilha />
+                )}
+              </div>
+              <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
+            </div>
+          </div>
+
+          {/* Seletor Interativo de Status de Presença */}
+          <div className="rounded-2xl border border-papel-3/80 card-surface p-3.5 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-tinta-2">Seu status:</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { key: "online", label: "Online", dot: "bg-emerald-500", activeBg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" },
+                { key: "lendo", label: "Lendo agora", dot: "bg-amber-500", activeBg: "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400" },
+                { key: "ocupado", label: "Não perturbe", dot: "bg-rose-500", activeBg: "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400" },
+                { key: "invisivel", label: "Invisível", dot: "bg-tinta-3/60", activeBg: "bg-papel-3/50 border-tinta-3/30 text-tinta-2" },
+              ].map((st) => {
+                const ativo = statusPresenca === st.key;
+                return (
+                  <button
+                    key={st.key}
+                    type="button"
+                    onClick={() => mudarStatus(st.key as any)}
+                    className={`spring-bounce inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+                      ativo
+                        ? `${st.activeBg} ring-2 ring-amora/30 font-semibold shadow-xs`
+                        : "border-papel-3 bg-papel-2/60 text-tinta-2 hover:border-papel-3 hover:bg-papel-3/50"
+                    }`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${st.dot} ${ativo ? "scale-110" : "opacity-60"}`} />
+                    {st.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

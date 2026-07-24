@@ -141,7 +141,7 @@ export const atualizarProgresso = createServerFn({ method: "POST" })
 
 // ------- Perfis públicos -------
 
-export type StatusPresenca = "online" | "lendo" | "offline";
+export type StatusPresenca = "online" | "lendo" | "ocupado" | "invisivel" | "offline";
 
 export type LeitorResumo = {
   usuario: string;
@@ -153,9 +153,15 @@ export type LeitorResumo = {
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
   await exigirUsuario();
+  try {
+    await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
+  } catch {
+    // Coluna já existe
+  }
+
   const { results } = await db()
     .prepare(
-      `SELECT us.usuario, us.nome,
+      `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
               (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
               (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
                ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
@@ -163,16 +169,20 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
        FROM usuarios us
        ORDER BY us.nome`
     )
-    .all<{ usuario: string; nome: string; lidos: number; lendoAgora: string | null; temSessao: number }>();
+    .all<{ usuario: string; nome: string; statusCustom: string | null; lidos: number; lendoAgora: string | null; temSessao: number }>();
 
   return results.map((r): LeitorResumo => {
     const estaOnline = Boolean(r.temSessao);
-    const temLeitura = Boolean(r.lendoAgora);
+    const customStatus = r.statusCustom as StatusPresenca | null;
 
     let statusPresenca: StatusPresenca = "offline";
-    if (estaOnline) {
+    if (customStatus === "invisivel") {
+      statusPresenca = "offline";
+    } else if (customStatus && customStatus !== "online") {
+      statusPresenca = customStatus;
+    } else if (estaOnline) {
       statusPresenca = "online";
-    } else if (temLeitura) {
+    } else if (r.lendoAgora) {
       statusPresenca = "lendo";
     }
 

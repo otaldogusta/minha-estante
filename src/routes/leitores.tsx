@@ -23,7 +23,7 @@ export const Route = createFileRoute("/leitores")({
 });
 
 function PontoPresenca({ status, eVoce }: { status: StatusPresenca; eVoce: boolean }) {
-  const statusEfetivo: StatusPresenca = eVoce ? "online" : status;
+  const statusEfetivo: StatusPresenca = status;
 
   if (statusEfetivo === "online") {
     return (
@@ -42,6 +42,17 @@ function PontoPresenca({ status, eVoce }: { status: StatusPresenca; eVoce: boole
         <span className="relative flex h-2.5 w-2.5">
           <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+        </span>
+      </span>
+    );
+  }
+
+  if (statusEfetivo === "ocupado") {
+    return (
+      <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-papel ring-2 ring-papel shadow-xs" title="Não perturbe (Lendo em paz)">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
         </span>
       </span>
     );

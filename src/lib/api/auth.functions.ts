@@ -18,11 +18,30 @@ function db() {
   return DB;
 }
 
+async function garantirColunaStatusPresenca() {
+  try {
+    await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
+  } catch {
+    // Coluna já existe
+  }
+}
+
 export const sessaoAtual = createServerFn({ method: "GET" }).handler(async () => {
   const u = await usuarioDaSessao();
   if (!u) return { autenticado: false as const };
-  const row = await db().prepare("SELECT email FROM usuarios WHERE id = ?").bind(u.id).first<{ email: string | null }>();
-  return { autenticado: true as const, id: u.id, nome: u.nome, usuario: u.usuario, email: row?.email ?? null };
+  await garantirColunaStatusPresenca();
+  const row = await db()
+    .prepare("SELECT email, status_presenca FROM usuarios WHERE id = ?")
+    .bind(u.id)
+    .first<{ email: string | null; status_presenca: string | null }>();
+  return {
+    autenticado: true as const,
+    id: u.id,
+    nome: u.nome,
+    usuario: u.usuario,
+    email: row?.email ?? null,
+    statusPresenca: (row?.status_presenca as "online" | "lendo" | "ocupado" | "invisivel") || "online",
+  };
 });
 
 function escapeHtml(str: string): string {
@@ -337,4 +356,16 @@ export const atualizarConta = createServerFn({ method: "POST" })
       await criarSessao(u.id);
     }
     return { ok: true as const };
+  });
+
+export const atualizarStatusPresenca = createServerFn({ method: "POST" })
+  .validator(z.object({ status: z.enum(["online", "lendo", "ocupado", "invisivel"]) }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    await garantirColunaStatusPresenca();
+    await db()
+      .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
+      .bind(data.status, u.id)
+      .run();
+    return { ok: true as const, status: data.status };
   });
