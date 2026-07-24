@@ -22,6 +22,8 @@ export function BotaoAdicionar() {
   );
 }
 
+let posScrollCabecalhoGlobal = 0;
+
 export function Cabecalho({
   paginaAtiva,
 }: {
@@ -29,6 +31,20 @@ export function Cabecalho({
 }) {
   const [novas, setNovas] = useState(0);
   const [tema, setTema] = useState<"light" | "dark">("light");
+  const navRef = useRef<HTMLElement>(null);
+
+  // Restaurar posição de scroll ao trocar de página sem resetar
+  useEffect(() => {
+    if (navRef.current && posScrollCabecalhoGlobal > 0) {
+      navRef.current.scrollLeft = posScrollCabecalhoGlobal;
+    }
+  }, []);
+
+  const salvarScroll = () => {
+    if (navRef.current) {
+      posScrollCabecalhoGlobal = navRef.current.scrollLeft;
+    }
+  };
 
   useEffect(() => {
     let ativo = true;
@@ -47,6 +63,38 @@ export function Cabecalho({
     };
   }, []);
 
+  // Deslizar suavemente apenas se a aba ativa estiver cortada nas bordas
+  useEffect(() => {
+    if (!navRef.current) return;
+    const container = navRef.current;
+    const activeEl = container.querySelector<HTMLElement>("[data-active='true']");
+    if (!activeEl) return;
+
+    const elLeft = activeEl.offsetLeft;
+    const elWidth = activeEl.offsetWidth;
+    const containerWidth = container.clientWidth;
+    const containerScrollLeft = container.scrollLeft;
+
+    const elRight = elLeft + elWidth;
+    const containerScrollRight = containerScrollLeft + containerWidth;
+    const padding = 12;
+
+    let targetLeft = containerScrollLeft;
+
+    if (elLeft - padding < containerScrollLeft) {
+      targetLeft = Math.max(0, elLeft - padding);
+    } else if (elRight + padding > containerScrollRight) {
+      targetLeft = elRight + padding - containerWidth;
+    } else {
+      return;
+    }
+
+    container.scrollTo({
+      left: Math.max(0, targetLeft),
+      behavior: "smooth",
+    });
+  }, [paginaAtiva]);
+
   function alternarTema() {
     const novoTema = tema === "light" ? "dark" : "light";
     setTema(novoTema);
@@ -59,7 +107,7 @@ export function Cabecalho({
       <div className="mx-auto flex h-14 sm:h-16 max-w-6xl items-center justify-between gap-1 px-2 sm:gap-3 sm:px-6">
         
         {/* Esquerda: Logo Minha Estante */}
-        <Link to="/" className="flex items-center gap-1.5 spring-bounce shrink-0" title="Minha Estante - Página Inicial">
+        <Link to="/" className="flex items-center gap-1.5 shrink-0" title="Minha Estante - Página Inicial">
           <span aria-hidden className="inline-flex gap-[2.5px]">
             <span className="inline-block h-4.5 w-[4px] sm:h-5 sm:w-[5px] rounded-sm bg-amora" />
             <span className="inline-block h-3.5 w-[4px] sm:h-4 sm:w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
@@ -70,12 +118,17 @@ export function Cabecalho({
           </span>
         </Link>
 
-        {/* Centro: Abas de Navegação (Scroll horizontal nativo igual prateleira de livros) */}
-        <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-0.5 snap-x snap-mandatory scroll-smooth">
+        {/* Centro: Abas de Navegação (Scroll horizontal suave sem corte nem pulo) */}
+        <nav
+          ref={navRef}
+          onScroll={salvarScroll}
+          className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar py-1.5 scroll-smooth"
+        >
           <div className="flex items-center gap-0.5 sm:gap-1.5 whitespace-nowrap">
             <Link
               to="/"
-              className={`snap-start shrink-0 transition-colors duration-200 spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
+              data-active={paginaAtiva === "estante"}
+              className={`shrink-0 transition-colors duration-200 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "estante"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -86,7 +139,8 @@ export function Cabecalho({
             <Link
               to="/retrospectiva/$ano"
               params={{ ano: String(new Date().getFullYear()) }}
-              className={`snap-start shrink-0 transition-colors duration-200 spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
+              data-active={paginaAtiva === "retrospectiva"}
+              className={`shrink-0 transition-colors duration-200 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "retrospectiva"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -98,7 +152,8 @@ export function Cabecalho({
             <Link
               to="/cartas"
               aria-label="Cartas"
-              className={`snap-start shrink-0 transition-colors duration-200 relative spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
+              data-active={paginaAtiva === "cartas"}
+              className={`shrink-0 transition-colors duration-200 relative rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "cartas"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -113,7 +168,8 @@ export function Cabecalho({
             </Link>
             <Link
               to="/leitores"
-              className={`snap-start shrink-0 transition-colors duration-200 spring-bounce rounded-full px-2 py-1 text-[11px] sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
+              data-active={paginaAtiva === "leitores"}
+              className={`shrink-0 transition-colors duration-200 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm cursor-pointer ${
                 paginaAtiva === "leitores"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
