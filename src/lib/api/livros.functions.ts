@@ -178,7 +178,7 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
         `SELECT id, titulo, autor, genero, paginas, status, ano_leitura, inicio, fim, nota, palavra, capa
          FROM livros WHERE usuario_id = ? AND privado = 0
          ORDER BY CASE status WHEN 'lendo' THEN 0 WHEN 'quero_ler' THEN 1 ELSE 2 END,
-                  ano_leitura DESC, COALESCE(fim, inicio, criado_em) DESC, id DESC`
+                  ano_leitura DESC, COALESCE(fim, inicio, CAST(criado_em AS TEXT)) DESC, id DESC`
       )
       .bind(dono.id)
       .all<

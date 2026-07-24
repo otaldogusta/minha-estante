@@ -18,6 +18,12 @@ function convertSqliteToPg(sql: string): string {
   // 3. datetime('now') → NOW()
   result = result.replace(/datetime\s*\(\s*'now'\s*\)/gi, "NOW()");
 
+  // 4. COALESCE with criado_em timestamp column -> CAST to text
+  result = result.replace(/COALESCE\(([^)]*?)criado_em([^)]*?)\)/gi, (match) => {
+    if (match.includes("CAST(")) return match;
+    return match.replace(/criado_em/g, "CAST(criado_em AS TEXT)");
+  });
+
   return result;
 }
 
