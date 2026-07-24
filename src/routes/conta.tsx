@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 import {
   atualizarConta,
@@ -26,8 +27,6 @@ export const Route = createFileRoute("/conta")({
 
 const campo =
   "mt-1 w-full rounded-lg border border-papel-3 bg-papel px-3 py-2.5 text-tinta focus:border-amora focus:outline-none";
-
-
 
 // Recuperação pela casa: pedidos de redefinição dos outros leitores.
 // Quem está logado copia o link e entrega pessoalmente a quem esqueceu a senha.
@@ -146,19 +145,7 @@ function PaginaConta() {
             <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta flex items-center gap-3">
               Minha conta
               {sessao.autenticado && sessao.id === 1 && (
-                <button
-                  onClick={() => {
-                    const el = document.getElementById("btn-abrir-modal-planilha");
-                    if (el) el.click();
-                  }}
-                  className="spring-bounce inline-flex items-center gap-1.5 rounded-full border border-papel-3 bg-papel-2/60 px-3 py-1 text-xs text-tinta-2 shadow-sm transition-all hover:border-amora hover:text-amora cursor-pointer"
-                  title="Abrir Planilha do Google Drive"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#0F9D58]" fill="currentColor">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                  </svg>
-                  <span className="font-medium text-tinta">Google Drive</span>
-                </button>
+                <BotaoAbrirPlanilha />
               )}
             </h1>
             <p className="mt-1 text-tinta-2">Seu nome, seu usuário e sua senha.</p>
@@ -233,25 +220,18 @@ function PaginaConta() {
           <button
             type="submit"
             disabled={salvando}
-            className="w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60"
+            className="w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60 cursor-pointer"
           >
             {salvando ? "Salvando..." : "Salvar mudanças"}
           </button>
         </form>
 
-        {/* Google Sheets Integration for Julia */}
-        {sessao.autenticado && sessao.id === 1 && (
-          <SecaoGoogleSheets />
-        )}
-
         <button
           onClick={encerrar}
-          className="mt-6 w-full rounded-xl border border-papel-3 px-6 py-3 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora"
+          className="mt-6 w-full rounded-xl border border-papel-3 px-6 py-3 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora cursor-pointer"
         >
           Sair da conta
         </button>
-
-
 
         {pedidosRecuperacao.length > 0 && <SecaoRecuperacao pedidos={pedidosRecuperacao} />}
 
@@ -273,7 +253,7 @@ function extrairEmbedUrl(urlStr: string) {
   return "https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/htmlembed?widget=true&headers=false&chrome=false";
 }
 
-function SecaoGoogleSheets() {
+function BotaoAbrirPlanilha() {
   const router = useRouter();
   const [sincronizando, setSincronizando] = useState(false);
   const [status, setStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null);
@@ -313,8 +293,19 @@ function SecaoGoogleSheets() {
 
   return (
     <>
-      {/* Modal da planilha */}
-      {modalPlanilha && (
+      <button
+        onClick={() => setModalPlanilha(true)}
+        className="spring-bounce inline-flex items-center gap-1.5 rounded-full border border-papel-3 bg-papel-2/60 px-3 py-1 text-xs text-tinta-2 shadow-sm transition-all hover:border-amora hover:text-amora cursor-pointer"
+        title="Abrir Planilha do Google Drive"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#0F9D58]" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        <span className="font-medium text-tinta">Google Drive</span>
+      </button>
+
+      {/* Modal da planilha montado via Portal direto no document.body para ficar 100% fixo no viewport */}
+      {modalPlanilha && typeof document !== "undefined" && createPortal(
         <div
           className="modal-backdrop"
           onClick={() => setModalPlanilha(false)}
@@ -361,8 +352,8 @@ function SecaoGoogleSheets() {
                     </>
                   ) : (
                     <>
-                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.2 8H18" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                       </svg>
                       Sincronizar
                     </>
@@ -383,7 +374,7 @@ function SecaoGoogleSheets() {
 
                 <button
                   onClick={() => setModalPlanilha(false)}
-                  className="rounded-full p-1.5 text-tinta-2 transition-colors hover:bg-papel-2 hover:text-tinta"
+                  className="rounded-full p-1.5 text-tinta-2 transition-colors hover:bg-papel-2 hover:text-tinta cursor-pointer"
                   aria-label="Fechar"
                 >
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -409,68 +400,9 @@ function SecaoGoogleSheets() {
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-
-      {/* Card da seção */}
-      <section className="mt-8 rounded-2xl border border-papel-3 card-surface p-6 shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="mt-0.5 rounded-xl bg-amora-clara p-2.5 shrink-0">
-            <svg viewBox="0 0 24 24" className="h-5 w-5 text-amora" fill="currentColor">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-display text-xl font-semibold text-tinta">Planilha do Google Sheets</h2>
-            <p className="mt-1 text-sm text-tinta-2">
-              Sua estante está conectada à sua planilha original. Sincronize para importar novos livros — capas e resenhas cadastradas aqui são preservadas.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <button
-            id="btn-abrir-modal-planilha"
-            onClick={() => setModalPlanilha(true)}
-            className="flex-1 rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Ver Planilha
-          </button>
-
-          <button
-            onClick={sincronizar}
-            disabled={sincronizando}
-            className="flex-1 rounded-xl bg-amora px-4 py-2.5 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {sincronizando ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-papel" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Sincronizando...
-              </>
-            ) : (
-              <>
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.2 8H18" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Sincronizar Estante
-              </>
-            )}
-          </button>
-        </div>
-
-        {status && (
-          <p className={`mt-3 text-sm text-center rounded-lg p-2 ${status.tipo === "ok" ? "bg-tinta/5 text-tinta font-medium" : "bg-amora-clara text-amora-escura"}`}>
-            {status.msg}
-          </p>
-        )}
-      </section>
     </>
   );
 }
