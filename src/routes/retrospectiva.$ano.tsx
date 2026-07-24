@@ -49,12 +49,31 @@ function Contador({ ate, formatar }: { ate: number; formatar?: (n: number) => st
   return <>{formatar ? formatar(valor) : valor.toLocaleString("pt-BR")}</>;
 }
 
-function Destaque({ rotulo, titulo, detalhe }: { rotulo: string; titulo: string; detalhe: string }) {
+function Destaque({
+  rotulo,
+  titulo,
+  detalhe,
+  icone,
+}: {
+  rotulo: string;
+  titulo: string;
+  detalhe: string;
+  icone?: React.ReactNode;
+}) {
   return (
-    <div className="rounded-2xl border border-papel-3 bg-papel-2 p-5">
-      <p className="text-sm text-amora">{rotulo}</p>
-      <p className="mt-1 font-display text-lg font-semibold leading-snug text-tinta">{titulo}</p>
-      <p className="mt-1 font-num text-sm text-tinta-2">{detalhe}</p>
+    <div className="card-surface spring-bounce flex items-center justify-between gap-3.5 rounded-2xl border border-papel-3 bg-papel-2/60 p-4 sm:p-5 shadow-sm transition-all hover:border-amora">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-amora">{rotulo}</p>
+        <p className="mt-1 font-display text-base sm:text-lg font-semibold leading-snug text-tinta truncate" title={titulo}>
+          {titulo}
+        </p>
+        <p className="mt-1 font-num text-xs sm:text-sm text-tinta-2">{detalhe}</p>
+      </div>
+      {icone && (
+        <div className="rounded-xl bg-amora-clara p-2.5 sm:p-3 shrink-0 text-amora shadow-xs">
+          {icone}
+        </div>
+      )}
     </div>
   );
 }
@@ -161,28 +180,80 @@ function PaginaRetrospectiva() {
               </button>
             </div>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
               {est.maisRapido && (
                 <Destaque
                   rotulo="Leitura mais rápida"
                   titulo={est.maisRapido.titulo}
                   detalhe={est.maisRapido.dias <= 1 ? "em 1 dia" : `em ${est.maisRapido.dias} dias`}
+                  icone={
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                  }
                 />
               )}
               {est.maisLongo && (
-                <Destaque rotulo="Companhia mais longa" titulo={est.maisLongo.titulo} detalhe={`${est.maisLongo.dias} dias juntos`} />
+                <Destaque
+                  rotulo="Companhia mais longa"
+                  titulo={est.maisLongo.titulo}
+                  detalhe={`${est.maisLongo.dias} dias juntos`}
+                  icone={
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  }
+                />
               )}
               {est.autorTop && est.autorTop.qtd > 1 && (
-                <Destaque rotulo="Autor do ano" titulo={est.autorTop.nome} detalhe={`${est.autorTop.qtd} livros`} />
+                <Destaque
+                  rotulo="Autor do ano"
+                  titulo={est.autorTop.nome}
+                  detalhe={`${est.autorTop.qtd} livros`}
+                  icone={
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  }
+                />
               )}
               {est.maiorLivro && (
-                <Destaque rotulo="Maior calhamaço" titulo={est.maiorLivro.titulo} detalhe={`${est.maiorLivro.paginas} páginas`} />
+                <Destaque
+                  rotulo="Maior calhamaço"
+                  titulo={est.maiorLivro.titulo}
+                  detalhe={`${est.maiorLivro.paginas} páginas`}
+                  icone={
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                  }
+                />
               )}
               {est.melhorNota && (
-                <Destaque rotulo="Favorito do ano" titulo={est.melhorNota.titulo} detalhe={`nota ${notaFmt(est.melhorNota.nota)}`} />
+                <Destaque
+                  rotulo="Favorito do ano"
+                  titulo={est.melhorNota.titulo}
+                  detalhe={`nota ${notaFmt(est.melhorNota.nota)}`}
+                  icone={
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6 text-amora" fill="currentColor">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                  }
+                />
               )}
               {est.diasMedio !== null && (
-                <Destaque rotulo="Ritmo" titulo={`${Math.round(est.diasMedio)} dias por livro`} detalhe="tempo médio de leitura" />
+                <Destaque
+                  rotulo="Ritmo"
+                  titulo={`${Math.round(est.diasMedio)} dias por livro`}
+                  detalhe="tempo médio de leitura"
+                  icone={
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                  }
+                />
               )}
             </div>
 
