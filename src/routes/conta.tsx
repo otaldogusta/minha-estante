@@ -83,6 +83,23 @@ function PaginaConta() {
   const { sessao, pedidosRecuperacao } = Route.useLoaderData();
   const navigate = useNavigate();
   const router = useRouter();
+
+  const [statusPresenca, setStatusPresenca] = useState<"online" | "lendo" | "ocupado" | "invisivel">(
+    sessao.autenticado && (sessao as any).statusPresenca ? (sessao as any).statusPresenca : "online"
+  );
+  const [salvandoStatus, setSalvandoStatus] = useState(false);
+
+  async function mudarStatus(novoStatus: "online" | "lendo" | "ocupado" | "invisivel") {
+    setStatusPresenca(novoStatus);
+    setSalvandoStatus(true);
+    try {
+      await atualizarStatusPresenca({ data: { status: novoStatus } });
+      await router.invalidate();
+    } finally {
+      setSalvandoStatus(false);
+    }
+  }
+
   const [nome, setNome] = useState(sessao.autenticado ? sessao.nome : "");
   const [usuario, setUsuario] = useState(sessao.autenticado ? sessao.usuario : "");
   const [email, setEmail] = useState(sessao.autenticado ? (sessao.email ?? "") : "");
