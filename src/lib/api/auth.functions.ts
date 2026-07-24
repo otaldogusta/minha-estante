@@ -25,6 +25,15 @@ export const sessaoAtual = createServerFn({ method: "GET" }).handler(async () =>
   return { autenticado: true as const, id: u.id, nome: u.nome, usuario: u.usuario, email: row?.email ?? null };
 });
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export const entrar = createServerFn({ method: "POST" })
   .validator(z.object({ usuario: z.string().min(1).max(80), senha: z.string().min(1).max(200) }))
   .handler(async ({ data }) => {
@@ -32,8 +41,11 @@ export const entrar = createServerFn({ method: "POST" })
       .prepare("SELECT id, nome, usuario, senha_hash, carta_vista FROM usuarios WHERE usuario = ?")
       .bind(data.usuario.trim().toLowerCase())
       .first<{ id: number; nome: string; usuario: string; senha_hash: string; carta_vista: number }>();
-    // Mensagem única para usuário/senha errados (não revelar qual falhou).
-    if (!row || !(await verificarSenha(data.senha, row.senha_hash))) {
+    
+    const senhaValida = row ? await verificarSenha(data.senha, row.senha_hash) : false;
+    if (!row || !senhaValida) {
+      // Pequeno delay (600ms) para mitigar scripts de força bruta em massa
+      await new Promise((r) => setTimeout(r, 600));
       return { ok: false as const, erro: "Usuário ou senha incorretos." };
     }
     await criarSessao(row.id);
@@ -221,7 +233,7 @@ export const solicitarRecuperacao = createServerFn({ method: "POST" })
                 from: "Minha Estante <onboarding@resend.dev>",
                 to: [user.email],
                 subject: "Recuperar sua senha da Minha Estante",
-                html: `<p>Oi, ${user.nome}!</p><p>Recebemos um pedido para redefinir sua senha. O link vale por 24 horas:</p><p><a href="${link}">${link}</a></p><p>Se não foi você, ignore este email.</p>`,
+                html: `<p>Oi, ${escapeHtml(user.nome)}!</p><p>Recebemos um pedido para redefinir sua senha. O link vale por 24 horas:</p><p><a href="${link}">${link}</a></p><p>Se não foi você, ignore este email.</p>`,
               }),
               signal: AbortSignal.timeout(10000),
             });
@@ -271,9 +283,11 @@ export const redefinirSenha = createServerFn({ method: "POST" })
   });
 
 // Pedidos de recuperação dos OUTROS leitores (para a "recuperação pela casa":
-// quem está logado gera o link e passa pessoalmente para quem esqueceu).
+// Apenas a conta administradora principal da casa pode gerar o link e passar pessoalmente).
 export const listarPedidosRecuperacao = createServerFn({ method: "GET" }).handler(async () => {
   const u = await exigirUsuario();
+  // Restrição de segurança: Apenas a conta ID 1 (dono/administrador da casa) pode ver os tokens
+  if (u.id !== 1) return [];
   const { results } = await db()
     .prepare(
       `SELECT r.token, us.nome, r.criado_em FROM redefinicoes r

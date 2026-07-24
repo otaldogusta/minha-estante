@@ -99,6 +99,16 @@ export const enviarCarta = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     if (data.para === u.id) return { ok: false as const, erro: "Escolha outra pessoa." };
+    
+    // Rate limit: máximo 10 cartas enviadas na última hora (proteção contra abuso/spam)
+    const recentLetters = await db()
+      .prepare("SELECT COUNT(*) AS count FROM cartas WHERE de_usuario_id = ? AND criado_em >= datetime('now', '-1 hour')")
+      .bind(u.id)
+      .first<{ count: number }>();
+    if (recentLetters && recentLetters.count >= 10) {
+      return { ok: false as const, erro: "Você atingiu o limite de envio de cartas (máximo 10 por hora)." };
+    }
+
     const destino = await db().prepare("SELECT 1 FROM usuarios WHERE id = ?").bind(data.para).first();
     if (!destino) return { ok: false as const, erro: "Destinatário não encontrado." };
     if (data.livroCondicaoId) {
