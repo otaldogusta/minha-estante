@@ -50,8 +50,7 @@ function PaginaPerfil() {
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">{perfil.nome}</h1>
             <p className="mt-0.5 text-sm text-tinta-2">
-              a estante de {perfil.nome}
-              {perfil.souEu ? " (você)" : ""}
+              {perfil.souEu ? "Sua estante" : `a estante de ${perfil.nome}`}
             </p>
           </div>
         </div>
