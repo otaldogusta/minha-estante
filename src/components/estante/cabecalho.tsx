@@ -52,19 +52,27 @@ export function Cabecalho({
     if (!navRef.current) return;
     const activeEl = navRef.current.querySelector<HTMLElement>("[data-active='true']");
     if (activeEl) {
-      activeEl.scrollIntoView({
+      const container = navRef.current;
+      const elLeft = activeEl.offsetLeft;
+      const elWidth = activeEl.offsetWidth;
+      const containerWidth = container.offsetWidth;
+      container.scrollTo({
+        left: Math.max(0, elLeft - containerWidth / 2 + elWidth / 2),
         behavior: "smooth",
-        block: "nearest",
-        inline: "center",
       });
     }
   }, [paginaAtiva]);
 
   const handleTabClick = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.scrollIntoView({
+    if (!navRef.current) return;
+    const container = navRef.current;
+    const target = e.currentTarget;
+    const elLeft = target.offsetLeft;
+    const elWidth = target.offsetWidth;
+    const containerWidth = container.offsetWidth;
+    container.scrollTo({
+      left: Math.max(0, elLeft - containerWidth / 2 + elWidth / 2),
       behavior: "smooth",
-      block: "nearest",
-      inline: "center",
     });
   };
 
@@ -77,10 +85,10 @@ export function Cabecalho({
 
   return (
     <header className="sticky top-0 z-50 border-b border-papel-3/45 bg-papel/85 backdrop-blur-lg shadow-xs">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-1 px-2.5 sm:gap-3 sm:px-6">
         
         {/* Esquerda: Logo Minha Estante */}
-        <Link to="/" className="flex items-center gap-2 spring-bounce shrink-0" title="Minha Estante - Página Inicial">
+        <Link to="/" className="flex items-center gap-1.5 spring-bounce shrink-0" title="Minha Estante - Página Inicial">
           <span aria-hidden className="inline-flex gap-[3px]">
             <span className="inline-block h-5 w-[5px] rounded-sm bg-amora" />
             <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
@@ -93,12 +101,12 @@ export function Cabecalho({
 
         {/* Centro: > Scroll Abas < */}
         <nav ref={navRef} className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-start sm:justify-center overflow-x-auto overflow-y-hidden no-scrollbar py-1 scroll-smooth">
-          <div className="flex items-center gap-1 sm:gap-1.5 whitespace-nowrap px-1">
+          <div className="flex items-center gap-0.5 sm:gap-1.5 whitespace-nowrap px-0.5">
             <Link
               to="/"
               data-active={paginaAtiva === "estante"}
               onClick={handleTabClick}
-              className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "estante"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -111,20 +119,21 @@ export function Cabecalho({
               params={{ ano: String(new Date().getFullYear()) }}
               data-active={paginaAtiva === "retrospectiva"}
               onClick={handleTabClick}
-              className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "retrospectiva"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
               }`}
             >
-              Retrospectiva
+              <span className="md:hidden">Retro</span>
+              <span className="hidden md:inline">Retrospectiva</span>
             </Link>
             <Link
               to="/cartas"
               aria-label="Cartas"
               data-active={paginaAtiva === "cartas"}
               onClick={handleTabClick}
-              className={`relative spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`relative spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "cartas"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
@@ -141,7 +150,7 @@ export function Cabecalho({
               to="/leitores"
               data-active={paginaAtiva === "leitores"}
               onClick={handleTabClick}
-              className={`spring-bounce rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
+              className={`spring-bounce rounded-full px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm shrink-0 cursor-pointer ${
                 paginaAtiva === "leitores"
                   ? "font-semibold text-amora bg-amora-clara/65 shadow-xs"
                   : "text-tinta-2 hover:bg-papel-2/70 hover:text-tinta"
