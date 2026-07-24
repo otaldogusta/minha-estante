@@ -135,15 +135,15 @@ function PaginaRetrospectiva() {
           </div>
         ) : (
           <>
-            <div className="surgir mt-10 grid grid-cols-4 gap-1 sm:gap-4 rounded-3xl bg-tinta px-2 py-6 text-papel sm:px-6 sm:py-8">
+            <div className="surgir mt-10 grid grid-cols-4 gap-1 sm:gap-4 rounded-3xl bg-tinta px-1.5 py-6 text-papel sm:px-6 sm:py-8">
               {[
                 { rotulo: "livros lidos", n: est.livros, f: undefined as ((n: number) => string) | undefined },
                 { rotulo: "páginas viradas", n: est.paginas, f: undefined },
                 { rotulo: "nota média", n: Math.round((est.notaMedia ?? 0) * 10), f: (v: number) => notaFmt(v / 10) },
                 { rotulo: "investidos em livros", n: Math.round(est.gasto), f: (v: number) => brl(v) },
               ].map((i) => (
-                <div key={i.rotulo} className="text-center min-w-0 px-0.5">
-                  <p className="font-num text-base sm:text-3xl md:text-4xl truncate font-medium">
+                <div key={i.rotulo} className="text-center min-w-0 px-0.5 flex flex-col justify-center items-center">
+                  <p className="font-num text-[11px] min-[380px]:text-xs sm:text-2xl md:text-3xl lg:text-4xl font-medium whitespace-nowrap tracking-tight">
                     <Contador ate={i.n} formatar={i.f} />
                   </p>
                   <p className="mt-1 text-[10px] sm:text-sm text-papel/75 leading-tight">{i.rotulo}</p>
