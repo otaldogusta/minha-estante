@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { listarLivros } from "../lib/api/livros.functions";
@@ -14,6 +14,137 @@ export const Route = createFileRoute("/retrospectiva/$ano")({
   loader: () => listarLivros(),
   component: PaginaRetrospectiva,
 });
+
+// Seletor interativo de ano por arrasto vertical / scroll / setas
+function SeletorAnoVertical({ anoAtual, anos }: { anoAtual: number; anos: number[] }) {
+  const navigate = useNavigate();
+  const [arrastando, setArrastando] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [direcao, setDirecao] = useState<"up" | "down">("up");
+
+  const idx = anos.indexOf(anoAtual);
+  // anos ordenado do mais recente para o mais antigo: [2026, 2025, 2024]
+  const temAnterior = idx > 0;
+  const temProximo = idx < anos.length - 1;
+
+  function irPara(novoAno: number, dir: "up" | "down") {
+    if (novoAno === anoAtual) return;
+    setDirecao(dir);
+    navigate({ to: "/retrospectiva/$ano", params: { ano: String(novoAno) } });
+  }
+
+  function subir() {
+    if (temAnterior) irPara(anos[idx - 1], "down");
+  }
+
+  function descer() {
+    if (temProximo) irPara(anos[idx + 1], "up");
+  }
+
+  // Arraste por Mouse
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setArrastando(true);
+    setStartY(e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!arrastando) return;
+    const diff = e.clientY - startY;
+    if (diff < -25) {
+      setArrastando(false);
+      descer();
+    } else if (diff > 25) {
+      setArrastando(false);
+      subir();
+    }
+  };
+
+  const handleMouseUp = () => setArrastando(false);
+
+  // Arraste por Toque Mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const diff = e.touches[0].clientY - startY;
+    if (diff < -25) {
+      descer();
+    } else if (diff > 25) {
+      subir();
+    }
+  };
+
+  // Scroll com a roda do Mouse
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.deltaY > 15) {
+      descer();
+    } else if (e.deltaY < -15) {
+      subir();
+    }
+  };
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onWheel={handleWheel}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowUp") subir();
+        if (e.key === "ArrowDown") descer();
+      }}
+      className="group relative inline-flex items-center gap-2.5 cursor-ns-resize select-none focus:outline-none py-1"
+      title="Arraste para cima/baixo ou use o scroll para mudar de ano"
+    >
+      <div className="relative overflow-hidden h-14 sm:h-16 flex items-center pr-1">
+        <h1
+          key={anoAtual}
+          className={`font-display text-5xl sm:text-6xl font-semibold tracking-tight text-amora inline-block ${
+            direcao === "up" ? "animate-slide-up" : "animate-slide-down"
+          }`}
+        >
+          {anoAtual}
+        </h1>
+      </div>
+
+      <div className="flex flex-col text-amora/35 group-hover:text-amora transition-colors">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            subir();
+          }}
+          disabled={!temAnterior}
+          className="p-0.5 hover:text-amora-escura disabled:opacity-15 cursor-pointer transition-opacity"
+          title="Ano mais recente"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 15l-6-6-6 6" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            descer();
+          }}
+          disabled={!temProximo}
+          className="p-0.5 hover:text-amora-escura disabled:opacity-15 cursor-pointer transition-opacity"
+          title="Ano anterior"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // Contador animado (re-executa em toda navegação ou quando o ano muda).
 function Contador({ ate, formatar }: { ate: number; formatar?: (n: number) => string }) {
@@ -110,7 +241,7 @@ function PaginaRetrospectiva() {
         <div className="mt-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-tinta-2">Retrospectiva de leitura</p>
-            <h1 className="font-display text-5xl font-semibold tracking-tight text-amora md:text-6xl">{anoNum}</h1>
+            <SeletorAnoVertical anoAtual={anoNum} anos={abasAnos} />
           </div>
           <div className="flex gap-2">
             {abasAnos.map((a) => (
