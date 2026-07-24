@@ -9,10 +9,12 @@ import { exigirLogin } from "../lib/exigir-login";
 export const Route = createFileRoute("/leitores")({
   beforeLoad: () => exigirLogin(),
   loader: async () => {
-    const [leitores, convites] = await Promise.all([
+    const [leitoresRes, convitesRes] = await Promise.allSettled([
       listarLeitores(),
       listarConvites(),
     ]);
+    const leitores = leitoresRes.status === "fulfilled" ? leitoresRes.value ?? [] : [];
+    const convites = convitesRes.status === "fulfilled" ? convitesRes.value ?? [] : [];
     return { leitores, convites };
   },
   component: PaginaLeitores,
@@ -30,7 +32,7 @@ function PaginaLeitores() {
           <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">Leitores</h1>
           <button
             onClick={() => setModalAberto(true)}
-            className="rounded-xl border border-amora px-4 py-2 text-sm font-medium text-amora transition-colors hover:bg-amora hover:text-papel active:translate-y-[1px]"
+            className="spring-bounce rounded-xl border border-amora px-4 py-2 text-sm font-medium text-amora transition-colors hover:bg-amora hover:text-papel active:translate-y-[1px] cursor-pointer"
           >
             + Convidar
           </button>
@@ -38,28 +40,39 @@ function PaginaLeitores() {
         <p className="mt-1 text-tinta-2">As estantes desta casa. Cada perfil mostra só o que a pessoa deixou público.</p>
 
         <div className="mt-8 space-y-4">
-          {leitores.map((l) => (
-            <Link
-              key={l.usuario}
-              to="/leitor/$usuario"
-              params={{ usuario: l.usuario }}
-              className="card-surface group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora">
-                {l.nome.charAt(0).toUpperCase()}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora">{l.nome}</p>
-                <p className="mt-0.5 truncate text-sm text-tinta-2">
-                  {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
-                  {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
-                </p>
-              </div>
-              <span aria-hidden className="text-tinta-3 transition-transform duration-300 motion-safe:group-hover:translate-x-1">
-                →
-              </span>
-            </Link>
-          ))}
+          {leitores.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-tinta-3 p-8 text-center">
+              <p className="font-display text-lg text-tinta">Nenhum outro leitor encontrado</p>
+              <p className="mt-1 text-sm text-tinta-2">Use o botão "+ Convidar" para convidar pessoas para a sua estante.</p>
+            </div>
+          ) : (
+            leitores.map((l) => {
+              const nome = l.nome || l.usuario || "Leitor";
+              const inicial = nome.charAt(0).toUpperCase();
+              return (
+                <Link
+                  key={l.usuario}
+                  to="/leitor/$usuario"
+                  params={{ usuario: l.usuario }}
+                  className="card-surface spring-bounce group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
+                >
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora font-semibold">
+                    {inicial}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors">{nome}</p>
+                    <p className="mt-0.5 truncate text-sm text-tinta-2">
+                      {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
+                      {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
+                    </p>
+                  </div>
+                  <span aria-hidden className="text-tinta-3 transition-transform duration-300 motion-safe:group-hover:translate-x-1">
+                    →
+                  </span>
+                </Link>
+              );
+            })
+          )}
         </div>
       </main>
 
