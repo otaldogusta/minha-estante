@@ -205,7 +205,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       let statusPresenca: StatusPresenca = "offline";
       if (customStatus === "invisivel") {
         statusPresenca = "offline";
-      } else if (customStatus && customStatus !== "online") {
+      } else if (customStatus === "online" || customStatus === "lendo" || customStatus === "ocupado") {
         statusPresenca = customStatus;
       } else if (estaOnline) {
         statusPresenca = "online";
