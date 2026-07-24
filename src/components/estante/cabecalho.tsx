@@ -100,17 +100,17 @@ export function Cabecalho({
           </span>
         </Link>
 
-        {/* Centro: Abas de Navegação (Track com indicador pill deslizante de 300ms cubic-bezier) */}
+        {/* Centro: Abas de Navegação (Track limpo sem container externo) */}
         <nav className="flex-1 min-w-0 mx-1 sm:mx-3 flex items-center justify-center overflow-x-auto no-scrollbar py-1">
           <div
             ref={trackRef}
-            className="relative flex items-center gap-0.5 sm:gap-1 p-1 rounded-full bg-papel-2/60 border border-papel-3/40 whitespace-nowrap"
+            className="relative flex items-center gap-0.5 sm:gap-1 whitespace-nowrap"
           >
             {/* Pill Ativo Deslizante */}
             {pillStyle.width > 0 && (
               <span
                 aria-hidden
-                className="absolute top-1 bottom-1 rounded-full bg-amora-clara/80 shadow-xs transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
+                className="absolute top-0 bottom-0 rounded-full bg-amora-clara/75 shadow-xs transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none"
                 style={{
                   left: `${pillStyle.left}px`,
                   width: `${pillStyle.width}px`,
