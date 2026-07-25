@@ -34,8 +34,7 @@ export const obterLivro = createServerFn({ method: "GET" })
       .prepare("SELECT * FROM livros WHERE id = ? AND usuario_id = ?")
       .bind(data.id, u.id)
       .first<Livro>();
-    if (!livro) throw new Error("Livro não encontrado");
-    return livro;
+    return livro || null;
   });
 
 const livroInput = z.object({

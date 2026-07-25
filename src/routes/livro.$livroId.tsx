@@ -45,18 +45,11 @@ export const Route = createFileRoute("/livro/$livroId")({
   beforeLoad: () => exigirLogin(),
   validateSearch: z.object({ concluir: z.boolean().optional() }),
   loader: async ({ params }) => {
-    try {
-      const id = Number(params.livroId);
-      if (isNaN(id) || id <= 0) throw notFound();
-      const livro = await obterLivro({ data: { id } });
-      if (!livro) throw notFound();
-      return livro;
-    } catch (err: any) {
-      if (err?.isNotFound || err?.message === "Livro não encontrado" || String(err?.message || "").includes("não encontrado")) {
-        throw notFound();
-      }
-      throw err;
-    }
+    const id = Number(params.livroId);
+    if (isNaN(id) || id <= 0) throw notFound();
+    const livro = await obterLivro({ data: { id } });
+    if (!livro) throw notFound();
+    return livro;
   },
   notFoundComponent: LivroNaoEncontrado,
   component: PaginaLivro,

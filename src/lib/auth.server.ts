@@ -84,17 +84,12 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
 
   if (!cached || cached.expires <= now) {
     try {
-      await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT DEFAULT (datetime('now'))").run();
-    } catch {
-      // Coluna já existe
-    }
-    try {
       await db()
         .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
         .bind(token)
         .run();
     } catch {
-      // Silencioso
+      // Silencioso se a coluna não existir
     }
   }
 
