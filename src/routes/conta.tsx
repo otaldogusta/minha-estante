@@ -383,12 +383,6 @@ function PaginaConta() {
         </button>
 
         {pedidosRecuperacao.length > 0 && <SecaoRecuperacao pedidos={pedidosRecuperacao} />}
-
-        <p className="mt-8 text-center">
-          <Link to="/carta" className="font-display text-sm italic text-amora underline decoration-amora/40 underline-offset-4 hover:decoration-amora">
-            Reler a primeira página do diário
-          </Link>
-        </p>
       </main>
 
       {/* Modal de Confirmação para Descartar Alterações Não Salvas */}
