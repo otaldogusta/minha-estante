@@ -160,7 +160,10 @@ export function FormularioLivro({
 
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-tinta/65 backdrop-blur-xs p-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
             <span className="rounded-full bg-papel/95 px-3 py-1.5 text-xs font-semibold text-tinta shadow-md flex items-center gap-1.5">
-              <span>📷</span>
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-amora" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
               <span>{v.capa ? "Alterar capa" : "Adicionar capa"}</span>
             </span>
             {v.capa && (
@@ -170,9 +173,12 @@ export function FormularioLivro({
                   e.stopPropagation();
                   setModalRemoverCapaAberto(true);
                 }}
-                className="mt-1 text-xs text-papel/90 hover:text-white hover:underline cursor-pointer"
+                className="mt-1 flex items-center gap-1 text-xs text-papel/90 hover:text-white hover:underline cursor-pointer"
               >
-                🗑️ Remover capa
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                </svg>
+                <span>Remover capa</span>
               </button>
             )}
           </div>
@@ -182,9 +188,12 @@ export function FormularioLivro({
           <button
             type="button"
             onClick={() => setModalCapaAberto(true)}
-            className="inline-flex items-center justify-center md:justify-start gap-1 font-medium text-amora hover:underline cursor-pointer"
+            className="inline-flex items-center justify-center md:justify-start gap-1.5 font-medium text-amora hover:underline cursor-pointer"
           >
-            <span>✨ {v.capa ? "Alterar foto da capa" : "+ Adicionar foto da capa"}</span>
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14m-7-7h14" />
+            </svg>
+            <span>{v.capa ? "Alterar foto da capa" : "Adicionar foto da capa"}</span>
           </button>
           <button
             type="button"
@@ -192,9 +201,13 @@ export function FormularioLivro({
               const query = encodeURIComponent(`${v.titulo || ""} ${v.autor || ""} capa livro edicao`);
               window.open(`https://www.google.com/search?tbm=isch&q=${query}`, "_blank");
             }}
-            className="inline-flex items-center justify-center md:justify-start gap-1 font-medium text-tinta-2 hover:text-amora hover:underline cursor-pointer"
+            className="inline-flex items-center justify-center md:justify-start gap-1.5 font-medium text-tinta-2 hover:text-amora hover:underline cursor-pointer"
           >
-            <span>🔍 Buscar capas no Google</span>
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-tinta-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <span>Buscar capas no Google</span>
           </button>
         </div>
       </div>
@@ -617,20 +630,27 @@ function ModalGerenciadorCapa({
           <button
             type="button"
             onClick={() => setAba("upload")}
-            className={`flex-1 rounded-lg py-2 transition-colors cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors cursor-pointer ${
               aba === "upload" ? "bg-papel text-tinta shadow-xs" : "text-tinta-2 hover:text-tinta"
             }`}
           >
-            📁 Carregar foto (Drag & Drop)
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-amora" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m4-5l5-5 5 5m-5-5v12" />
+            </svg>
+            <span>Carregar foto (Drag & Drop)</span>
           </button>
           <button
             type="button"
             onClick={() => setAba("url")}
-            className={`flex-1 rounded-lg py-2 transition-colors cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors cursor-pointer ${
               aba === "url" ? "bg-papel text-tinta shadow-xs" : "text-tinta-2 hover:text-tinta"
             }`}
           >
-            🔗 Link da Imagem (URL)
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-amora" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+            </svg>
+            <span>Link da Imagem (URL)</span>
           </button>
         </div>
 
@@ -648,10 +668,16 @@ function ModalGerenciadorCapa({
           >
             <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" id="capa-file-input" />
             <label htmlFor="capa-file-input" className="cursor-pointer flex flex-col items-center">
-              <span className="text-4xl mb-2">📸</span>
+              <div className="rounded-2xl bg-amora-clara p-3.5 mb-3 text-amora shadow-xs">
+                <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+              </div>
               <p className="font-medium text-tinta text-base">Arraste uma foto da capa aqui</p>
               <p className="text-xs text-tinta-3 mt-1">ou clique para escolher do seu computador</p>
-              <span className="mt-4 rounded-full bg-amora-clara px-4 py-1.5 text-xs font-semibold text-amora shadow-xs">
+              <span className="mt-4 rounded-full bg-amora px-4 py-1.5 text-xs font-medium text-papel shadow-xs hover:bg-amora-escura transition-colors">
                 {processando ? "Otimizando capa..." : "Escolher arquivo"}
               </span>
             </label>
@@ -677,9 +703,13 @@ function ModalGerenciadorCapa({
                 const query = encodeURIComponent(`${titulo || ""} ${autor || ""} capa livro edicao`);
                 window.open(`https://www.google.com/search?tbm=isch&q=${query}`, "_blank");
               }}
-              className="text-xs font-medium text-amora hover:underline cursor-pointer flex items-center gap-1"
+              className="text-xs font-medium text-amora hover:underline cursor-pointer flex items-center gap-1.5"
             >
-              🔍 Buscar capas no Google Imagens
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <span>Buscar capas no Google Imagens</span>
             </button>
           </div>
         )}
