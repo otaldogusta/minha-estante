@@ -58,7 +58,7 @@ const livroInput = z.object({
   adaptacao: z.boolean().default(false),
   vi_adaptacao: z.boolean().default(false),
   valor: z.number().min(0).max(100000).nullish(),
-  capa: z.string().url().max(600).nullish(),
+  capa: z.string().max(2000000).nullish(),
   sinopse: z.string().max(2000).nullish(),
   pagina_atual: z.number().int().min(0).max(20000).nullish(),
   privado: z.boolean().default(false),
