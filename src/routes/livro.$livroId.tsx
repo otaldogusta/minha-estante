@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter, notFound } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { z } from "zod";
 
@@ -13,10 +13,52 @@ import { Celebracao } from "../components/estante/celebracao";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
 
+function LivroNaoEncontrado() {
+  return (
+    <div className="min-h-dvh bg-papel">
+      <Cabecalho />
+      <main className="mx-auto max-w-md px-4 py-20 text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-amora-clara text-amora shadow-xs">
+          <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+            <path d="M9 10h6" />
+          </svg>
+        </div>
+        <h1 className="mt-6 font-display text-2xl font-semibold text-tinta">Livro não encontrado</h1>
+        <p className="mt-2 text-sm text-tinta-2 leading-relaxed">
+          Este livro não existe na sua estante ou pode ter sido removido.
+        </p>
+        <div className="mt-8">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-full bg-amora px-6 py-2.5 text-sm font-medium text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs"
+          >
+            ← Voltar para a estante
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/livro/$livroId")({
   beforeLoad: () => exigirLogin(),
   validateSearch: z.object({ concluir: z.boolean().optional() }),
-  loader: ({ params }) => obterLivro({ data: { id: Number(params.livroId) } }),
+  loader: async ({ params }) => {
+    try {
+      const id = Number(params.livroId);
+      if (isNaN(id) || id <= 0) throw notFound();
+      const livro = await obterLivro({ data: { id } });
+      if (!livro) throw notFound();
+      return livro;
+    } catch (err: any) {
+      if (err?.isNotFound || err?.message === "Livro não encontrado" || String(err?.message || "").includes("não encontrado")) {
+        throw notFound();
+      }
+      throw err;
+    }
+  },
+  notFoundComponent: LivroNaoEncontrado,
   component: PaginaLivro,
 });
 
