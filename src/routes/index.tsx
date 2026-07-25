@@ -138,6 +138,106 @@ function CartaoLendoAgora({ livro }: { livro: Livro }) {
   );
 }
 
+function MetaLeituraMinimalista({
+  lidosAno,
+  metaInicial = 12,
+}: {
+  lidosAno: number;
+  metaInicial?: number;
+}) {
+  const [meta, setMeta] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const salvacao = localStorage.getItem("minha-estante-meta-ano");
+      if (salvacao) return parseInt(salvacao, 10) || metaInicial;
+    }
+    return metaInicial;
+  });
+  const [editando, setEditando] = useState(false);
+  const [tempMeta, setTempMeta] = useState(String(meta));
+
+  function salvarMeta() {
+    const n = parseInt(tempMeta, 10);
+    if (!isNaN(n) && n > 0 && n <= 500) {
+      setMeta(n);
+      localStorage.setItem("minha-estante-meta-ano", String(n));
+      notificar("Meta de leitura atualizada!");
+    }
+    setEditando(false);
+  }
+
+  const mesAtual = new Date().getMonth() + 1; // 1 to 12
+  const fracaoAno = mesAtual / 12;
+  const metaEsperada = Math.round(meta * fracaoAno);
+  const diferenca = lidosAno - metaEsperada;
+
+  let badgeRitmo = { texto: "⚡ No ritmo", classe: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" };
+  if (diferenca > 0) {
+    badgeRitmo = { texto: `🔥 +${diferenca} à frente`, classe: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
+  } else if (diferenca < 0) {
+    badgeRitmo = { texto: `📖 ${diferenca} p/ meta`, classe: "bg-amber-500/15 text-amber-600 border-amber-500/30" };
+  }
+
+  const percentual = Math.min(100, Math.round((lidosAno / meta) * 100));
+
+  return (
+    <div className="mb-6 rounded-2xl border border-papel-3 bg-papel-2/60 p-4 transition-all hover:border-amora/40 shadow-xs">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="font-display text-sm font-semibold text-tinta">Meta {new Date().getFullYear()}</span>
+          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeRitmo.classe}`}>
+            {badgeRitmo.texto}
+          </span>
+        </div>
+
+        {editando ? (
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              min="1"
+              max="500"
+              value={tempMeta}
+              onChange={(e) => setTempMeta(e.target.value)}
+              className="w-14 rounded-lg border border-amora bg-papel px-2 py-0.5 text-center font-num text-xs text-tinta focus:outline-none"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") salvarMeta();
+                if (e.key === "Escape") setEditando(false);
+              }}
+            />
+            <button
+              onClick={salvarMeta}
+              className="rounded-lg bg-amora px-2.5 py-0.5 text-xs text-papel font-medium hover:bg-amora-escura transition-colors cursor-pointer"
+            >
+              OK
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setTempMeta(String(meta));
+              setEditando(true);
+            }}
+            className="group flex items-center gap-1 text-xs text-tinta-2 hover:text-amora transition-colors cursor-pointer"
+            title="Clique para alterar sua meta do ano"
+          >
+            <span className="font-num font-semibold text-tinta group-hover:text-amora">{lidosAno}</span>
+            <span>/</span>
+            <span className="font-num text-tinta-3 group-hover:text-amora underline decoration-dashed underline-offset-2">{meta} livros</span>
+          </button>
+        )}
+      </div>
+
+      {/* Barra de Progresso Minimalista Animada */}
+      <div className="mt-3 h-2 w-full rounded-full bg-papel-3 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-amora to-amora-escura transition-all duration-500 ease-out"
+          style={{ width: `${percentual}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function FaixaNumeros({ livros }: { livros: Livro[] }) {
   const anoAtual = new Date().getFullYear();
   const est = calcularEstatisticas(livros, anoAtual);
@@ -149,6 +249,7 @@ function FaixaNumeros({ livros }: { livros: Livro[] }) {
   ];
   return (
     <section className="mx-auto mt-8 max-w-6xl px-4 sm:px-6">
+      <MetaLeituraMinimalista lidosAno={est.livros} />
       <div className="grid grid-cols-2 gap-x-2 gap-y-6 border-y border-papel-3 py-6 sm:grid-cols-4">
         {itens.map((i) => (
           <div key={i.rotulo} className="text-center px-1 min-w-0">
