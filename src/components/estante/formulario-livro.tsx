@@ -625,32 +625,32 @@ function ModalGerenciadorCapa({
           </button>
         </div>
 
-        {/* Seleção de Aba */}
+        {/* Seleção de Aba (Apenas Ícones) */}
         <div className="flex rounded-xl bg-papel-2 p-1 text-sm font-medium">
           <button
             type="button"
             onClick={() => setAba("upload")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors cursor-pointer ${
-              aba === "upload" ? "bg-papel text-tinta shadow-xs" : "text-tinta-2 hover:text-tinta"
+            title="Carregar foto (Drag & Drop)"
+            className={`flex-1 flex items-center justify-center rounded-lg py-2.5 transition-all cursor-pointer ${
+              aba === "upload" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
             }`}
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-amora" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m4-5l5-5 5 5m-5-5v12" />
             </svg>
-            <span>Carregar foto (Drag & Drop)</span>
           </button>
           <button
             type="button"
             onClick={() => setAba("url")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 transition-colors cursor-pointer ${
-              aba === "url" ? "bg-papel text-tinta shadow-xs" : "text-tinta-2 hover:text-tinta"
+            title="Link da Imagem (URL)"
+            className={`flex-1 flex items-center justify-center rounded-lg py-2.5 transition-all cursor-pointer ${
+              aba === "url" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
             }`}
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-amora" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
             </svg>
-            <span>Link da Imagem (URL)</span>
           </button>
         </div>
 
