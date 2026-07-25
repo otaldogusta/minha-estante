@@ -149,15 +149,9 @@ export function FormularioLivro({
     totalPaginas && v.pagina_atual !== null && v.pagina_atual !== undefined
       ? Math.min(100, Math.round((v.pagina_atual / totalPaginas) * 100))
       : null;
-
   return (
     <div className="grid gap-8 md:grid-cols-[180px_1fr]">
       <div className="mx-auto w-40 md:mx-0 flex flex-col items-center md:items-start">
-        {/* Estrelas da nota acima da capa (apenas as estrelas, sem o texto "Sua nota") */}
-        <div className="mb-2 flex justify-center md:justify-start">
-          <EstrelasInput valor={v.nota ?? null} onChange={(n) => set("nota", n)} />
-        </div>
-
         <div
           onClick={() => setModalCapaAberto(true)}
           className="group relative cursor-pointer overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl hover:scale-[1.02] w-full"
@@ -176,7 +170,12 @@ export function FormularioLivro({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-col gap-1.5 text-xs text-center md:text-left">
+        {/* Estrelas da nota abaixo do livro (apenas as estrelas) */}
+        <div className="mt-3 flex justify-center md:justify-start">
+          <EstrelasInput valor={v.nota ?? null} onChange={(n) => set("nota", n)} />
+        </div>
+
+        <div className="mt-2.5 flex flex-col gap-1.5 text-xs text-center md:text-left">
           <button
             type="button"
             onClick={() => setModalCapaAberto(true)}
@@ -194,7 +193,7 @@ export function FormularioLivro({
               className="inline-flex items-center justify-center md:justify-start gap-1.5 text-tinta-3 hover:text-amora cursor-pointer transition-colors"
             >
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 01-2-2h4a2 2 0 012 2v2" />
+                <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
               </svg>
               <span>Remover capa</span>
             </button>
