@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { listarLeitores, type StatusPresenca } from "../lib/api/livros.functions";
 import { listarConvites, criarConvite, revogarConvite, sessaoAtual } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
+import { AvatarLeitor } from "../components/estante/avatar";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
 
