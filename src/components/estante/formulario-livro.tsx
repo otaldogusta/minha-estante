@@ -152,10 +152,15 @@ export function FormularioLivro({
 
   return (
     <div className="grid gap-8 md:grid-cols-[180px_1fr]">
-      <div className="mx-auto w-40 md:mx-0">
+      <div className="mx-auto w-40 md:mx-0 flex flex-col items-center md:items-start">
+        {/* Estrelas da nota acima da capa (apenas as estrelas, sem o texto "Sua nota") */}
+        <div className="mb-2 flex justify-center md:justify-start">
+          <EstrelasInput valor={v.nota ?? null} onChange={(n) => set("nota", n)} />
+        </div>
+
         <div
           onClick={() => setModalCapaAberto(true)}
-          className="group relative cursor-pointer overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl hover:scale-[1.02]"
+          className="group relative cursor-pointer overflow-hidden rounded-xl shadow-md transition-all hover:shadow-xl hover:scale-[1.02] w-full"
           title="Clique para alterar ou adicionar a capa"
         >
           <CapaLivro titulo={v.titulo || "Sem título"} autor={v.autor || ""} capa={v.capa ?? null} />
@@ -360,22 +365,16 @@ export function FormularioLivro({
         )}
 
         {(v.status === "lido" || v.status === "abandonado") && (
-          <>
-            <div>
-              <span className={rotulo}>Sua nota</span>
-              <EstrelasInput valor={v.nota ?? null} onChange={(n) => set("nota", n)} />
-            </div>
-            <label className={rotulo}>
-              Uma palavra para este livro
-              <input
-                className={`${campo} mt-1 max-w-xs`}
-                value={v.palavra ?? ""}
-                onChange={(e) => set("palavra", e.target.value || null)}
-                placeholder="Visceral, Transformador, Previsível..."
-                maxLength={40}
-              />
-            </label>
-          </>
+          <label className={rotulo}>
+            Uma palavra para este livro
+            <input
+              className={`${campo} mt-1 max-w-xs`}
+              value={v.palavra ?? ""}
+              onChange={(e) => set("palavra", e.target.value || null)}
+              placeholder="Visceral, Transformador, Previsível..."
+              maxLength={40}
+            />
+          </label>
         )}
 
         <label className={rotulo}>
