@@ -138,6 +138,14 @@ export function FormularioLivro({
     { valor: "abandonado", rotulo: "Abandonei" },
   ];
 
+  const [modoProgresso, setModoProgresso] = useState<"pagina" | "porcentagem">("pagina");
+
+  const totalPaginas = v.paginas && v.paginas > 0 ? v.paginas : null;
+  const pctCalculado =
+    totalPaginas && v.pagina_atual !== null && v.pagina_atual !== undefined
+      ? Math.min(100, Math.round((v.pagina_atual / totalPaginas) * 100))
+      : null;
+
   return (
     <div className="grid gap-8 md:grid-cols-[180px_1fr]">
       <div className="mx-auto w-40 md:mx-0">
@@ -151,6 +159,27 @@ export function FormularioLivro({
             placeholder="https://..."
           />
         </label>
+        <div className="mt-2 flex flex-col gap-1 text-xs">
+          <button
+            type="button"
+            onClick={() => {
+              const query = encodeURIComponent(`${v.titulo || ""} ${v.autor || ""} capa livro edicao`);
+              window.open(`https://www.google.com/search?tbm=isch&q=${query}`, "_blank");
+            }}
+            className="inline-flex items-center gap-1 font-medium text-amora hover:underline cursor-pointer"
+          >
+            <span>🔍 Buscar capas de edições</span>
+          </button>
+          {v.capa && (
+            <button
+              type="button"
+              onClick={() => set("capa", null)}
+              className="text-tinta-3 hover:text-amora text-left cursor-pointer"
+            >
+              Remover capa
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-5">
@@ -224,12 +253,13 @@ export function FormularioLivro({
             />
           </label>
           <label className={rotulo}>
-            Páginas
+            Páginas (da sua edição)
             <input
               className={`${campo} mt-1 font-num`}
               inputMode="numeric"
               value={v.paginas ?? ""}
               onChange={(e) => set("paginas", num(e.target.value.replace(/\D/g, "")))}
+              placeholder="Ex: 293 ou total do EPUB"
             />
           </label>
           <label className={rotulo}>
@@ -264,15 +294,52 @@ export function FormularioLivro({
                 <input type="date" className={`${campo} mt-1 font-num`} value={v.fim ?? ""} onChange={(e) => set("fim", e.target.value || null)} />
               </label>
             ) : (
-              <label className={rotulo}>
-                Página atual
-                <input
-                  className={`${campo} mt-1 font-num`}
-                  inputMode="numeric"
-                  value={v.pagina_atual ?? ""}
-                  onChange={(e) => set("pagina_atual", num(e.target.value.replace(/\D/g, "")))}
-                />
-              </label>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-tinta-2">
+                    {modoProgresso === "pagina" ? "Página atual" : "Porcentagem lida (%)"}
+                    {pctCalculado !== null && modoProgresso === "pagina" && (
+                      <span className="ml-1.5 font-num text-xs font-semibold text-amora">({pctCalculado}%)</span>
+                    )}
+                    {v.pagina_atual !== null && v.pagina_atual !== undefined && modoProgresso === "porcentagem" && (
+                      <span className="ml-1.5 font-num text-xs font-semibold text-amora">(Pág. {v.pagina_atual})</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setModoProgresso((m) => (m === "pagina" ? "porcentagem" : "pagina"))}
+                    className="text-xs font-medium text-amora hover:underline cursor-pointer"
+                  >
+                    {modoProgresso === "pagina" ? "Usar %" : "Usar Páginas"}
+                  </button>
+                </div>
+                {modoProgresso === "pagina" ? (
+                  <input
+                    className={`${campo} font-num`}
+                    inputMode="numeric"
+                    placeholder="Ex: 88"
+                    value={v.pagina_atual ?? ""}
+                    onChange={(e) => set("pagina_atual", num(e.target.value.replace(/\D/g, "")))}
+                  />
+                ) : (
+                  <input
+                    className={`${campo} font-num`}
+                    inputMode="numeric"
+                    placeholder="Ex: 30"
+                    value={pctCalculado ?? ""}
+                    onChange={(e) => {
+                      const p = num(e.target.value.replace(/\D/g, ""));
+                      if (p === null) {
+                        set("pagina_atual", null);
+                      } else {
+                        const total = totalPaginas || 100;
+                        const calcPag = Math.min(total, Math.round((Math.min(100, p) / 100) * total));
+                        set("pagina_atual", calcPag);
+                      }
+                    }}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}
