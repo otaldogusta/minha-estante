@@ -548,7 +548,8 @@ function ModalGerenciadorCapa({
   titulo: string;
   autor: string;
 }) {
-  const [aba, setAba] = useState<"upload" | "url">("upload");
+  const [arquivoInfo, setArquivoInfo] = useState<{ nome: string; tamanho: string } | null>(null);
+  const [progressoUpload, setProgressoUpload] = useState<number>(0);
   const [urlInput, setUrlInput] = useState(capaAtual || "");
   const [preview, setPreview] = useState<string | null>(capaAtual);
   const [arrastando, setArrastando] = useState(false);
@@ -559,6 +560,8 @@ function ModalGerenciadorCapa({
     if (aberto) {
       setUrlInput(capaAtual || "");
       setPreview(capaAtual);
+      setArquivoInfo(null);
+      setProgressoUpload(0);
       setErro(null);
     }
   }, [aberto, capaAtual]);
@@ -570,15 +573,31 @@ function ModalGerenciadorCapa({
       setErro("Por favor, selecione um arquivo de imagem válido.");
       return;
     }
+    const tamanhoFmt =
+      file.size < 1024 * 1024
+        ? `${(file.size / 1024).toFixed(1)} KB`
+        : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+
+    setArquivoInfo({ nome: file.name, tamanho: tamanhoFmt });
     setProcessando(true);
+    setProgressoUpload(30);
     setErro(null);
+
+    const timer1 = setTimeout(() => setProgressoUpload(70), 120);
+    const timer2 = setTimeout(() => setProgressoUpload(95), 250);
+
     try {
       const dataUrl = await redimensionarImagem(file);
       setPreview(dataUrl);
       setUrlInput(dataUrl);
+      setProgressoUpload(100);
     } catch {
       setErro("Não foi possível otimizar esta imagem.");
+      setArquivoInfo(null);
+      setProgressoUpload(0);
     } finally {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
       setProcessando(false);
     }
   }
@@ -597,14 +616,24 @@ function ModalGerenciadorCapa({
     }
   }
 
+  function limparArquivo() {
+    setArquivoInfo(null);
+    setProgressoUpload(0);
+    setPreview(capaAtual);
+    setUrlInput(capaAtual || "");
+  }
+
   return createPortal(
     <div className="modal-backdrop z-[70]" onClick={aoFechar}>
       <div
         className="relative w-full max-w-lg my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <h3 className="font-display text-xl font-semibold text-tinta">Alterar capa do livro</h3>
+        <div className="flex items-center justify-between border-b border-papel-3/50 pb-4">
+          <div>
+            <h3 className="font-display text-xl font-semibold text-tinta">Alterar capa do livro</h3>
+            <p className="text-xs text-tinta-2 mt-0.5">{titulo ? `"${titulo}"` : "Selecione uma imagem"}</p>
+          </div>
           <button
             type="button"
             onClick={aoFechar}
@@ -614,12 +643,12 @@ function ModalGerenciadorCapa({
           </button>
         </div>
 
-        {/* Seleção de Aba (Apenas Ícones) */}
+        {/* Seleção de Aba (Apenas Ícones KokonutUI) */}
         <div className="flex rounded-xl bg-papel-2 p-1 text-sm font-medium">
           <button
             type="button"
             onClick={() => setAba("upload")}
-            title="Carregar foto (Drag & Drop)"
+            title="Carregar arquivo (Drag & Drop)"
             className={`flex-1 flex items-center justify-center rounded-lg py-2.5 transition-all cursor-pointer ${
               aba === "upload" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
             }`}
@@ -644,32 +673,96 @@ function ModalGerenciadorCapa({
         </div>
 
         {aba === "upload" ? (
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setArrastando(true);
-            }}
-            onDragLeave={() => setArrastando(false)}
-            onDrop={handleDrop}
-            className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors cursor-pointer ${
-              arrastando ? "border-amora bg-amora-clara/20" : "border-papel-3 hover:border-amora/50 bg-papel-2/50"
-            }`}
-          >
-            <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" id="capa-file-input" />
-            <label htmlFor="capa-file-input" className="cursor-pointer flex flex-col items-center">
-              <div className="rounded-2xl bg-amora-clara p-3.5 mb-3 text-amora shadow-xs">
-                <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
+          <div className="space-y-4">
+            {/* Componente KokonutUI File Upload Dropzone */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setArrastando(true);
+              }}
+              onDragLeave={() => setArrastando(false)}
+              onDrop={handleDrop}
+              className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-7 text-center transition-all cursor-pointer group ${
+                arrastando
+                  ? "border-amora bg-amora-clara/30 scale-[1.01]"
+                  : "border-papel-3 hover:border-amora/60 bg-papel-2/40 hover:bg-papel-2/80"
+              }`}
+            >
+              <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" id="capa-file-input" />
+              <label htmlFor="capa-file-input" className="cursor-pointer flex flex-col items-center w-full">
+                <div className="rounded-2xl bg-amora-clara/70 p-4 mb-3 text-amora shadow-xs group-hover:scale-110 group-hover:bg-amora group-hover:text-papel transition-all duration-300">
+                  <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                    <path d="M12 12v9" />
+                    <path d="m16 16-4-4-4 4" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-tinta text-sm">
+                  {arrastando ? "Solte a imagem para carregar" : "Arraste e solte a capa do livro aqui"}
+                </p>
+                <p className="text-xs text-tinta-2 mt-1">ou clique para escolher do seu computador</p>
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-papel px-3 py-1 text-[11px] font-medium text-tinta-3 border border-papel-3">
+                  <span>Suporta PNG, JPG, WEBP até 10MB</span>
+                </div>
+              </label>
+            </div>
+
+            {/* KokonutUI File Upload Status Card */}
+            {arquivoInfo && (
+              <div className="rounded-2xl border border-papel-3 bg-papel-2 p-3.5 space-y-3 surgir shadow-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-12 w-9 shrink-0 overflow-hidden rounded-md border border-papel-3 bg-papel shadow-xs">
+                      {preview ? (
+                        <img src={preview} alt="Prévia da capa" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-amora-clara text-amora">
+                          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-tinta truncate">{arquivoInfo.nome}</p>
+                      <p className="text-[11px] text-tinta-3">{arquivoInfo.tamanho}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {progressoUpload === 100 ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600">
+                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Pronto
+                      </span>
+                    ) : (
+                      <span className="text-xs font-num text-amora font-medium">{progressoUpload}%</span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={limparArquivo}
+                      className="rounded-full p-1 text-tinta-3 hover:bg-papel-3 hover:text-amora transition-colors cursor-pointer"
+                      title="Remover arquivo"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progress Bar (KokonutUI style) */}
+                <div className="h-1.5 w-full rounded-full bg-papel-3 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amora transition-all duration-300 ease-out"
+                    style={{ width: `${progressoUpload}%` }}
+                  />
+                </div>
               </div>
-              <p className="font-medium text-tinta text-base">Arraste uma foto da capa aqui</p>
-              <p className="text-xs text-tinta-3 mt-1">ou clique para escolher do seu computador</p>
-              <span className="mt-4 rounded-full bg-amora px-4 py-1.5 text-xs font-medium text-papel shadow-xs hover:bg-amora-escura transition-colors">
-                {processando ? "Otimizando capa..." : "Escolher arquivo"}
-              </span>
-            </label>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -681,6 +774,7 @@ function ModalGerenciadorCapa({
                 onChange={(e) => {
                   setUrlInput(e.target.value);
                   setPreview(e.target.value || null);
+                  setArquivoInfo(null);
                 }}
                 placeholder="https://exemplo.com/capa.jpg"
                 className="w-full mt-1.5 rounded-xl border border-papel-3 bg-papel px-3.5 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none"
@@ -703,45 +797,65 @@ function ModalGerenciadorCapa({
           </div>
         )}
 
-        {erro && <p className="text-xs text-amora-escura">{erro}</p>}
+        {erro && <p className="text-xs text-rose-500 font-medium">{erro}</p>}
 
-        {/* Prévia Otimizada */}
-        {preview && (
+        {/* Prévia da capa quando não há card de upload ativo */}
+        {preview && !arquivoInfo && (
           <div className="flex items-center gap-4 rounded-2xl border border-papel-3 bg-papel-2 p-3">
-            <div className="w-16 shrink-0 overflow-hidden rounded-lg shadow-md aspect-[2/3] bg-papel-3">
+            <div className="w-12 shrink-0 overflow-hidden rounded-lg shadow-md aspect-[2/3] bg-papel-3">
               <img src={preview} alt="Prévia da capa" className="h-full w-full object-cover" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-tinta">Prévia da nova capa</p>
-              <p className="text-[11px] text-tinta-2 mt-0.5">Imagem comprimida em alta qualidade para carregamento instantâneo.</p>
+              <p className="text-xs font-semibold text-tinta">Capa atual selecionada</p>
+              <p className="text-[11px] text-tinta-2 mt-0.5">Imagem otimizada em alta resolução.</p>
             </div>
           </div>
         )}
 
         {/* Botões do Modal */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={aoFechar}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-tinta-2 hover:bg-papel-2 cursor-pointer transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (preview) {
-                aoAplicarCapa(preview);
+        <div className="flex items-center justify-between border-t border-papel-3/50 pt-4">
+          {capaAtual ? (
+            <button
+              type="button"
+              onClick={() => {
                 aoFechar();
-              } else {
-                setErro("Nenhuma imagem selecionada.");
-              }
-            }}
-            disabled={!preview || processando}
-            className="rounded-xl bg-amora px-5 py-2 text-sm font-medium text-papel hover:bg-amora-escura cursor-pointer transition-colors shadow-sm disabled:opacity-50"
-          >
-            Aplicar capa
-          </button>
+                aoAplicarCapa("");
+              }}
+              className="text-xs text-tinta-3 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+              </svg>
+              <span>Remover capa</span>
+            </button>
+          ) : (
+            <span />
+          )}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={aoFechar}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-tinta-2 hover:bg-papel-2 cursor-pointer transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (preview) {
+                  aoAplicarCapa(preview);
+                  aoFechar();
+                } else {
+                  setErro("Nenhuma imagem selecionada.");
+                }
+              }}
+              disabled={!preview || processando}
+              className="rounded-xl bg-amora px-5 py-2 text-sm font-medium text-papel hover:bg-amora-escura cursor-pointer transition-colors shadow-sm disabled:opacity-50"
+            >
+              Aplicar capa
+            </button>
+          </div>
         </div>
       </div>
     </div>,
