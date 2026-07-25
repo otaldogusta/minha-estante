@@ -180,20 +180,6 @@ export function FormularioLivro({
             </svg>
             <span>{v.capa ? "Alterar foto da capa" : "Adicionar foto da capa"}</span>
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              const query = encodeURIComponent(`${v.titulo || ""} ${v.autor || ""} capa livro edicao`);
-              window.open(`https://www.google.com/search?tbm=isch&q=${query}`, "_blank");
-            }}
-            className="inline-flex items-center justify-center md:justify-start gap-1.5 font-medium text-tinta-2 hover:text-amora hover:underline cursor-pointer"
-          >
-            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-tinta-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <span>Buscar capas no Google</span>
-          </button>
           {v.capa && (
             <button
               type="button"
@@ -201,7 +187,7 @@ export function FormularioLivro({
               className="inline-flex items-center justify-center md:justify-start gap-1.5 text-tinta-3 hover:text-amora cursor-pointer transition-colors"
             >
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 01-2-2h4a2 2 0 012 2v2" />
               </svg>
               <span>Remover capa</span>
             </button>
