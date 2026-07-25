@@ -6,6 +6,7 @@ import { salvarLivro } from "../../lib/api/livros.functions";
 import { GENEROS, FORMATOS, type Livro } from "../../lib/livros";
 import { EstrelasInput } from "./estrelas";
 import { CapaLivro } from "./capa-livro";
+import { notificar } from "../../lib/toast";
 
 export type ValoresLivro = Partial<Omit<Livro, "id">> & { id?: number };
 
@@ -124,6 +125,7 @@ export function FormularioLivro({
           privado: !!v.privado,
         },
       });
+      notificar("Alterações salvas com sucesso!");
       aoSalvar(res.id);
     } catch {
       setErro("Não foi possível salvar. Tente de novo.");
@@ -438,7 +440,10 @@ export function FormularioLivro({
       <ModalGerenciadorCapa
         aberto={modalCapaAberto}
         aoFechar={() => setModalCapaAberto(false)}
-        aoAplicarCapa={(novaCapa) => set("capa", novaCapa)}
+        aoAplicarCapa={(novaCapa) => {
+          set("capa", novaCapa);
+          notificar("Capa do livro selecionada!");
+        }}
         capaAtual={v.capa ?? null}
         titulo={v.titulo || ""}
         autor={v.autor || ""}
@@ -448,7 +453,10 @@ export function FormularioLivro({
       <ModalConfirmarRemoverCapa
         aberto={modalRemoverCapaAberto}
         aoFechar={() => setModalRemoverCapaAberto(false)}
-        aoConfirmar={() => set("capa", null)}
+        aoConfirmar={() => {
+          set("capa", null);
+          notificar("Capa do livro removida.");
+        }}
       />
 
       {/* Modal de Confirmação para Descartar Alterações Não Salvas no Livro */}

@@ -11,6 +11,7 @@ import { Estrelas } from "../components/estante/estrelas";
 import { FormularioLivro } from "../components/estante/formulario-livro";
 import { Celebracao } from "../components/estante/celebracao";
 import { exigirLogin } from "../lib/exigir-login";
+import { notificar } from "../lib/toast";
 
 export const Route = createFileRoute("/livro/$livroId")({
   beforeLoad: () => exigirLogin(),
@@ -33,6 +34,7 @@ function PaginaLivro() {
 
   async function excluir() {
     await excluirLivro({ data: { id: livro.id } });
+    notificar("Livro removido da estante.");
     navigate({ to: "/" });
   }
 

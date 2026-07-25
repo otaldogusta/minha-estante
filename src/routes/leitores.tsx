@@ -5,6 +5,7 @@ import { listarLeitores, type StatusPresenca } from "../lib/api/livros.functions
 import { listarConvites, criarConvite, revogarConvite, sessaoAtual } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { exigirLogin } from "../lib/exigir-login";
+import { notificar } from "../lib/toast";
 
 export const Route = createFileRoute("/leitores")({
   beforeLoad: () => exigirLogin(),
@@ -187,6 +188,7 @@ function ModalConvites({
     try {
       await criarConvite();
       await router.invalidate();
+      notificar("Convite de leitor gerado!");
     } finally {
       setGerando(false);
     }
@@ -197,6 +199,7 @@ function ModalConvites({
     try {
       await revogarConvite({ data: { codigo } });
       await router.invalidate();
+      notificar("Convite revogado.");
     } finally {
       setRevogando(null);
     }
@@ -206,6 +209,7 @@ function ModalConvites({
     try {
       await navigator.clipboard.writeText(linkDe(codigo));
       setCopiado(codigo);
+      notificar("Link do convite copiado!");
       setTimeout(() => setCopiado(null), 2000);
     } catch {
       // sem clipboard

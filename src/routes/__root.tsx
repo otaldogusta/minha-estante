@@ -212,12 +212,74 @@ function TopProgressBar() {
   );
 }
 
+function ToastContainer() {
+  const [toasts, setToasts] = useState<Array<{ id: string; mensagem: string; tipo: "sucesso" | "erro" | "info" }>>([]);
+
+  useEffect(() => {
+    const handleToast = (e: Event) => {
+      const customEv = e as CustomEvent<{ mensagem: string; tipo: "sucesso" | "erro" | "info" }>;
+      if (!customEv.detail || !customEv.detail.mensagem) return;
+
+      const id = Math.random().toString(36).substring(2, 9);
+      const novoToast = {
+        id,
+        mensagem: customEv.detail.mensagem,
+        tipo: customEv.detail.tipo || "sucesso",
+      };
+
+      setToasts((prev) => [...prev.slice(-2), novoToast]);
+
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 3500);
+    };
+
+    window.addEventListener("app:toast", handleToast);
+    return () => window.removeEventListener("app:toast", handleToast);
+  }, []);
+
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none px-4 w-full max-w-sm">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className="pointer-events-auto flex items-center gap-2.5 rounded-full border border-papel-3 bg-tinta/95 text-papel px-5 py-3 text-sm font-medium shadow-2xl backdrop-blur-md surgir transition-all"
+        >
+          {t.tipo === "sucesso" && (
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+          {t.tipo === "erro" && (
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+          )}
+          {t.tipo === "info" && (
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          )}
+          <span>{t.mensagem}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
       <TopProgressBar />
+      <ToastContainer />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <div className="page-layout-transition">
         <Outlet />

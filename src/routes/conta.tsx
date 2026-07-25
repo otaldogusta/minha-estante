@@ -13,6 +13,7 @@ import { sincronizarPlanilhaGoogle } from "../lib/api/livros.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { CampoSenha } from "../components/estante/campo-senha";
 import { exigirLogin } from "../lib/exigir-login";
+import { notificar } from "../lib/toast";
 
 export const Route = createFileRoute("/conta")({
   beforeLoad: () => exigirLogin(),
@@ -108,6 +109,7 @@ function PaginaConta() {
     try {
       await atualizarStatusPresenca({ data: { status: novoStatus } });
       await router.invalidate();
+      notificar("Status de presença alterado!");
     } finally {
       setSalvandoStatus(false);
     }
@@ -181,6 +183,7 @@ function PaginaConta() {
         setNovaSenha("");
         setConfirmar("");
         await router.invalidate();
+        notificar("Dados da conta atualizados com sucesso!");
       } else {
         setMensagem({ tipo: "erro", texto: res.erro });
       }
