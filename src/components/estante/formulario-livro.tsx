@@ -548,6 +548,7 @@ function ModalGerenciadorCapa({
   titulo: string;
   autor: string;
 }) {
+  const [aba, setAba] = useState<"upload" | "url">("upload");
   const [arquivoInfo, setArquivoInfo] = useState<{ nome: string; tamanho: string } | null>(null);
   const [progressoUpload, setProgressoUpload] = useState<number>(0);
   const [urlInput, setUrlInput] = useState(capaAtual || "");
