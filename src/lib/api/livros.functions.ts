@@ -237,6 +237,34 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
       .bind(data.usuario.trim().toLowerCase())
       .first<{ id: number; nome: string; usuario: string }>();
     if (!dono) throw new Error("Leitor não encontrado");
+
+    // Status de presença do leitor
+    let presencaRow: { statusCustom: string | null; temSessao: number } | null = null;
+    try {
+      presencaRow = await db()
+        .prepare(
+          `SELECT us.status_presenca AS statusCustom,
+                  EXISTS(SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now')) AS temSessao
+           FROM usuarios us WHERE us.id = ?`
+        )
+        .bind(dono.id)
+        .first<{ statusCustom: string | null; temSessao: number }>();
+    } catch {
+      // Fallback se colunas/tabelas ainda não existirem
+    }
+
+    const customStatus = presencaRow?.statusCustom as StatusPresenca | null;
+    const estaOnline = Boolean(presencaRow?.temSessao);
+
+    let statusPresenca: StatusPresenca = "offline";
+    if (customStatus === "invisivel") {
+      statusPresenca = "offline";
+    } else if (customStatus === "online" || customStatus === "lendo" || customStatus === "ocupado") {
+      statusPresenca = customStatus;
+    } else if (estaOnline) {
+      statusPresenca = "online";
+    }
+
     const { results } = await db()
       .prepare(
         `SELECT id, titulo, autor, genero, paginas, status, ano_leitura, inicio, fim, nota, palavra, capa
@@ -251,7 +279,13 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
           "id" | "titulo" | "autor" | "genero" | "paginas" | "status" | "ano_leitura" | "inicio" | "fim" | "nota" | "palavra" | "capa"
         >
       >();
-    return { nome: dono.nome, usuario: dono.usuario, souEu: dono.id === eu.id, livros: results };
+    return {
+      nome: dono.nome,
+      usuario: dono.usuario,
+      souEu: dono.id === eu.id,
+      statusPresenca,
+      livros: results,
+    };
   });
 
 // Busca metadados de um livro (Google Books com fallback Open Library), server-side.

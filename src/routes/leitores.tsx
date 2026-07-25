@@ -111,12 +111,7 @@ function PaginaLeitores() {
                     params={{ usuario: l.usuario }}
                     className="card-surface spring-bounce group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
                   >
-                    <div className="relative shrink-0">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amora-clara font-display text-xl text-amora font-semibold">
-                        {inicial}
-                      </span>
-                      <PontoPresenca status={l.statusPresenca} eVoce={eVoce} />
-                    </div>
+                    <AvatarLeitor nome={nome} status={l.statusPresenca} tamanho="md" />
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors inline-flex items-center gap-2 flex-wrap">
                         <span>{nome}</span>

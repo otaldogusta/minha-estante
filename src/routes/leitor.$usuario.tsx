@@ -6,6 +6,7 @@ import { diasDeLeitura, notaFmt } from "../lib/livros";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { CapaLivro } from "../components/estante/capa-livro";
 import { Estrelas } from "../components/estante/estrelas";
+import { AvatarLeitor } from "../components/estante/avatar";
 import { exigirLogin } from "../lib/exigir-login";
 
 export const Route = createFileRoute("/leitor/$usuario")({
@@ -44,9 +45,7 @@ function PaginaPerfil() {
         </Link>
 
         <div className="mt-6 flex items-center gap-5">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-amora-clara font-display text-3xl text-amora">
-            {perfil.nome.charAt(0).toUpperCase()}
-          </span>
+          <AvatarLeitor nome={perfil.nome} status={perfil.statusPresenca} tamanho="lg" />
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">{perfil.nome}</h1>
             <p className="mt-0.5 text-sm text-tinta-2">
