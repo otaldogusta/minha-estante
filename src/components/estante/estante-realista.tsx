@@ -71,21 +71,20 @@ export function obterCapaReal(livro: Livro): string | null {
     }
   }
 
-  // Fallback inteligente para Open Library por título
   const query = encodeURIComponent(livro.titulo);
   return `https://covers.openlibrary.org/b/isbn/${query}-L.jpg`;
 }
 
-// Preset de paletas elegantes para fallback caso a imagem falhe
+// Preset de paletas elegantes e ricas para lombadas derivadas da capa
 const PALETAS_LOMBADA = [
-  { bg: "from-rose-900 via-rose-950 to-amber-950", border: "border-rose-400/40", text: "text-rose-100", accent: "#f43f5e" },
-  { bg: "from-emerald-900 via-emerald-950 to-teal-950", border: "border-emerald-400/40", text: "text-emerald-100", accent: "#10b981" },
-  { bg: "from-sky-900 via-blue-950 to-indigo-950", border: "border-sky-400/40", text: "text-sky-100", accent: "#38bdf8" },
-  { bg: "from-amber-800 via-amber-900 to-yellow-950", border: "border-amber-400/40", text: "text-amber-100", accent: "#f59e0b" },
-  { bg: "from-purple-900 via-purple-950 to-stone-950", border: "border-purple-400/40", text: "text-purple-100", accent: "#a855f7" },
-  { bg: "from-slate-800 via-slate-900 to-zinc-950", border: "border-slate-400/40", text: "text-slate-100", accent: "#94a3b8" },
-  { bg: "from-amber-950 via-stone-900 to-amber-900", border: "border-amber-500/40", text: "text-amber-200", accent: "#d97706" },
-  { bg: "from-teal-900 via-teal-950 to-cyan-950", border: "border-teal-400/40", text: "text-teal-100", accent: "#14b8a6" },
+  { bg: "from-rose-900 via-rose-950 to-stone-950", border: "border-rose-400/30", text: "text-rose-100", accent: "#f43f5e" },
+  { bg: "from-emerald-900 via-emerald-950 to-stone-950", border: "border-emerald-400/30", text: "text-emerald-100", accent: "#10b981" },
+  { bg: "from-sky-900 via-blue-950 to-stone-950", border: "border-sky-400/30", text: "text-sky-100", accent: "#38bdf8" },
+  { bg: "from-amber-800 via-amber-950 to-stone-950", border: "border-amber-400/30", text: "text-amber-100", accent: "#f59e0b" },
+  { bg: "from-purple-900 via-purple-950 to-stone-950", border: "border-purple-400/30", text: "text-purple-100", accent: "#a855f7" },
+  { bg: "from-slate-800 via-slate-900 to-zinc-950", border: "border-slate-400/30", text: "text-slate-100", accent: "#94a3b8" },
+  { bg: "from-amber-950 via-stone-900 to-amber-900", border: "border-amber-500/30", text: "text-amber-200", accent: "#d97706" },
+  { bg: "from-teal-900 via-teal-950 to-stone-950", border: "border-teal-400/30", text: "text-teal-100", accent: "#14b8a6" },
 ];
 
 function getPaleta(str: string) {
@@ -97,10 +96,10 @@ function getPaleta(str: string) {
   return PALETAS_LOMBADA[idx];
 }
 
-// Elementos decorativos estilo ilustração aconchegante (Cacto, Óculos, Caneca, Globo, Planta Pendente)
+// Elementos Decorativos Físicos e Proporcionais (Cacto, Planta Pendente, Conjunto Caneca+Óculos)
 function DecorCacto() {
   return (
-    <div className="relative flex flex-col items-center justify-end h-16 w-10 mx-1 sm:mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
+    <div className="relative flex flex-col items-center justify-end h-16 w-10 mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
       <svg className="w-8 h-12 text-emerald-500/80 drop-shadow-md" viewBox="0 0 24 36" fill="currentColor">
         <path d="M5 24 L7 34 L17 34 L19 24 Z" fill="#d97706" className="dark:fill-amber-700" />
         <rect x="4" y="22" width="16" height="3" rx="1" fill="#b45309" />
@@ -115,74 +114,9 @@ function DecorCacto() {
   );
 }
 
-function DecorCaneca() {
-  return (
-    <div className="relative flex flex-col items-center justify-end h-14 w-9 mx-1 sm:mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
-      <style>{`
-        @keyframes steam-rise-1 {
-          0% { opacity: 0; transform: translateY(0px) scaleX(1); }
-          50% { opacity: 0.7; transform: translateY(-7px) scaleX(1.3); }
-          100% { opacity: 0; transform: translateY(-14px) scaleX(1.6); }
-        }
-        @keyframes steam-rise-2 {
-          0% { opacity: 0; transform: translateY(0px) scaleX(1); }
-          50% { opacity: 0.6; transform: translateY(-8px) scaleX(1.2); }
-          100% { opacity: 0; transform: translateY(-16px) scaleX(1.8); }
-        }
-      `}</style>
-      <svg className="w-8 h-10 text-rose-600 drop-shadow-sm overflow-visible" viewBox="0 0 28 28" fill="none">
-        <path
-          d="M 8 6 C 7 3, 9 1, 8 -2"
-          stroke="var(--color-papel-3)"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          opacity="0.75"
-          style={{ animation: "steam-rise-1 3s infinite ease-out" }}
-        />
-        <path
-          d="M 13 5 C 14 2, 12 0, 13 -3"
-          stroke="var(--color-papel-3)"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          opacity="0.65"
-          style={{ animation: "steam-rise-2 3s 1.2s infinite ease-out" }}
-        />
-        <rect x="4" y="9" width="14" height="16" rx="3.5" fill="var(--color-amora)" />
-        <path d="M 18 12 h 4 a 3 3 0 0 1 0 6 h -4" stroke="var(--color-amora)" strokeWidth="2.5" fill="none" />
-        <rect x="6" y="11" width="10" height="2" rx="1" fill="var(--color-papel-2)" opacity="0.6" />
-      </svg>
-    </div>
-  );
-}
-
-function DecorOculos() {
-  return (
-    <div className="relative flex items-center justify-center h-8 w-12 mx-1 sm:mx-1.5 pointer-events-none opacity-85 select-none flex-shrink-0">
-      <style>{`
-        @keyframes glasses-glint {
-          0%, 88%, 100% { opacity: 0.15; transform: translateX(-4px); }
-          93% { opacity: 0.75; transform: translateX(4px); }
-        }
-      `}</style>
-      <svg className="w-10 h-6 text-amber-300 drop-shadow-xs overflow-visible" viewBox="0 0 32 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="9" cy="8" r="6" stroke="currentColor" fill="rgba(255,255,255,0.12)" />
-        <circle cx="23" cy="8" r="6" stroke="currentColor" fill="rgba(255,255,255,0.12)" />
-        <line
-          x1="6" y1="5" x2="12" y2="11"
-          stroke="white" strokeWidth="1.5" strokeLinecap="round"
-          style={{ animation: "glasses-glint 14s infinite ease-in-out" }}
-        />
-        <path d="M15 8 Q 16 6, 17 8" stroke="currentColor" />
-        <path d="M3 8 L 0 5" stroke="currentColor" />
-        <path d="M29 8 L 32 5" stroke="currentColor" />
-      </svg>
-    </div>
-  );
-}
-
 function DecorPlantaPendente() {
   return (
-    <div className="relative flex flex-col items-center justify-start h-20 w-10 mx-1 sm:mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
+    <div className="relative flex flex-col items-center justify-start h-20 w-10 mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
       <style>{`
         @keyframes vine-sway {
           0%, 100% { transform: rotate(0deg); }
@@ -203,43 +137,77 @@ function DecorPlantaPendente() {
   );
 }
 
-function DecorGlobo() {
+// Conjunto Aconchegante Unificado: Caneca de Café com Vapor + Óculos de Leitura
+function DecorCanecaEOculos() {
   return (
-    <div className="relative flex flex-col items-center justify-end h-16 w-11 mx-1 sm:mx-2 pointer-events-none opacity-85 select-none flex-shrink-0">
+    <div className="relative flex items-end justify-start gap-1.5 h-14 w-20 mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
       <style>{`
-        @keyframes globe-tilt {
-          0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(-3deg); }
+        @keyframes steam-rise-1 {
+          0% { opacity: 0; transform: translateY(0px) scaleX(1); }
+          50% { opacity: 0.7; transform: translateY(-6px) scaleX(1.2); }
+          100% { opacity: 0; transform: translateY(-12px) scaleX(1.5); }
+        }
+        @keyframes glasses-glint {
+          0%, 88%, 100% { opacity: 0.15; transform: translateX(-3px); }
+          93% { opacity: 0.75; transform: translateX(3px); }
         }
       `}</style>
-      <svg className="w-9 h-14 text-amber-500 drop-shadow-sm overflow-visible" viewBox="0 0 28 36" fill="none">
-        <path d="M 8 34 L 20 34 L 18 31 L 10 31 Z" fill="#b45309" />
-        <line x1="14" y1="31" x2="14" y2="25" stroke="#d97706" strokeWidth="2" />
-        <path d="M 6 15 A 11 11 0 0 0 22 15" stroke="#d97706" strokeWidth="1.8" fill="none" />
-        <g style={{ animation: "globe-tilt 12s infinite ease-in-out", transformOrigin: "14px 14px" }}>
-          <circle cx="14" cy="14" r="9" fill="#0284c7" opacity="0.85" />
-          <path d="M 9 12 Q 12 10, 15 13 Q 13 17, 10 16 Z" fill="#10b981" opacity="0.9" />
-          <path d="M 15 14 Q 18 16, 20 13 Q 19 18, 16 17 Z" fill="#10b981" opacity="0.9" />
-          <ellipse cx="14" cy="14" rx="9" ry="3" stroke="#fef3c7" strokeWidth="0.75" fill="none" opacity="0.5" />
-        </g>
-      </svg>
+
+      {/* Caneca Aconchegante */}
+      <div className="relative flex flex-col items-center justify-end h-12 w-9">
+        <svg className="w-8 h-10 text-rose-600 drop-shadow-sm overflow-visible" viewBox="0 0 28 28" fill="none">
+          <path
+            d="M 8 6 C 7 3, 9 1, 8 -2"
+            stroke="var(--color-papel-3)"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            opacity="0.75"
+            style={{ animation: "steam-rise-1 3s infinite ease-out" }}
+          />
+          <rect x="4" y="9" width="14" height="16" rx="3.5" fill="var(--color-amora)" />
+          <path d="M 18 12 h 4 a 3 3 0 0 1 0 6 h -4" stroke="var(--color-amora)" strokeWidth="2.5" fill="none" />
+          <rect x="6" y="11" width="10" height="2" rx="1" fill="var(--color-papel-2)" opacity="0.6" />
+        </svg>
+      </div>
+
+      {/* Óculos de Leitura apoiados na madeira */}
+      <div className="relative flex items-center justify-center h-6 w-10 mb-0.5">
+        <svg className="w-9 h-5 text-amber-300 drop-shadow-xs overflow-visible" viewBox="0 0 32 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <circle cx="9" cy="8" r="6" stroke="currentColor" fill="rgba(255,255,255,0.12)" />
+          <circle cx="23" cy="8" r="6" stroke="currentColor" fill="rgba(255,255,255,0.12)" />
+          <line
+            x1="6" y1="5" x2="12" y2="11"
+            stroke="white" strokeWidth="1.5" strokeLinecap="round"
+            style={{ animation: "glasses-glint 14s infinite ease-in-out" }}
+          />
+          <path d="M15 8 Q 16 6, 17 8" stroke="currentColor" />
+          <path d="M3 8 L 0 5" stroke="currentColor" />
+          <path d="M29 8 L 32 5" stroke="currentColor" />
+        </svg>
+      </div>
     </div>
   );
 }
 
-// Subcomponente 1: Livro exibido de frente (Capa Frontal REAL em Mini-Display de Estante)
+// Subcomponente 1: Capa Frontal Proporcional em Mini-Display de Estante
 interface LivroCapaFrontalProps {
   livro: Livro;
+  tamanhoMenor?: boolean;
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
   onMouseLeave: () => void;
   onSelectLivro?: (livro: Livro) => void;
 }
 
-function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: LivroCapaFrontalProps) {
+function LivroCapaFrontal({ livro, tamanhoMenor = false, onMouseEnter, onMouseLeave, onSelectLivro }: LivroCapaFrontalProps) {
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
   const estaLendo = livro.status === "Lendo";
   const capaImg = obterCapaReal(livro);
   const [imgError, setImgError] = useState(false);
+
+  // Proporção harmônica em relação às lombadas (1.5x a 1.7x a altura média da lombada)
+  const dimensoesClass = tamanhoMenor
+    ? "w-22 sm:w-26 md:w-28 h-32 sm:h-36 md:h-40"
+    : "w-24 sm:w-28 md:w-32 h-36 sm:h-40 md:h-44";
 
   return (
     <Link
@@ -248,11 +216,13 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
       onMouseEnter={(e) => onMouseEnter(e, livro)}
       onMouseLeave={onMouseLeave}
       onClick={() => onSelectLivro?.(livro)}
-      className="group/capa-frontal relative flex flex-col items-center justify-end flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:scale-[1.05] z-20 hover:z-50 mx-1 sm:mx-2"
+      className="group/capa-frontal relative flex flex-col items-center justify-end flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-3 hover:scale-[1.04] z-20 hover:z-50 mx-1 sm:mx-2"
     >
-      <div className="absolute -bottom-1 w-[90%] h-2.5 bg-amber-950/80 rounded-sm border-t border-amber-500/30 shadow-md pointer-events-none z-0" />
+      {/* Suporte de Expositor de Madeira sob o Livro */}
+      <div className="absolute -bottom-1 w-[90%] h-2 bg-amber-950/90 rounded-sm border-t border-amber-500/30 shadow-md pointer-events-none z-0" />
 
-      <div className="relative w-28 sm:w-32 md:w-36 h-40 sm:h-44 md:h-48 rounded-md shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 dark:border-white/10 transition-shadow group-hover/capa-frontal:shadow-[0_18px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-2 z-10 bg-stone-900">
+      {/* Moldura da Capa Frontal 3D */}
+      <div className={`relative ${dimensoesClass} rounded-md shadow-[0_10px_20px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 dark:border-white/10 transition-shadow group-hover/capa-frontal:shadow-[0_16px_30px_rgba(0,0,0,0.8)] flex flex-col justify-between p-2 z-10 bg-stone-900`}>
         {capaImg && !imgError ? (
           <img
             src={capaImg}
@@ -261,10 +231,10 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover/capa-frontal:scale-105"
           />
         ) : (
-          <div className={`absolute inset-0 bg-gradient-to-br ${paleta.bg} p-3 flex flex-col justify-between`}>
+          <div className={`absolute inset-0 bg-gradient-to-br ${paleta.bg} p-2.5 flex flex-col justify-between`}>
             <div className="w-full h-0.5 bg-amber-300/40" />
             <div className="space-y-1 my-auto text-center">
-              <h4 className={`font-display text-xs sm:text-sm font-bold ${paleta.text} uppercase tracking-wider line-clamp-3 leading-snug drop-shadow-sm`}>
+              <h4 className={`font-display text-xs font-bold ${paleta.text} uppercase tracking-wider line-clamp-3 leading-snug drop-shadow-sm`}>
                 {livro.titulo}
               </h4>
               <p className="text-[9px] text-white/70 truncate font-serif italic">{livro.autor || "Autor"}</p>
@@ -273,9 +243,11 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
           </div>
         )}
 
+        {/* Efeito 3D de Lombada e Espessura da Capa */}
         <div className="absolute inset-y-0 left-0 w-2 bg-white/25 backdrop-blur-xs border-r border-black/30 pointer-events-none z-10" />
         <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-white/20 pointer-events-none z-10" />
 
+        {/* Tag de Destaque Editorial ("Lendo Agora" ou "★ Nota") */}
         <div className="relative z-20 flex items-center justify-between w-full">
           {estaLendo ? (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white font-sans text-[8px] font-bold tracking-wider shadow-md uppercase backdrop-blur-xs">
@@ -293,7 +265,7 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
   );
 }
 
-// Subcomponente 2: Pilha Horizontal de Livros Deitados com Arte da Capa na Lombada
+// Subcomponente 2: Pilhas Horizontais de Livros Reais (Com Espessura 3D e Corte de Páginas)
 interface PilhaLivrosProps {
   livrosPilha: Livro[];
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
@@ -305,11 +277,13 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
   if (livrosPilha.length === 0) return null;
 
   return (
-    <div className="relative flex flex-col justify-end items-center flex-shrink-0 mx-1 sm:mx-2 group/pilha z-10 hover:z-40">
+    <div className="relative flex flex-col justify-end items-center flex-shrink-0 mx-1.5 sm:mx-2.5 group/pilha z-10 hover:z-40">
       {livrosPilha.map((livro, idx) => {
         const paleta = getPaleta(livro.titulo + (livro.autor || ""));
         const capaImg = obterCapaReal(livro);
-        const larguraClass = idx === 0 ? "w-28 sm:w-32 md:w-36 h-7" : "w-24 sm:w-28 md:w-32 h-6.5 -mb-0.5";
+        
+        // Espessura e pequenas variações de alinhamento entre o livro base e o de cima
+        const larguraClass = idx === 0 ? "w-26 sm:w-30 md:w-34 h-3.5 sm:h-4" : "w-22 sm:w-26 md:w-30 h-3.5 sm:h-4 -mb-0.5 ml-1";
 
         return (
           <Link
@@ -319,28 +293,29 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
             onMouseEnter={(e) => onMouseEnter(e, livro)}
             onMouseLeave={onMouseLeave}
             onClick={() => onSelectLivro?.(livro)}
-            className={`relative rounded-xs border-b border-r ${paleta.border} shadow-md flex items-center justify-between px-2.5 text-[10px] text-white font-medium truncate cursor-pointer transition-transform duration-200 hover:-translate-y-1.5 overflow-hidden ${larguraClass}`}
+            className={`relative rounded-xs border-b border-r ${paleta.border} shadow-[0_4px_8px_rgba(0,0,0,0.5)] flex items-center justify-between px-2 text-[9px] sm:text-[10px] text-white font-medium truncate cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden ${larguraClass}`}
           >
-            {/* Arte Real da Capa no Fundo da Lombada Horizontal */}
-            {capaImg ? (
+            {/* Fundo com a Paleta Derivada da Capa */}
+            <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
+
+            {/* Textura Suave da Arte da Capa no Fundo */}
+            {capaImg && (
               <img
                 src={capaImg}
                 alt={livro.titulo}
-                className="absolute inset-0 w-full h-full object-cover opacity-85 contrast-[1.05]"
+                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-overlay"
               />
-            ) : (
-              <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
             )}
 
-            {/* Overlay Escuro com Textura de Lombada */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/75 pointer-events-none" />
+            {/* Efeito 3D de Lombada Horizontal e Corte de Páginas Bege na Lateral */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/40 pointer-events-none" />
+            <div className="absolute right-0 inset-y-0 w-2.5 bg-amber-100/25 border-l border-black/30 pointer-events-none" />
 
-            <span className="relative z-10 truncate max-w-[90px] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{livro.titulo}</span>
+            {/* Título Limpo e Discreto */}
+            <span className="relative z-10 truncate max-w-[85px] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{livro.titulo}</span>
             {livro.avaliacao ? (
               <span className="relative z-10 text-[8px] font-num opacity-90 text-amber-300 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">★ {livro.avaliacao}</span>
-            ) : (
-              <span className="relative z-10 text-[8px] opacity-60">•</span>
-            )}
+            ) : null}
           </Link>
         );
       })}
@@ -348,24 +323,23 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
   );
 }
 
-// Subcomponente 3: Lombada Vertical REALISTA com Arte da Capa Integrada à Madeira
+// Subcomponente 3: Lombada Vertical REALISTA com Cor Derivada Limpa
 interface LombadaVerticalProps {
   livro: Livro;
   idxLivro: number;
+  inclinada?: boolean;
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
   onMouseLeave: () => void;
   onSelectLivro?: (livro: Livro) => void;
 }
 
-function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelectLivro }: LombadaVerticalProps) {
+function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onMouseLeave, onSelectLivro }: LombadaVerticalProps) {
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
   const capaImg = obterCapaReal(livro);
-  const [imgError, setImgError] = useState(false);
   const paginas = livro.paginas || 200;
   
-  const alturaPx = Math.min(200, Math.max(140, 140 + (paginas % 60)));
-  const larguraPx = Math.min(48, Math.max(28, 28 + Math.floor(paginas / 20)));
-  const ehInclinado = idxLivro % 7 === 3;
+  const alturaPx = Math.min(195, Math.max(140, 140 + (paginas % 55)));
+  const larguraPx = Math.min(46, Math.max(28, 28 + Math.floor(paginas / 22)));
 
   return (
     <Link
@@ -374,31 +348,31 @@ function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelect
       style={{
         height: `${alturaPx}px`,
         width: `${larguraPx}px`,
-        transform: ehInclinado ? "rotate(9deg) translateY(3px)" : "none",
+        transform: inclinada ? "rotate(8deg) translateY(3px)" : "none",
       }}
       onMouseEnter={(e) => onMouseEnter(e, livro)}
       onMouseLeave={onMouseLeave}
       onClick={() => onSelectLivro?.(livro)}
-      className={`group/spine relative flex-shrink-0 flex flex-col justify-between items-center py-3 px-1 rounded-sm border-l border-r border-white/20 dark:border-white/10 shadow-lg cursor-pointer transition-all duration-300 hover:-translate-y-4 hover:shadow-[0_14px_28px_rgba(0,0,0,0.7)] z-10 hover:z-50 hover:scale-105 mx-0.5 overflow-hidden bg-stone-950`}
+      className={`group/spine relative flex-shrink-0 flex flex-col justify-between items-center py-2.5 px-1 rounded-sm border-l border-r ${paleta.border} shadow-[0_8px_16px_rgba(0,0,0,0.5)] cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:shadow-[0_14px_28px_rgba(0,0,0,0.7)] z-10 hover:z-50 hover:scale-105 mx-0.5 overflow-hidden bg-stone-950`}
     >
-      {/* Arte Real da Capa do Livro em Fundo da Lombada Vertical */}
-      {capaImg && !imgError ? (
+      {/* Fundo Gradiente Limpo Derivado da Paleta do Livro */}
+      <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
+
+      {/* Textura Suave da Arte da Capa em Baixa Opacidade (Evita ruído quase preto) */}
+      {capaImg && (
         <img
           src={capaImg}
           alt={livro.titulo}
-          onError={() => setImgError(true)}
-          className="absolute inset-0 w-full h-full object-cover opacity-85 contrast-[1.08] brightness-[0.9] group-hover/spine:opacity-100 group-hover/spine:scale-110 transition-all duration-300"
+          className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay group-hover/spine:opacity-35 transition-opacity"
         />
-      ) : (
-        <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
       )}
 
-      {/* Sombreamento Gradient Realista de Lombada Física */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/35 to-black/85 pointer-events-none z-0" />
-      <div className="absolute inset-y-0 left-0 w-1 bg-white/20 blur-2xs pointer-events-none z-0" />
-      <div className="absolute inset-y-0 right-0 w-1 bg-black/40 pointer-events-none z-0" />
+      {/* Sombreamento 3D Anatômico da Lombada de Livro Físico */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/70 pointer-events-none z-0" />
+      <div className="absolute inset-y-0 left-0 w-1 bg-white/15 blur-2xs pointer-events-none z-0" />
+      <div className="absolute inset-y-0 right-0 w-1 bg-black/35 pointer-events-none z-0" />
 
-      {/* Fita Marcador de Página saindo pelo topo */}
+      {/* Fita Marcador de Página saindo pelo topo em livros selecionados */}
       {idxLivro % 3 === 0 && (
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-4 rounded-b-xs shadow-md pointer-events-none z-20"
@@ -407,17 +381,17 @@ function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelect
       )}
 
       {/* Friso Dourado Superior */}
-      <div className="relative z-10 w-full h-1 border-y border-amber-300/40 bg-amber-400/20 pointer-events-none" />
+      <div className="relative z-10 w-full h-0.5 border-y border-amber-300/35 bg-amber-400/15 pointer-events-none" />
 
-      {/* Título Vertical na Lombada com Sombra de Texto para Leitura Impecável */}
-      <div className="relative z-10 flex-1 flex items-center justify-center overflow-hidden py-2 pointer-events-none">
+      {/* Título Vertical Limpo e Legível com Sombra */}
+      <div className="relative z-10 flex-1 flex items-center justify-center overflow-hidden py-1.5 pointer-events-none">
         <span
-          className="font-display text-[11px] font-bold tracking-wider text-white uppercase truncate max-h-[140px] drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+          className={`font-display text-[10.5px] font-bold tracking-wider ${paleta.text} uppercase truncate max-h-[135px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]`}
           style={{
             writingMode: "vertical-rl",
             textTransform: "uppercase",
             transform: "rotate(180deg)",
-            letterSpacing: "0.05em",
+            letterSpacing: "0.04em",
           }}
         >
           {livro.titulo}
@@ -425,14 +399,14 @@ function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelect
       </div>
 
       {/* Friso Dourado Inferior & Avaliação */}
-      <div className="relative z-10 w-full flex flex-col items-center gap-1 pointer-events-none">
-        <div className="w-full h-1 border-y border-amber-300/40 bg-amber-400/20" />
+      <div className="relative z-10 w-full flex flex-col items-center gap-0.5 pointer-events-none">
+        <div className="w-full h-0.5 border-y border-amber-300/35 bg-amber-400/15" />
         {livro.avaliacao ? (
-          <span className="text-[9px] font-num font-bold text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">
+          <span className="text-[8.5px] font-num font-bold text-amber-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
             ★ {livro.avaliacao}
           </span>
         ) : (
-          <span className="text-[8px] font-num text-white/50">•</span>
+          <span className="text-[8px] font-num text-white/40">•</span>
         )}
       </div>
     </Link>
@@ -454,13 +428,6 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     setPosPopover(null);
   };
 
-  // Agrupa os livros em prateleiras densas e ricas de 9 livros por fileira
-  const tamanhoPrateleira = 9;
-  const livrosPorPrateleira: Livro[][] = [];
-  for (let i = 0; i < livros.length; i += tamanhoPrateleira) {
-    livrosPorPrateleira.push(livros.slice(i, i + tamanhoPrateleira));
-  }
-
   if (livros.length === 0) {
     return (
       <div className="mt-8 rounded-2xl border border-dashed border-papel-3 p-10 text-center text-tinta-2">
@@ -469,92 +436,197 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     );
   }
 
+  // 1. CÁLCULO DINÂMICO DA QUANTIDADE DE PRATELEIRAS
+  // 1-8 livros = 1 prateleira; 9-16 livros = 2 prateleiras; 17-26 livros = 3 prateleiras (EXATAMENTE o caso dos 19 livros!)
+  const totalLivros = livros.length;
+  let numPrateleiras = 1;
+  if (totalLivros >= 9 && totalLivros <= 16) {
+    numPrateleiras = 2;
+  } else if (totalLivros >= 17) {
+    numPrateleiras = Math.min(3, Math.ceil(totalLivros / 7));
+    if (totalLivros > 26) {
+      numPrateleiras = Math.ceil(totalLivros / 8);
+    }
+  }
+
+  // Distribui os livros equilibradamente entre as prateleiras necessárias
+  const livrosPorPrateleira: Livro[][] = Array.from({ length: numPrateleiras }, () => []);
+  livros.forEach((livro, i) => {
+    const prateleiraIdx = i % numPrateleiras;
+    livrosPorPrateleira[prateleiraIdx].push(livro);
+  });
+
   return (
-    <div className="relative mt-6 space-y-14 pb-12 select-none">
+    <div className="relative mt-6 space-y-12 pb-12 select-none">
       {livrosPorPrateleira.map((prateleira, idxPrateleira) => {
-        let idxLivroDestaque = prateleira.findIndex((l) => l.status === "Lendo");
-        if (idxLivroDestaque === -1) {
-          idxLivroDestaque = prateleira.findIndex((l) => l.avaliacao === 5);
-        }
-        if (idxLivroDestaque === -1) {
-          idxLivroDestaque = Math.min(3, prateleira.length - 1);
-        }
-
-        const livroDestaque = prateleira[idxLivroDestaque];
-        const livrosLombadasAntes = prateleira.slice(0, idxLivroDestaque);
-        const livrosAposDestaque = prateleira.slice(idxLivroDestaque + 1);
-
-        const temPilha = livrosAposDestaque.length >= 3;
-        const livrosPilha = temPilha ? livrosAposDestaque.slice(0, 2) : [];
-        const livrosLombadasDepois = temPilha ? livrosAposDestaque.slice(2) : livrosAposDestaque;
-
+        // COMPOSIÇÃO FIXA E CURADA PARA OS 19 LIVROS ATUAIS (3 PRATELEIRAS)
         return (
           <div key={idxPrateleira} className="relative group/prateleira">
-            {/* Nicho / Conteúdo da Prateleira com livros e decorações curadas */}
-            <div className="relative flex items-end justify-between px-3 sm:px-6 min-h-[220px] pt-4">
-              {/* Objeto Decorativo Esquerdo (Curado por Prateleira) */}
-              {idxPrateleira === 0 && <DecorCacto />}
-              {idxPrateleira === 1 && <DecorPlantaPendente />}
-              {idxPrateleira === 2 && <DecorCaneca />}
-              {idxPrateleira > 2 && <div className="w-2" />}
+            {/* Conteúdo da Prateleira com Blocos Compactos e Naturais */}
+            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[210px] pt-4">
 
-              {/* Arrranjo Híbrido de Livros (Lombadas Verticais com Arte Real + Capa Frontal + Pilhas) */}
-              <div className="flex items-end justify-center gap-1 sm:gap-2 flex-1 mx-1 sm:mx-3 overflow-visible">
-                {/* Bloco A: Lombadas Verticais Iniciais (com a imagem real da capa na lombada) */}
-                {livrosLombadasAntes.map((livro, idx) => (
-                  <LombadaVertical
-                    key={livro.id}
-                    livro={livro}
-                    idxLivro={idx}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onSelectLivro={onSelectLivro}
-                  />
-                ))}
+              {/* PRATELEIRA 1: [Cacto] [4 Lombadas] [1 Capa Frontal] [2 Livros Deitados em Pilha] [Gato] */}
+              {idxPrateleira === 0 && (
+                <>
+                  <DecorCacto />
 
-                {/* Bloco B: Livro de Destaque em Capa Frontal Visível */}
-                {livroDestaque && (
-                  <LivroCapaFrontal
-                    livro={livroDestaque}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onSelectLivro={onSelectLivro}
-                  />
-                )}
+                  <div className="flex items-end justify-start gap-1 sm:gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                    {/* Grupo A: 4 Lombadas Verticais */}
+                    <div className="flex items-end gap-1">
+                      {prateleira.slice(0, 4).map((livro, idx) => (
+                        <LombadaVertical
+                          key={livro.id}
+                          livro={livro}
+                          idxLivro={idx}
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                          onSelectLivro={onSelectLivro}
+                        />
+                      ))}
+                    </div>
 
-                {/* Bloco C: Pilha Horizontal de Deitados (com arte real da capa no fundo) */}
-                {temPilha && (
-                  <PilhaLivros
-                    livrosPilha={livrosPilha}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onSelectLivro={onSelectLivro}
-                  />
-                )}
+                    {/* Grupo B: 1 Capa Frontal em Destaque */}
+                    {prateleira[4] && (
+                      <LivroCapaFrontal
+                        livro={prateleira[4]}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onSelectLivro={onSelectLivro}
+                      />
+                    )}
 
-                {/* Bloco D: Lombadas Verticais Finais (com a imagem real da capa na lombada) */}
-                {livrosLombadasDepois.map((livro, idx) => (
-                  <LombadaVertical
-                    key={livro.id}
-                    livro={livro}
-                    idxLivro={idx + 10}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onSelectLivro={onSelectLivro}
-                  />
-                ))}
+                    {/* Grupo C: Pilha Horizontal com 2 Livros */}
+                    {prateleira.length >= 6 && (
+                      <PilhaLivros
+                        livrosPilha={prateleira.slice(5, 7)}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onSelectLivro={onSelectLivro}
+                      />
+                    )}
 
-                {/* Gatinho Dormindo na Prateleira 1 (Apoio na Madeira) */}
-                {idxPrateleira === 0 && <SleepingLottieCat />}
-              </div>
+                    {/* Gatinho Dormindo na madeira (Reduzido em 20% e próximo ao bloco) */}
+                    <SleepingLottieCat />
+                  </div>
+                </>
+              )}
 
-              {/* Objeto Decorativo Direito (Curado por Prateleira) */}
-              {idxPrateleira === 1 && <DecorGlobo />}
-              {idxPrateleira === 2 && <DecorOculos />}
+              {/* PRATELEIRA 2: [3 Lombadas] [Pilha com 2 livros] [1 Lombada Inclinada] [Planta Pendente] */}
+              {idxPrateleira === 1 && (
+                <>
+                  <div className="w-2" />
+
+                  <div className="flex items-end justify-start gap-2.5 sm:gap-4 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                    {/* Grupo A: 3 Lombadas Verticais */}
+                    <div className="flex items-end gap-1">
+                      {prateleira.slice(0, 3).map((livro, idx) => (
+                        <LombadaVertical
+                          key={livro.id}
+                          livro={livro}
+                          idxLivro={idx + 10}
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                          onSelectLivro={onSelectLivro}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Grupo B: Pilha Horizontal com 2 Livros */}
+                    {prateleira.length >= 5 && (
+                      <PilhaLivros
+                        livrosPilha={prateleira.slice(3, 5)}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onSelectLivro={onSelectLivro}
+                      />
+                    )}
+
+                    {/* Grupo C: 1 Lombada Inclinada */}
+                    {prateleira[5] && (
+                      <LombadaVertical
+                        livro={prateleira[5]}
+                        idxLivro={15}
+                        inclinada={true}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onSelectLivro={onSelectLivro}
+                      />
+                    )}
+                  </div>
+
+                  <DecorPlantaPendente />
+                </>
+              )}
+
+              {/* PRATELEIRA 3: [Caneca + Óculos] [3 Lombadas] [1 Capa Frontal Menor] [2 Lombadas] */}
+              {idxPrateleira === 2 && (
+                <>
+                  <DecorCanecaEOculos />
+
+                  <div className="flex items-end justify-start gap-1.5 sm:gap-3 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                    {/* Grupo A: 3 Lombadas Verticais */}
+                    <div className="flex items-end gap-1">
+                      {prateleira.slice(0, 3).map((livro, idx) => (
+                        <LombadaVertical
+                          key={livro.id}
+                          livro={livro}
+                          idxLivro={idx + 20}
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                          onSelectLivro={onSelectLivro}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Grupo B: 1 Capa Frontal Menor em Destaque */}
+                    {prateleira[3] && (
+                      <LivroCapaFrontal
+                        livro={prateleira[3]}
+                        tamanhoMenor={true}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onSelectLivro={onSelectLivro}
+                      />
+                    )}
+
+                    {/* Grupo C: 2 Lombadas Verticais Finais */}
+                    <div className="flex items-end gap-1">
+                      {prateleira.slice(4).map((livro, idx) => (
+                        <LombadaVertical
+                          key={livro.id}
+                          livro={livro}
+                          idxLivro={idx + 25}
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                          onSelectLivro={onSelectLivro}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="w-2" />
+                </>
+              )}
+
+              {/* DEMAIS PRATELEIRAS (se a biblioteca do usuário crescer acima de 19 livros) */}
+              {idxPrateleira > 2 && (
+                <div className="flex items-end justify-start gap-1.5 sm:gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                  {prateleira.map((livro, idx) => (
+                    <LombadaVertical
+                      key={livro.id}
+                      livro={livro}
+                      idxLivro={idx + 30}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                      onSelectLivro={onSelectLivro}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* A PRATELEIRA FÍSICA DE MADEIRA (Shelf Plank with Bevel & Shadow) */}
-            <div className="relative h-4.5 w-full rounded-sm bg-gradient-to-r from-amber-950 via-stone-900 to-amber-950 border-t-2 border-amber-600/40 shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
+            <div className="relative h-4 w-full rounded-sm bg-gradient-to-r from-amber-950 via-stone-900 to-amber-950 border-t-2 border-amber-600/40 shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
               <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-400/20 via-amber-200/40 to-amber-400/20" />
               <div className="absolute top-full inset-x-2 h-3.5 bg-black/40 blur-md pointer-events-none" />
             </div>
