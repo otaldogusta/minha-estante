@@ -356,7 +356,7 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
   const capaImg = obterCapaReal(livro);
   const [imgError, setImgError] = useState(false);
   const paginas = livro.paginas || 200;
-  
+
   const alturaPx = Math.min(195, Math.max(140, 140 + (paginas % 55)));
   const larguraPx = Math.min(46, Math.max(28, 28 + Math.floor(paginas / 22)));
   const temCapaReal = capaImg && !imgError;
@@ -373,74 +373,38 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
       onMouseEnter={(e) => onMouseEnter(e, livro)}
       onMouseLeave={onMouseLeave}
       onClick={() => onSelectLivro?.(livro)}
-      className={`group/spine relative flex-shrink-0 flex flex-col justify-between items-center py-2.5 px-1 rounded-sm border-l border-r ${paleta.border} shadow-[0_8px_16px_rgba(0,0,0,0.5)] cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:shadow-[0_14px_28px_rgba(0,0,0,0.7)] z-10 hover:z-50 hover:scale-105 mx-0.5 overflow-hidden bg-stone-950`}
+      className={`group/spine relative flex-shrink-0 rounded-sm border-l border-r ${paleta.border} shadow-[0_8px_16px_rgba(0,0,0,0.5)] cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:shadow-[0_14px_28px_rgba(0,0,0,0.7)] z-10 hover:z-50 hover:scale-105 mx-0.5 overflow-hidden bg-stone-950`}
     >
-      {/* FUNDO: Gradiente da paleta (fallback caso a capa falhe) */}
+      {/* Gradiente da paleta (fallback) */}
       <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
 
-      {/* CAPA REAL dominando a lombada — alta opacidade sem mix-blend */}
+      {/* Capa real dominando */}
       {temCapaReal ? (
         <img
           src={capaImg!}
           alt={livro.titulo}
           onError={() => setImgError(true)}
-          className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover/spine:opacity-95 transition-opacity duration-300"
+          className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover/spine:opacity-100 transition-opacity duration-300"
         />
       ) : null}
 
-      {/* Sombra nas bordas laterais apenas — efeito 3D de lombada sem escurecer o centro */}
-      <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/60 to-transparent pointer-events-none z-10" />
-      <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-black/50 to-transparent pointer-events-none z-10" />
-
-      {/* Sombra discreta no topo e base para leitura do título e avaliação */}
-      <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/70 to-transparent pointer-events-none z-10" />
-      <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
-
-      {/* Reflexo de luz na borda esquerda (efeito físico de lombada) */}
+      {/* Sombra lateral esquerda (efeito 3D de lombada) */}
+      <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/55 to-transparent pointer-events-none z-10" />
+      {/* Sombra lateral direita */}
+      <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-black/45 to-transparent pointer-events-none z-10" />
+      {/* Reflexo de luz na borda esquerda */}
       <div className="absolute inset-y-0 left-0 w-[2px] bg-white/20 pointer-events-none z-10" />
 
-      {/* Fita Marcador de Página saindo pelo topo */}
+      {/* Fita marcador no topo (detalhe físico) */}
       {idxLivro % 3 === 0 && (
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-4 rounded-b-xs shadow-md pointer-events-none z-20"
           style={{ backgroundColor: paleta.accent }}
         />
       )}
-
-      {/* Friso Dourado Superior */}
-      <div className="relative z-20 w-full h-0.5 border-y border-amber-300/50 bg-amber-400/25 pointer-events-none" />
-
-      {/* Título Vertical com sombra intensa para leitura sobre a capa */}
-      <div className="relative z-20 flex-1 flex items-center justify-center overflow-hidden py-1.5 pointer-events-none">
-        <span
-          className="font-display text-[10.5px] font-bold tracking-wider text-white uppercase truncate max-h-[135px]"
-          style={{
-            writingMode: "vertical-rl",
-            textTransform: "uppercase",
-            transform: "rotate(180deg)",
-            letterSpacing: "0.04em",
-            textShadow: "0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.9)",
-          }}
-        >
-          {livro.titulo}
-        </span>
-      </div>
-
-      {/* Friso Dourado Inferior & Avaliação */}
-      <div className="relative z-20 w-full flex flex-col items-center gap-0.5 pointer-events-none">
-        <div className="w-full h-0.5 border-y border-amber-300/50 bg-amber-400/25" />
-        {livro.avaliacao ? (
-          <span className="text-[8.5px] font-num font-bold text-amber-300" style={{ textShadow: "0 1px 3px rgba(0,0,0,1)" }}>
-            ★ {livro.avaliacao}
-          </span>
-        ) : (
-          <span className="text-[8px] font-num text-white/60">•</span>
-        )}
-      </div>
     </Link>
   );
 }
-
 
 
 export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps) {
