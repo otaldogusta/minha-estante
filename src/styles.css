@@ -554,3 +554,12 @@ html[data-theme="dark"] {
     background: #d57292;
   }
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
