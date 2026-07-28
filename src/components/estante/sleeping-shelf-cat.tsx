@@ -66,15 +66,8 @@ export function SleepingShelfCat() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Sombra de Contato Suave com a Madeira (Ground Contact Shadow) */}
-        <ellipse
-          cx="102"
-          cy="66"
-          rx="72"
-          ry="3.5"
-          fill="var(--color-tinta)"
-          opacity="0.22"
-        />
+
+
 
         {/* Cauda Curvada Enrolada ao Lado da Madeira (Com movimento sutil raro) */}
         <g className="cat-anim-tail origin-right" style={{ animation: "cat-shelf-tail 13s infinite ease-in-out", transformOrigin: "52px 60px" }}>
