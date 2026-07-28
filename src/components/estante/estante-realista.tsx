@@ -437,13 +437,15 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => {
     // getBoundingClientRect() retorna coordenadas relativas ao VIEWPORT.
-    // Para usar corretamente com o Portal (que renderiza direto no body),
-    // adicionamos scrollY/scrollX para converter para coordenadas absolutas de página.
+    // Adicionamos scrollY/scrollX para coordenadas absolutas de página (Portal renderiza no body).
+    // Usamos rect.top (topo do livro antes da animação hover) como referência.
     const rect = e.currentTarget.getBoundingClientRect();
     setLivroHover(livro);
     setPosPopover({
       x: rect.left + rect.width / 2 + window.scrollX,
-      y: rect.top + window.scrollY,
+      // Subtraímos 30px extras além do scrollY para garantir folga acima do livro,
+      // mesmo levando em conta o hover-translate-y-3.5 (~14px) de animação
+      y: rect.top + window.scrollY - 30,
     });
   };
 
@@ -664,7 +666,10 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
           className="absolute z-[9999] -translate-x-1/2 pointer-events-none w-64 rounded-2xl border border-papel-3 bg-papel/95 backdrop-blur-2xl p-3 shadow-2xl surgir drop-shadow-2xl flex gap-3 items-center"
           style={{
             left: `${posPopover.x}px`,
-            top: `${posPopover.y - 12}px`,
+            // posPopover.y já inclui a folga de 30px do topo do livro.
+            // translateY(-100%) sobe o popover pela sua própria altura.
+            // Resultado: popover flutua claramente ACIMA do livro, sem encavalhar.
+            top: `${posPopover.y}px`,
             transform: "translateX(-50%) translateY(-100%)",
           }}
         >
