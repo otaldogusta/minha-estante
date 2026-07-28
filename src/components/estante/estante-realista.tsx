@@ -278,68 +278,89 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
   if (livrosPilha.length === 0) return null;
 
   return (
-    // flex-col com items-start para alinhar os livros à esquerda (volumes menores ficam levemente desalinhados)
     <div className="relative flex flex-col justify-end items-start flex-shrink-0 mx-2 sm:mx-3 group/pilha z-10 hover:z-40">
       {livrosPilha.map((livro, idx) => {
         const paleta = getPaleta(livro.titulo + (livro.autor || ""));
         const capaImg = obterCapaReal(livro);
 
-        // Quando o livro fica DEITADO:
-        // - largura do livro deitado = altura do livro em pé (~140-160px)
-        // - espessura (height) = lombada do livro em pé (~34-42px)
-        // O volume de cima é levemente menor/deslocado para criar profundidade
+        // Livro deitado: largura = altura de um livro em pé (~150px), espessura = lombada (~38-42px)
         const larguraPx = idx === 0 ? 152 : 140;
         const espessuraPx = idx === 0 ? 40 : 36;
-        const deslocamento = idx === 0 ? 0 : 6; // px de offset à direita para parecer empilhado
+        const deslocamento = idx === 0 ? 0 : 6;
 
         return (
-          <Link
+          <LivroDeitadoItem
             key={livro.id}
-            to="/livro/$livroId"
-            params={{ livroId: String(livro.id) }}
-            onMouseEnter={(e) => onMouseEnter(e, livro)}
+            livro={livro}
+            capaImg={capaImg}
+            paleta={paleta}
+            larguraPx={larguraPx}
+            espessuraPx={espessuraPx}
+            deslocamento={deslocamento}
+            onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
-            onClick={() => onSelectLivro?.(livro)}
-            style={{ width: `${larguraPx}px`, height: `${espessuraPx}px`, marginLeft: `${deslocamento}px` }}
-            className={`relative rounded-[2px] border-b border-r ${paleta.border} shadow-[0_3px_8px_rgba(0,0,0,0.55)] flex items-center justify-between px-2.5 cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden`}
-          >
-            {/* Fundo com Gradiente da Paleta Derivada da Capa */}
-            <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
-
-            {/* Textura da Arte da Capa em Baixíssima Opacidade */}
-            {capaImg && (
-              <img
-                src={capaImg}
-                alt={livro.titulo}
-                className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay"
-              />
-            )}
-
-            {/* Sombra de Profundidade da Lombada Deitada */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/10 to-black/40 pointer-events-none" />
-
-            {/* Corte de Páginas em Bege no Lado Direito (topo do livro) */}
-            <div className="absolute right-0 inset-y-0 w-3 bg-gradient-to-l from-amber-100/30 to-transparent border-l border-black/20 pointer-events-none" />
-
-            {/* Reflexo de Luz na Borda Superior */}
-            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-
-            {/* Título horizontal legível */}
-            <span
-              className="relative z-10 truncate text-[10px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-wide"
-              style={{ maxWidth: `${larguraPx - 36}px` }}
-            >
-              {livro.titulo}
-            </span>
-            {livro.avaliacao ? (
-              <span className="relative z-10 text-[9px] font-num text-amber-300 font-bold flex-shrink-0 ml-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">★{livro.avaliacao}</span>
-            ) : null}
-          </Link>
+            onSelectLivro={onSelectLivro}
+          />
         );
       })}
     </div>
   );
 }
+
+// Item individual de livro deitado (precisa de useState, por isso componente separado)
+function LivroDeitadoItem({
+  livro, capaImg, paleta, larguraPx, espessuraPx, deslocamento,
+  onMouseEnter, onMouseLeave, onSelectLivro
+}: {
+  livro: Livro;
+  capaImg: string | null;
+  paleta: ReturnType<typeof getPaleta>;
+  larguraPx: number;
+  espessuraPx: number;
+  deslocamento: number;
+  onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
+  onMouseLeave: () => void;
+  onSelectLivro?: (livro: Livro) => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const temCapa = capaImg && !imgError;
+
+  return (
+    <Link
+      to="/livro/$livroId"
+      params={{ livroId: String(livro.id) }}
+      onMouseEnter={(e) => onMouseEnter(e, livro)}
+      onMouseLeave={onMouseLeave}
+      onClick={() => onSelectLivro?.(livro)}
+      style={{ width: `${larguraPx}px`, height: `${espessuraPx}px`, marginLeft: `${deslocamento}px` }}
+      className={`relative rounded-[2px] border-b border-r ${paleta.border} shadow-[0_3px_8px_rgba(0,0,0,0.55)] cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden`}
+    >
+      {/* Gradiente da paleta (fallback) */}
+      <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
+
+      {/* Capa real em alta opacidade — sem texto sobreposto */}
+      {temCapa ? (
+        <img
+          src={capaImg!}
+          alt={livro.titulo}
+          onError={() => setImgError(true)}
+          className="absolute inset-0 w-full h-full object-cover opacity-85 hover:opacity-100 transition-opacity duration-200"
+        />
+      ) : null}
+
+      {/* Sombra leve nas extremidades para efeito 3D */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30 pointer-events-none" />
+
+      {/* Corte de páginas em bege no lado direito (topo do livro físico) */}
+      <div className="absolute right-0 inset-y-0 w-3 bg-gradient-to-l from-amber-100/35 to-transparent border-l border-black/20 pointer-events-none" />
+
+      {/* Reflexo de luz na borda superior */}
+      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none" />
+    </Link>
+  );
+}
+
+
 
 // Subcomponente 3: Lombada Vertical REALISTA com Cor Derivada Limpa
 interface LombadaVerticalProps {
