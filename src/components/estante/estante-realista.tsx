@@ -674,37 +674,20 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
       {/* Popover Flutuante via React Portal — escapa de qualquer contexto de transform do pai */}
       {livroHover && posPopover && typeof document !== "undefined" && createPortal(
         <div
-          className="absolute z-[9999] -translate-x-1/2 pointer-events-none w-64 rounded-2xl border border-papel-3 bg-papel/95 backdrop-blur-2xl p-3 shadow-2xl surgir drop-shadow-2xl flex gap-3 items-center"
+          className="absolute z-[9999] pointer-events-none w-44 rounded-xl border border-papel-3 bg-papel/95 backdrop-blur-2xl px-3 py-2 shadow-xl surgir drop-shadow-xl"
           style={{
             left: `${posPopover.x}px`,
-            // posPopover.y já inclui a folga de 30px do topo do livro.
-            // translateY(-100%) sobe o popover pela sua própria altura.
-            // Resultado: popover flutua claramente ACIMA do livro, sem encavalhar.
             top: `${posPopover.y}px`,
             transform: "translateX(-50%) translateY(-100%)",
           }}
         >
-          {obterCapaReal(livroHover) ? (
-            <img
-              src={obterCapaReal(livroHover)!}
-              alt={livroHover.titulo}
-              className="h-20 w-14 object-cover rounded-md shadow-md border border-papel-3"
-            />
-          ) : (
-            <div className="h-20 w-14 rounded-md bg-papel-3/60 flex items-center justify-center text-[10px] text-tinta-3 text-center p-1">
-              Sem Capa
-            </div>
-          )}
-
-          <div className="flex-1 min-w-0 space-y-1">
-            <h4 className="font-display text-xs font-bold text-tinta truncate">{livroHover.titulo}</h4>
-            <p className="text-[11px] text-tinta-2 truncate">{livroHover.autor || "Autor desconhecido"}</p>
-            <div className="flex items-center justify-between pt-1 border-t border-papel-3/50 text-[10px]">
-              <span className="font-num text-amora font-semibold">
-                {livroHover.avaliacao ? `★ ${livroHover.avaliacao}/5` : "Sem nota"}
-              </span>
-              <span className="text-tinta-3 font-num">{livroHover.paginas || 0} págs</span>
-            </div>
+          <p className="font-display text-[11px] font-bold text-tinta truncate leading-tight">{livroHover.titulo}</p>
+          <p className="text-[10px] text-tinta-2 truncate mt-0.5">{livroHover.autor || "Autor desconhecido"}</p>
+          <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-papel-3/50 text-[10px]">
+            <span className="font-num text-amora font-semibold">
+              {livroHover.avaliacao ? `★ ${livroHover.avaliacao}/5` : "Sem nota"}
+            </span>
+            <span className="text-tinta-3 font-num">{livroHover.paginas || 0} págs</span>
           </div>
         </div>,
         document.body
