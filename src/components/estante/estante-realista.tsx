@@ -76,7 +76,7 @@ export function obterCapaReal(livro: Livro): string | null {
   return `https://covers.openlibrary.org/b/isbn/${query}-L.jpg`;
 }
 
-// Preset de paletas elegantes e aconchegantes para lombadas e capas de livros
+// Preset de paletas elegantes para fallback caso a imagem falhe
 const PALETAS_LOMBADA = [
   { bg: "from-rose-900 via-rose-950 to-amber-950", border: "border-rose-400/40", text: "text-rose-100", accent: "#f43f5e" },
   { bg: "from-emerald-900 via-emerald-950 to-teal-950", border: "border-emerald-400/40", text: "text-emerald-100", accent: "#10b981" },
@@ -250,12 +250,9 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
       onClick={() => onSelectLivro?.(livro)}
       className="group/capa-frontal relative flex flex-col items-center justify-end flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:scale-[1.05] z-20 hover:z-50 mx-1 sm:mx-2"
     >
-      {/* Suporte de Expositor de Madeira sob o Livro */}
       <div className="absolute -bottom-1 w-[90%] h-2.5 bg-amber-950/80 rounded-sm border-t border-amber-500/30 shadow-md pointer-events-none z-0" />
 
-      {/* Livro Exibido de Frente (Cover Frame 3D com Espessura Lateral) */}
       <div className="relative w-28 sm:w-32 md:w-36 h-40 sm:h-44 md:h-48 rounded-md shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 dark:border-white/10 transition-shadow group-hover/capa-frontal:shadow-[0_18px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-2 z-10 bg-stone-900">
-        {/* Imagem da Capa Real */}
         {capaImg && !imgError ? (
           <img
             src={capaImg}
@@ -264,7 +261,6 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover/capa-frontal:scale-105"
           />
         ) : (
-          /* Fallback com Capa Ilustrativa Tipográfica */
           <div className={`absolute inset-0 bg-gradient-to-br ${paleta.bg} p-3 flex flex-col justify-between`}>
             <div className="w-full h-0.5 bg-amber-300/40" />
             <div className="space-y-1 my-auto text-center">
@@ -277,11 +273,9 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
           </div>
         )}
 
-        {/* Efeito 3D de Lombada e Espessura Real da Capa de Livro */}
         <div className="absolute inset-y-0 left-0 w-2 bg-white/25 backdrop-blur-xs border-r border-black/30 pointer-events-none z-10" />
         <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-white/20 pointer-events-none z-10" />
 
-        {/* Tag de Destaque Editorial ("Lendo Agora" ou "Destaque ★") */}
         <div className="relative z-20 flex items-center justify-between w-full">
           {estaLendo ? (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white font-sans text-[8px] font-bold tracking-wider shadow-md uppercase backdrop-blur-xs">
@@ -299,7 +293,7 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
   );
 }
 
-// Subcomponente 2: Pilha Horizontal de Livros Deitados
+// Subcomponente 2: Pilha Horizontal de Livros Deitados com Arte da Capa na Lombada
 interface PilhaLivrosProps {
   livrosPilha: Livro[];
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
@@ -314,6 +308,7 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
     <div className="relative flex flex-col justify-end items-center flex-shrink-0 mx-1 sm:mx-2 group/pilha z-10 hover:z-40">
       {livrosPilha.map((livro, idx) => {
         const paleta = getPaleta(livro.titulo + (livro.autor || ""));
+        const capaImg = obterCapaReal(livro);
         const larguraClass = idx === 0 ? "w-28 sm:w-32 md:w-36 h-7" : "w-24 sm:w-28 md:w-32 h-6.5 -mb-0.5";
 
         return (
@@ -324,13 +319,27 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
             onMouseEnter={(e) => onMouseEnter(e, livro)}
             onMouseLeave={onMouseLeave}
             onClick={() => onSelectLivro?.(livro)}
-            className={`relative rounded-xs bg-gradient-to-r ${paleta.bg} border-b border-r ${paleta.border} shadow-md flex items-center justify-between px-2.5 text-[10px] ${paleta.text} font-medium truncate cursor-pointer transition-transform duration-200 hover:-translate-y-1.5 ${larguraClass}`}
+            className={`relative rounded-xs border-b border-r ${paleta.border} shadow-md flex items-center justify-between px-2.5 text-[10px] text-white font-medium truncate cursor-pointer transition-transform duration-200 hover:-translate-y-1.5 overflow-hidden ${larguraClass}`}
           >
-            <span className="truncate max-w-[90px] font-semibold">{livro.titulo}</span>
-            {livro.avaliacao ? (
-              <span className="text-[8px] font-num opacity-80">★ {livro.avaliacao}</span>
+            {/* Arte Real da Capa no Fundo da Lombada Horizontal */}
+            {capaImg ? (
+              <img
+                src={capaImg}
+                alt={livro.titulo}
+                className="absolute inset-0 w-full h-full object-cover opacity-85 contrast-[1.05]"
+              />
             ) : (
-              <span className="text-[8px] opacity-50">•</span>
+              <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
+            )}
+
+            {/* Overlay Escuro com Textura de Lombada */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/75 pointer-events-none" />
+
+            <span className="relative z-10 truncate max-w-[90px] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{livro.titulo}</span>
+            {livro.avaliacao ? (
+              <span className="relative z-10 text-[8px] font-num opacity-90 text-amber-300 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">★ {livro.avaliacao}</span>
+            ) : (
+              <span className="relative z-10 text-[8px] opacity-60">•</span>
             )}
           </Link>
         );
@@ -339,7 +348,7 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
   );
 }
 
-// Subcomponente 3: Lombada Vertical Tradicional
+// Subcomponente 3: Lombada Vertical REALISTA com Arte da Capa Integrada à Madeira
 interface LombadaVerticalProps {
   livro: Livro;
   idxLivro: number;
@@ -350,6 +359,8 @@ interface LombadaVerticalProps {
 
 function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelectLivro }: LombadaVerticalProps) {
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
+  const capaImg = obterCapaReal(livro);
+  const [imgError, setImgError] = useState(false);
   const paginas = livro.paginas || 200;
   
   const alturaPx = Math.min(200, Math.max(140, 140 + (paginas % 60)));
@@ -368,23 +379,40 @@ function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelect
       onMouseEnter={(e) => onMouseEnter(e, livro)}
       onMouseLeave={onMouseLeave}
       onClick={() => onSelectLivro?.(livro)}
-      className={`group/spine relative flex-shrink-0 flex flex-col justify-between items-center py-3 px-1 rounded-sm bg-gradient-to-b ${paleta.bg} border-l border-r ${paleta.border} shadow-lg cursor-pointer transition-all duration-300 hover:-translate-y-4 hover:shadow-[0_12px_24px_rgba(0,0,0,0.5)] z-10 hover:z-50 hover:scale-105 mx-0.5`}
+      className={`group/spine relative flex-shrink-0 flex flex-col justify-between items-center py-3 px-1 rounded-sm border-l border-r border-white/20 dark:border-white/10 shadow-lg cursor-pointer transition-all duration-300 hover:-translate-y-4 hover:shadow-[0_14px_28px_rgba(0,0,0,0.7)] z-10 hover:z-50 hover:scale-105 mx-0.5 overflow-hidden bg-stone-950`}
     >
+      {/* Arte Real da Capa do Livro em Fundo da Lombada Vertical */}
+      {capaImg && !imgError ? (
+        <img
+          src={capaImg}
+          alt={livro.titulo}
+          onError={() => setImgError(true)}
+          className="absolute inset-0 w-full h-full object-cover opacity-85 contrast-[1.08] brightness-[0.9] group-hover/spine:opacity-100 group-hover/spine:scale-110 transition-all duration-300"
+        />
+      ) : (
+        <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
+      )}
+
+      {/* Sombreamento Gradient Realista de Lombada Física */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/35 to-black/85 pointer-events-none z-0" />
+      <div className="absolute inset-y-0 left-0 w-1 bg-white/20 blur-2xs pointer-events-none z-0" />
+      <div className="absolute inset-y-0 right-0 w-1 bg-black/40 pointer-events-none z-0" />
+
       {/* Fita Marcador de Página saindo pelo topo */}
       {idxLivro % 3 === 0 && (
         <div
-          className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-4 rounded-b-xs shadow-xs pointer-events-none"
+          className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-4 rounded-b-xs shadow-md pointer-events-none z-20"
           style={{ backgroundColor: paleta.accent }}
         />
       )}
 
       {/* Friso Dourado Superior */}
-      <div className="w-full h-1 border-y border-amber-300/30 bg-amber-400/10 pointer-events-none" />
+      <div className="relative z-10 w-full h-1 border-y border-amber-300/40 bg-amber-400/20 pointer-events-none" />
 
-      {/* Título Vertical na Lombada */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden py-2 pointer-events-none">
+      {/* Título Vertical na Lombada com Sombra de Texto para Leitura Impecável */}
+      <div className="relative z-10 flex-1 flex items-center justify-center overflow-hidden py-2 pointer-events-none">
         <span
-          className={`font-display text-[11px] font-bold tracking-wider ${paleta.text} uppercase truncate max-h-[140px]`}
+          className="font-display text-[11px] font-bold tracking-wider text-white uppercase truncate max-h-[140px] drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
           style={{
             writingMode: "vertical-rl",
             textTransform: "uppercase",
@@ -397,14 +425,14 @@ function LombadaVertical({ livro, idxLivro, onMouseEnter, onMouseLeave, onSelect
       </div>
 
       {/* Friso Dourado Inferior & Avaliação */}
-      <div className="w-full flex flex-col items-center gap-1 pointer-events-none">
-        <div className="w-full h-1 border-y border-amber-300/30 bg-amber-400/10" />
+      <div className="relative z-10 w-full flex flex-col items-center gap-1 pointer-events-none">
+        <div className="w-full h-1 border-y border-amber-300/40 bg-amber-400/20" />
         {livro.avaliacao ? (
-          <span className="text-[9px] font-num font-bold text-amber-300/90">
+          <span className="text-[9px] font-num font-bold text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,1)]">
             ★ {livro.avaliacao}
           </span>
         ) : (
-          <span className="text-[8px] font-num text-white/40">•</span>
+          <span className="text-[8px] font-num text-white/50">•</span>
         )}
       </div>
     </Link>
@@ -470,9 +498,9 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
               {idxPrateleira === 2 && <DecorCaneca />}
               {idxPrateleira > 2 && <div className="w-2" />}
 
-              {/* Arrranjo Híbrido de Livros (Lombadas + Capa Frontal + Pilhas) */}
+              {/* Arrranjo Híbrido de Livros (Lombadas Verticais com Arte Real + Capa Frontal + Pilhas) */}
               <div className="flex items-end justify-center gap-1 sm:gap-2 flex-1 mx-1 sm:mx-3 overflow-visible">
-                {/* Bloco A: Lombadas Verticais Iniciais */}
+                {/* Bloco A: Lombadas Verticais Iniciais (com a imagem real da capa na lombada) */}
                 {livrosLombadasAntes.map((livro, idx) => (
                   <LombadaVertical
                     key={livro.id}
@@ -484,7 +512,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   />
                 ))}
 
-                {/* Bloco B: Livro de Destaque em Capa Frontal Visível (Com Capas Reais de Alta Resolução) */}
+                {/* Bloco B: Livro de Destaque em Capa Frontal Visível */}
                 {livroDestaque && (
                   <LivroCapaFrontal
                     livro={livroDestaque}
@@ -494,7 +522,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   />
                 )}
 
-                {/* Bloco C: Pilha Horizontal de Deitados */}
+                {/* Bloco C: Pilha Horizontal de Deitados (com arte real da capa no fundo) */}
                 {temPilha && (
                   <PilhaLivros
                     livrosPilha={livrosPilha}
@@ -504,7 +532,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   />
                 )}
 
-                {/* Bloco D: Lombadas Verticais Finais */}
+                {/* Bloco D: Lombadas Verticais Finais (com a imagem real da capa na lombada) */}
                 {livrosLombadasDepois.map((livro, idx) => (
                   <LombadaVertical
                     key={livro.id}
