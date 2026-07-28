@@ -336,22 +336,34 @@ function LivroDeitadoItem({
       className={`relative rounded-[2px] border-b border-r ${paleta.border} shadow-[0_3px_8px_rgba(0,0,0,0.55)] cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden`}
     >
       {/* Gradiente da paleta (fallback) */}
-      <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
+      <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
 
-      {/* Capa real em alta opacidade — sem texto sobreposto */}
+      {/*
+        Capa rotacionada -90°: o livro em pé tinha (espessuraPx)×(larguraPx).
+        Rotacionado fica (larguraPx)×(espessuraPx) — encaixe perfeito no container deitado.
+        translate(-50%, -50%) centraliza antes da rotação.
+      */}
       {temCapa ? (
         <img
           src={capaImg!}
           alt={livro.titulo}
           onError={() => setImgError(true)}
-          className="absolute inset-0 w-full h-full object-cover opacity-85 hover:opacity-100 transition-opacity duration-200"
+          style={{
+            position: "absolute",
+            width: `${espessuraPx}px`,
+            height: `${larguraPx}px`,
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%) rotate(-90deg)",
+            objectFit: "cover",
+          }}
         />
       ) : null}
 
-      {/* Sombra leve nas extremidades para efeito 3D */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30 pointer-events-none" />
+      {/* Sombra nas extremidades para efeito 3D de espessura */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/25 pointer-events-none" />
 
-      {/* Corte de páginas em bege no lado direito (topo do livro físico) */}
+      {/* Corte de páginas em bege no lado direito (lombo do livro) */}
       <div className="absolute right-0 inset-y-0 w-3 bg-gradient-to-l from-amber-100/35 to-transparent border-l border-black/20 pointer-events-none" />
 
       {/* Reflexo de luz na borda superior */}
@@ -359,6 +371,8 @@ function LivroDeitadoItem({
     </Link>
   );
 }
+
+
 
 
 
