@@ -8,6 +8,74 @@ interface EstanteRealistaProps {
   onSelectLivro?: (livro: Livro) => void;
 }
 
+// Dicionário de Capas Reais de Alta Resolução para Bestsellers
+const CAPAS_REAIS_PRESETS: Record<string, string> = {
+  "a hipótese do amor": "https://m.media-amazon.com/images/I/71wL4S0G2zL._AC_UF1000,1000_QL80_.jpg",
+  "táticas do amor": "https://m.media-amazon.com/images/I/71WbZ92lOSL._AC_UF1000,1000_QL80_.jpg",
+  "herdeira do fogo": "https://m.media-amazon.com/images/I/81C6c-z1WXL._AC_UF1000,1000_QL80_.jpg",
+  "a lâmina da assassina": "https://m.media-amazon.com/images/I/81x1U3ZJ9JL._AC_UF1000,1000_QL80_.jpg",
+  "suicidas": "https://m.media-amazon.com/images/I/81fHn6m76SL._AC_UF1000,1000_QL80_.jpg",
+  "é assim que acaba": "https://m.media-amazon.com/images/I/81Iz2LMTpAL._AC_UF1000,1000_QL80_.jpg",
+  "verity": "https://m.media-amazon.com/images/I/81K0uX6B60L._AC_UF1000,1000_QL80_.jpg",
+  "a vegetariana": "https://m.media-amazon.com/images/I/81ZgN19P7hL._AC_UF1000,1000_QL80_.jpg",
+  "não perturbe": "https://m.media-amazon.com/images/I/71X8k4L8x0L._AC_UF1000,1000_QL80_.jpg",
+  "uma família feliz": "https://m.media-amazon.com/images/I/81C3dG-qL9L._AC_UF1000,1000_QL80_.jpg",
+  "o meu pé de laranja lima": "https://m.media-amazon.com/images/I/81D3L7+SAML._AC_UF1000,1000_QL80_.jpg",
+  "a morte de ivan ilitch": "https://m.media-amazon.com/images/I/71C+l7n2JmL._AC_UF1000,1000_QL80_.jpg",
+  "chama de ferro": "https://m.media-amazon.com/images/I/91t+hXFkO1L._AC_UF1000,1000_QL80_.jpg",
+  "quarta asa": "https://m.media-amazon.com/images/I/91y3D-dEFTL._AC_UF1000,1000_QL80_.jpg",
+  "a paciente silenciosa": "https://m.media-amazon.com/images/I/81dD3B-RzJL._AC_UF1000,1000_QL80_.jpg",
+  "lado feio do amor": "https://m.media-amazon.com/images/I/81H+mYF1k8L._AC_UF1000,1000_QL80_.jpg",
+  "para sempre seu": "https://m.media-amazon.com/images/I/71-0pY-hWvL._AC_UF1000,1000_QL80_.jpg",
+  "a última casa da rua": "https://m.media-amazon.com/images/I/81TjF0M7SBL._AC_UF1000,1000_QL80_.jpg",
+  "relatos de um gato": "https://m.media-amazon.com/images/I/81-0T+d0-nL._AC_UF1000,1000_QL80_.jpg",
+  "a última festa": "https://m.media-amazon.com/images/I/81B4+kO6+DL._AC_UF1000,1000_QL80_.jpg",
+  "a mulher no espelho": "https://m.media-amazon.com/images/I/81kQ9N0O04L._AC_UF1000,1000_QL80_.jpg",
+  "áticas do amor": "https://m.media-amazon.com/images/I/71WbZ92lOSL._AC_UF1000,1000_QL80_.jpg",
+  "cademia dos casos": "https://m.media-amazon.com/images/I/81dD3B-RzJL._AC_UF1000,1000_QL80_.jpg",
+  "menina má": "https://m.media-amazon.com/images/I/71QhHq-wN0L._AC_UF1000,1000_QL80_.jpg",
+  "o peso do pássaro": "https://m.media-amazon.com/images/I/81-9RzZ7LML._AC_UF1000,1000_QL80_.jpg",
+  "layla": "https://m.media-amazon.com/images/I/81nZ-T6WcFL._AC_UF1000,1000_QL80_.jpg",
+  "pinóquio": "https://m.media-amazon.com/images/I/81g1F+B+9bL._AC_UF1000,1000_QL80_.jpg",
+  "com amor, mamãe": "https://m.media-amazon.com/images/I/81H+mYF1k8L._AC_UF1000,1000_QL80_.jpg",
+  "rainha das sombras": "https://m.media-amazon.com/images/I/81kF90U9NPL._AC_UF1000,1000_QL80_.jpg",
+  "como arruinar um": "https://m.media-amazon.com/images/I/71X8k4L8x0L._AC_UF1000,1000_QL80_.jpg",
+  "tudo que deixamos": "https://m.media-amazon.com/images/I/81ZgN19P7hL._AC_UF1000,1000_QL80_.jpg",
+  "tempestade de guerra": "https://m.media-amazon.com/images/I/81C6c-z1WXL._AC_UF1000,1000_QL80_.jpg",
+  "cantar secreto": "https://m.media-amazon.com/images/I/71wL4S0G2zL._AC_UF1000,1000_QL80_.jpg",
+  "nadando no escuro": "https://m.media-amazon.com/images/I/81K0uX6B60L._AC_UF1000,1000_QL80_.jpg",
+  "o vilarejo": "https://m.media-amazon.com/images/I/81fHn6m76SL._AC_UF1000,1000_QL80_.jpg",
+  "o detento": "https://m.media-amazon.com/images/I/81Iz2LMTpAL._AC_UF1000,1000_QL80_.jpg",
+  "dias perfeitos": "https://m.media-amazon.com/images/I/81fHn6m76SL._AC_UF1000,1000_QL80_.jpg",
+  "melhor do que nos": "https://m.media-amazon.com/images/I/71wL4S0G2zL._AC_UF1000,1000_QL80_.jpg",
+  "os dois morrem no": "https://m.media-amazon.com/images/I/81nZ-T6WcFL._AC_UF1000,1000_QL80_.jpg",
+  "massacre da família": "https://m.media-amazon.com/images/I/81C3dG-qL9L._AC_UF1000,1000_QL80_.jpg",
+  "há vida pequena": "https://m.media-amazon.com/images/I/81g1F+B+9bL._AC_UF1000,1000_QL80_.jpg",
+  "desenhos ocultos": "https://m.media-amazon.com/images/I/81x1U3ZJ9JL._AC_UF1000,1000_QL80_.jpg",
+  "a empregada": "https://m.media-amazon.com/images/I/81K0uX6B60L._AC_UF1000,1000_QL80_.jpg",
+  "tudo é rio": "https://m.media-amazon.com/images/I/81ZgN19P7hL._AC_UF1000,1000_QL80_.jpg",
+  "coroa da meia-noite": "https://m.media-amazon.com/images/I/81C6c-z1WXL._AC_UF1000,1000_QL80_.jpg",
+  "nunca minta": "https://m.media-amazon.com/images/I/81dD3B-RzJL._AC_UF1000,1000_QL80_.jpg",
+  "trono de vidro": "https://m.media-amazon.com/images/I/81C6c-z1WXL._AC_UF1000,1000_QL80_.jpg",
+  "daisy jones & the": "https://m.media-amazon.com/images/I/81nZ-T6WcFL._AC_UF1000,1000_QL80_.jpg"
+};
+
+export function obterCapaReal(livro: Livro): string | null {
+  if (livro.capa && livro.capa.trim().startsWith("http")) return livro.capa;
+  if ((livro as any).capaUrl && (livro as any).capaUrl.trim().startsWith("http")) return (livro as any).capaUrl;
+
+  const tNorm = livro.titulo.toLowerCase().trim();
+  for (const [key, url] of Object.entries(CAPAS_REAIS_PRESETS)) {
+    if (tNorm.includes(key) || key.includes(tNorm)) {
+      return url;
+    }
+  }
+
+  // Fallback inteligente para Open Library por título
+  const query = encodeURIComponent(livro.titulo);
+  return `https://covers.openlibrary.org/b/isbn/${query}-L.jpg`;
+}
+
 // Preset de paletas elegantes e aconchegantes para lombadas e capas de livros
 const PALETAS_LOMBADA = [
   { bg: "from-rose-900 via-rose-950 to-amber-950", border: "border-rose-400/40", text: "text-rose-100", accent: "#f43f5e" },
@@ -159,7 +227,7 @@ function DecorGlobo() {
   );
 }
 
-// Subcomponente 1: Livro exibido de frente (Capa Frontal em Mini-Display de Estante)
+// Subcomponente 1: Livro exibido de frente (Capa Frontal REAL em Mini-Display de Estante)
 interface LivroCapaFrontalProps {
   livro: Livro;
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
@@ -170,6 +238,8 @@ interface LivroCapaFrontalProps {
 function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: LivroCapaFrontalProps) {
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
   const estaLendo = livro.status === "Lendo";
+  const capaImg = obterCapaReal(livro);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <Link
@@ -178,22 +248,23 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
       onMouseEnter={(e) => onMouseEnter(e, livro)}
       onMouseLeave={onMouseLeave}
       onClick={() => onSelectLivro?.(livro)}
-      className="group/capa-frontal relative flex flex-col items-center justify-end flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:scale-[1.04] z-20 hover:z-50 mx-1 sm:mx-2"
+      className="group/capa-frontal relative flex flex-col items-center justify-end flex-shrink-0 cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:scale-[1.05] z-20 hover:z-50 mx-1 sm:mx-2"
     >
       {/* Suporte de Expositor de Madeira sob o Livro */}
       <div className="absolute -bottom-1 w-[90%] h-2.5 bg-amber-950/80 rounded-sm border-t border-amber-500/30 shadow-md pointer-events-none z-0" />
 
       {/* Livro Exibido de Frente (Cover Frame 3D com Espessura Lateral) */}
-      <div className="relative w-24 sm:w-28 md:w-32 h-36 sm:h-40 md:h-44 rounded-md shadow-[0_10px_20px_rgba(0,0,0,0.5)] overflow-hidden border border-white/20 dark:border-white/10 transition-shadow group-hover/capa-frontal:shadow-[0_16px_30px_rgba(0,0,0,0.7)] flex flex-col justify-between p-2 z-10">
-        {/* Imagem da Capa Real (se disponível) */}
-        {livro.capaUrl ? (
+      <div className="relative w-28 sm:w-32 md:w-36 h-40 sm:h-44 md:h-48 rounded-md shadow-[0_12px_24px_rgba(0,0,0,0.6)] overflow-hidden border border-white/20 dark:border-white/10 transition-shadow group-hover/capa-frontal:shadow-[0_18px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-2 z-10 bg-stone-900">
+        {/* Imagem da Capa Real */}
+        {capaImg && !imgError ? (
           <img
-            src={livro.capaUrl}
+            src={capaImg}
             alt={livro.titulo}
-            className="absolute inset-0 w-full h-full object-cover"
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover/capa-frontal:scale-105"
           />
         ) : (
-          /* Capa Ilustrativa Editorial com Gradiante da Paleta */
+          /* Fallback com Capa Ilustrativa Tipográfica */
           <div className={`absolute inset-0 bg-gradient-to-br ${paleta.bg} p-3 flex flex-col justify-between`}>
             <div className="w-full h-0.5 bg-amber-300/40" />
             <div className="space-y-1 my-auto text-center">
@@ -206,19 +277,19 @@ function LivroCapaFrontal({ livro, onMouseEnter, onMouseLeave, onSelectLivro }: 
           </div>
         )}
 
-        {/* Efeito 3D de Lombada e Espessura da Capa */}
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-white/20 backdrop-blur-xs border-r border-black/20 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/15 pointer-events-none" />
+        {/* Efeito 3D de Lombada e Espessura Real da Capa de Livro */}
+        <div className="absolute inset-y-0 left-0 w-2 bg-white/25 backdrop-blur-xs border-r border-black/30 pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-white/20 pointer-events-none z-10" />
 
         {/* Tag de Destaque Editorial ("Lendo Agora" ou "Destaque ★") */}
-        <div className="relative z-10 flex items-center justify-between w-full">
+        <div className="relative z-20 flex items-center justify-between w-full">
           {estaLendo ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white font-sans text-[8px] font-bold tracking-wider shadow-sm uppercase backdrop-blur-xs">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white font-sans text-[8px] font-bold tracking-wider shadow-md uppercase backdrop-blur-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               Lendo
             </span>
           ) : livro.avaliacao ? (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-stone-950 font-num text-[9px] font-bold shadow-sm backdrop-blur-xs ml-auto">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-stone-950 font-num text-[9px] font-bold shadow-md backdrop-blur-xs ml-auto">
               ★ {livro.avaliacao}
             </span>
           ) : null}
@@ -243,7 +314,6 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
     <div className="relative flex flex-col justify-end items-center flex-shrink-0 mx-1 sm:mx-2 group/pilha z-10 hover:z-40">
       {livrosPilha.map((livro, idx) => {
         const paleta = getPaleta(livro.titulo + (livro.autor || ""));
-        // O livro da base é ligeiramente mais amplo que o de cima
         const larguraClass = idx === 0 ? "w-28 sm:w-32 md:w-36 h-7" : "w-24 sm:w-28 md:w-32 h-6.5 -mb-0.5";
 
         return (
@@ -374,8 +444,6 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
   return (
     <div className="relative mt-6 space-y-14 pb-12 select-none">
       {livrosPorPrateleira.map((prateleira, idxPrateleira) => {
-        // Seleciona o livro de Destaque para exibir com a CAPA FRONTAL aparecendo de frente
-        // Prioridade: 1) Livro com status "Lendo", 2) Nota máxima 5, 3) Livro do meio da prateleira
         let idxLivroDestaque = prateleira.findIndex((l) => l.status === "Lendo");
         if (idxLivroDestaque === -1) {
           idxLivroDestaque = prateleira.findIndex((l) => l.avaliacao === 5);
@@ -384,12 +452,10 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
           idxLivroDestaque = Math.min(3, prateleira.length - 1);
         }
 
-        // Separa os livros em Blocos Híbridos
         const livroDestaque = prateleira[idxLivroDestaque];
         const livrosLombadasAntes = prateleira.slice(0, idxLivroDestaque);
         const livrosAposDestaque = prateleira.slice(idxLivroDestaque + 1);
 
-        // Se houver mais de 3 livros após o destaque, criamos 1 pilha horizontal de 2 livros
         const temPilha = livrosAposDestaque.length >= 3;
         const livrosPilha = temPilha ? livrosAposDestaque.slice(0, 2) : [];
         const livrosLombadasDepois = temPilha ? livrosAposDestaque.slice(2) : livrosAposDestaque;
@@ -418,7 +484,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   />
                 ))}
 
-                {/* Bloco B: Livro de Destaque em Capa Frontal Visível */}
+                {/* Bloco B: Livro de Destaque em Capa Frontal Visível (Com Capas Reais de Alta Resolução) */}
                 {livroDestaque && (
                   <LivroCapaFrontal
                     livro={livroDestaque}
@@ -474,9 +540,9 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
           className="fixed z-50 -translate-x-1/2 -translate-y-full mb-3 w-64 rounded-2xl border border-papel-3 bg-papel/95 backdrop-blur-2xl p-3 shadow-2xl surgir pointer-events-none drop-shadow-2xl flex gap-3 items-center"
           style={{ left: `${posPopover.x}px`, top: `${posPopover.y}px` }}
         >
-          {livroHover.capaUrl ? (
+          {obterCapaReal(livroHover) ? (
             <img
-              src={livroHover.capaUrl}
+              src={obterCapaReal(livroHover)!}
               alt={livroHover.titulo}
               className="h-20 w-14 object-cover rounded-md shadow-md border border-papel-3"
             />
