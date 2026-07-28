@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import type { Livro } from "@/lib/api/livros.functions";
 import { SleepingLottieCat } from "./sleeping-lottie-cat";
@@ -277,13 +278,19 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
   if (livrosPilha.length === 0) return null;
 
   return (
-    <div className="relative flex flex-col justify-end items-center flex-shrink-0 mx-1.5 sm:mx-2.5 group/pilha z-10 hover:z-40">
+    // flex-col com items-start para alinhar os livros à esquerda (volumes menores ficam levemente desalinhados)
+    <div className="relative flex flex-col justify-end items-start flex-shrink-0 mx-2 sm:mx-3 group/pilha z-10 hover:z-40">
       {livrosPilha.map((livro, idx) => {
         const paleta = getPaleta(livro.titulo + (livro.autor || ""));
         const capaImg = obterCapaReal(livro);
-        
-        // Espessura e pequenas variações de alinhamento entre o livro base e o de cima
-        const larguraClass = idx === 0 ? "w-26 sm:w-30 md:w-34 h-3.5 sm:h-4" : "w-22 sm:w-26 md:w-30 h-3.5 sm:h-4 -mb-0.5 ml-1";
+
+        // Quando o livro fica DEITADO:
+        // - largura do livro deitado = altura do livro em pé (~140-160px)
+        // - espessura (height) = lombada do livro em pé (~34-42px)
+        // O volume de cima é levemente menor/deslocado para criar profundidade
+        const larguraPx = idx === 0 ? 152 : 140;
+        const espessuraPx = idx === 0 ? 40 : 36;
+        const deslocamento = idx === 0 ? 0 : 6; // px de offset à direita para parecer empilhado
 
         return (
           <Link
@@ -293,28 +300,39 @@ function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }:
             onMouseEnter={(e) => onMouseEnter(e, livro)}
             onMouseLeave={onMouseLeave}
             onClick={() => onSelectLivro?.(livro)}
-            className={`relative rounded-xs border-b border-r ${paleta.border} shadow-[0_4px_8px_rgba(0,0,0,0.5)] flex items-center justify-between px-2 text-[9px] sm:text-[10px] text-white font-medium truncate cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden ${larguraClass}`}
+            style={{ width: `${larguraPx}px`, height: `${espessuraPx}px`, marginLeft: `${deslocamento}px` }}
+            className={`relative rounded-[2px] border-b border-r ${paleta.border} shadow-[0_3px_8px_rgba(0,0,0,0.55)] flex items-center justify-between px-2.5 cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden`}
           >
-            {/* Fundo com a Paleta Derivada da Capa */}
+            {/* Fundo com Gradiente da Paleta Derivada da Capa */}
             <div className={`absolute inset-0 bg-gradient-to-r ${paleta.bg}`} />
 
-            {/* Textura Suave da Arte da Capa no Fundo */}
+            {/* Textura da Arte da Capa em Baixíssima Opacidade */}
             {capaImg && (
               <img
                 src={capaImg}
                 alt={livro.titulo}
-                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-overlay"
+                className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay"
               />
             )}
 
-            {/* Efeito 3D de Lombada Horizontal e Corte de Páginas Bege na Lateral */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/40 pointer-events-none" />
-            <div className="absolute right-0 inset-y-0 w-2.5 bg-amber-100/25 border-l border-black/30 pointer-events-none" />
+            {/* Sombra de Profundidade da Lombada Deitada */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/10 to-black/40 pointer-events-none" />
 
-            {/* Título Limpo e Discreto */}
-            <span className="relative z-10 truncate max-w-[85px] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{livro.titulo}</span>
+            {/* Corte de Páginas em Bege no Lado Direito (topo do livro) */}
+            <div className="absolute right-0 inset-y-0 w-3 bg-gradient-to-l from-amber-100/30 to-transparent border-l border-black/20 pointer-events-none" />
+
+            {/* Reflexo de Luz na Borda Superior */}
+            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+            {/* Título horizontal legível */}
+            <span
+              className="relative z-10 truncate text-[10px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-wide"
+              style={{ maxWidth: `${larguraPx - 36}px` }}
+            >
+              {livro.titulo}
+            </span>
             {livro.avaliacao ? (
-              <span className="relative z-10 text-[8px] font-num opacity-90 text-amber-300 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">★ {livro.avaliacao}</span>
+              <span className="relative z-10 text-[9px] font-num text-amber-300 font-bold flex-shrink-0 ml-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">★{livro.avaliacao}</span>
             ) : null}
           </Link>
         );
@@ -418,9 +436,15 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
   const [posPopover, setPosPopover] = useState<{ x: number; y: number } | null>(null);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => {
+    // getBoundingClientRect() retorna coordenadas relativas ao VIEWPORT.
+    // Para usar corretamente com o Portal (que renderiza direto no body),
+    // adicionamos scrollY/scrollX para converter para coordenadas absolutas de página.
     const rect = e.currentTarget.getBoundingClientRect();
     setLivroHover(livro);
-    setPosPopover({ x: rect.left + rect.width / 2, y: rect.top });
+    setPosPopover({
+      x: rect.left + rect.width / 2 + window.scrollX,
+      y: rect.top + window.scrollY,
+    });
   };
 
   const handleMouseLeave = () => {
@@ -634,11 +658,15 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
         );
       })}
 
-      {/* Popover Flutuante de Capa ao Passar o Mouse */}
-      {livroHover && posPopover && (
+      {/* Popover Flutuante via React Portal — escapa de qualquer contexto de transform do pai */}
+      {livroHover && posPopover && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed z-50 -translate-x-1/2 -translate-y-full mb-3 w-64 rounded-2xl border border-papel-3 bg-papel/95 backdrop-blur-2xl p-3 shadow-2xl surgir pointer-events-none drop-shadow-2xl flex gap-3 items-center"
-          style={{ left: `${posPopover.x}px`, top: `${posPopover.y}px` }}
+          className="absolute z-[9999] -translate-x-1/2 pointer-events-none w-64 rounded-2xl border border-papel-3 bg-papel/95 backdrop-blur-2xl p-3 shadow-2xl surgir drop-shadow-2xl flex gap-3 items-center"
+          style={{
+            left: `${posPopover.x}px`,
+            top: `${posPopover.y - 12}px`,
+            transform: "translateX(-50%) translateY(-100%)",
+          }}
         >
           {obterCapaReal(livroHover) ? (
             <img
@@ -662,7 +690,8 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
               <span className="text-tinta-3 font-num">{livroHover.paginas || 0} págs</span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
