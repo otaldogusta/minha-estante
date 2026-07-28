@@ -14,7 +14,7 @@ export function SleepingShelfCat() {
   return (
     <div
       aria-hidden="true"
-      className="shelf-cat-editorial pointer-events-none relative flex-shrink-0 self-end -mb-[3px] ml-4 sm:ml-8 z-20 w-[190px] sm:w-[230px] md:w-[265px] select-none"
+      className="shelf-cat-editorial pointer-events-none relative flex-shrink-0 self-end -mb-[3px] ml-4 sm:ml-8 z-20 w-[240px] sm:w-[310px] md:w-[360px] select-none"
     >
       <style>{`
         @keyframes cat-shelf-breath {
