@@ -480,7 +480,59 @@ function salvarOrdem(ids: number[]) {
   } catch (e) {}
 }
 
-// Barra de Ações Flutuante sobre o livro no Modo Edição
+// Ícones Vetoriais SVG Elegantes do Modo Edição
+function IconVertical({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6" y="4" width="4" height="16" rx="1" />
+      <rect x="14" y="4" width="4" height="16" rx="1" />
+    </svg>
+  );
+}
+
+function IconFrontal({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  );
+}
+
+function IconDeitado({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <rect x="4" y="6" width="16" height="4" rx="1" />
+      <rect x="4" y="14" width="16" height="4" rx="1" />
+    </svg>
+  );
+}
+
+function IconInclinado({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6" y="3" width="4.5" height="17" rx="1" transform="rotate(18 6 3)" />
+    </svg>
+  );
+}
+
+function IconChevronLeft({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+function IconChevronRight({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
+// Barra de Ações Flutuante sobre o livro no Modo Edição (Seguindo o Design System do App)
 function ToolbarEdicaoLivro({
   livroId,
   estiloAtual,
@@ -495,64 +547,74 @@ function ToolbarEdicaoLivro({
   return (
     <div
       onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
-      className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1 rounded-xl bg-stone-950/95 border border-amber-500/60 shadow-2xl text-[11px] backdrop-blur-md select-none pointer-events-auto"
+      className="absolute -top-11 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-xl border border-papel-3/90 bg-papel-2/95 p-1 backdrop-blur-md shadow-xl select-none pointer-events-auto"
     >
       <button
         type="button"
         title="Em pé (Vertical)"
         onClick={() => onChangeEstilo(livroId, "vertical")}
-        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
-          estiloAtual === "vertical" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
+          estiloAtual === "vertical"
+            ? "bg-amora text-papel shadow-xs scale-105"
+            : "text-tinta-2 hover:bg-papel-3/60 hover:text-tinta"
         }`}
       >
-        ❚
+        <IconVertical />
       </button>
       <button
         type="button"
         title="Capa Frontal"
         onClick={() => onChangeEstilo(livroId, "frontal")}
-        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
-          estiloAtual === "frontal" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
+          estiloAtual === "frontal"
+            ? "bg-amora text-papel shadow-xs scale-105"
+            : "text-tinta-2 hover:bg-papel-3/60 hover:text-tinta"
         }`}
       >
-        📖
+        <IconFrontal />
       </button>
       <button
         type="button"
         title="Deitado"
         onClick={() => onChangeEstilo(livroId, "deitado")}
-        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
-          estiloAtual === "deitado" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
+          estiloAtual === "deitado"
+            ? "bg-amora text-papel shadow-xs scale-105"
+            : "text-tinta-2 hover:bg-papel-3/60 hover:text-tinta"
         }`}
       >
-        ▔
+        <IconDeitado />
       </button>
       <button
         type="button"
         title="Inclinado"
         onClick={() => onChangeEstilo(livroId, "inclinado")}
-        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
-          estiloAtual === "inclinado" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
+          estiloAtual === "inclinado"
+            ? "bg-amora text-papel shadow-xs scale-105"
+            : "text-tinta-2 hover:bg-papel-3/60 hover:text-tinta"
         }`}
       >
-        ⧸
+        <IconInclinado />
       </button>
-      <span className="w-[1px] h-3.5 bg-stone-700 mx-0.5" />
+
+      <span className="w-[1px] h-4 bg-papel-3/80 mx-0.5" />
+
       <button
         type="button"
         title="Mover para esquerda"
         onClick={() => onMover(livroId, -1)}
-        className="px-1.5 py-0.5 text-stone-300 hover:bg-stone-800 rounded-md font-bold transition-colors"
+        className="flex items-center justify-center p-1.5 rounded-lg text-tinta-2 hover:bg-papel-3/60 hover:text-tinta transition-all cursor-pointer"
       >
-        ←
+        <IconChevronLeft />
       </button>
       <button
         type="button"
         title="Mover para direita"
         onClick={() => onMover(livroId, 1)}
-        className="px-1.5 py-0.5 text-stone-300 hover:bg-stone-800 rounded-md font-bold transition-colors"
+        className="flex items-center justify-center p-1.5 rounded-lg text-tinta-2 hover:bg-papel-3/60 hover:text-tinta transition-all cursor-pointer"
       >
-        →
+        <IconChevronRight />
       </button>
     </div>
   );
@@ -755,29 +817,46 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
           <button
             type="button"
             onClick={() => setModoEdicao(!modoEdicao)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer ${
               modoEdicao
-                ? "bg-amber-500 text-stone-950 ring-2 ring-amber-400 ring-offset-2 ring-offset-stone-950 font-bold"
-                : "bg-stone-800/80 hover:bg-stone-700 text-stone-200 border border-white/10"
+                ? "bg-amora text-papel shadow-md"
+                : "border border-papel-3/80 bg-papel-2/80 text-tinta-2 hover:bg-papel-3/60 hover:text-tinta"
             }`}
           >
-            <span>{modoEdicao ? "✓ Concluir Edição" : "✏️ Personalizar Estante"}</span>
+            {modoEdicao ? (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Concluir Edição</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                <span>Personalizar Estante</span>
+              </>
+            )}
           </button>
 
           {temCustomizacao && (
             <button
               type="button"
               onClick={handleRestaurarPadrao}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium text-stone-400 hover:text-amber-400 bg-stone-900/60 hover:bg-stone-800 border border-stone-800 transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-tinta-3 hover:text-tinta border border-papel-3/60 bg-papel-2/60 hover:bg-papel-3/40 transition-colors cursor-pointer"
             >
-              🔄 Restaurar Padrão
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Restaurar Padrão</span>
             </button>
           )}
         </div>
 
         {modoEdicao && (
-          <span className="text-[11px] text-amber-400 font-medium animate-pulse hidden sm:inline">
-            Clique nos botões sobre cada livro para mudar o estilo (❚ 📖 ▔ ⧸) ou mover (← →)!
+          <span className="text-xs text-amora font-semibold animate-pulse hidden sm:inline">
+            Clique nos ícones sobre cada livro para alternar o estilo ou alterar a posição!
           </span>
         )}
       </div>
