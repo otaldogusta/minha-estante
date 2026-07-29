@@ -255,9 +255,9 @@ function LivroCapaFrontal({ livro, tamanhoMenor = false, onMouseEnter, onMouseLe
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               Lendo
             </span>
-          ) : livro.avaliacao ? (
+          ) : livro.nota ? (
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-stone-950 font-num text-[9px] font-bold shadow-md backdrop-blur-xs ml-auto">
-              ★ {livro.avaliacao}
+              ★ {livro.nota}
             </span>
           ) : null}
         </div>
@@ -500,14 +500,14 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
         return (
           <div key={idxPrateleira} className="relative group/prateleira">
             {/* Conteúdo da Prateleira com Blocos Compactos e Naturais */}
-            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[210px] pt-4">
+            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[240px] pt-2">
 
               {/* PRATELEIRA 1: [Cacto] [4 Lombadas] [1 Capa Frontal] [2 Livros Deitados em Pilha] [Gato] */}
               {idxPrateleira === 0 && (
                 <>
                   <DecorCacto />
 
-                  <div className="flex items-end justify-start gap-1 sm:gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                  <div className="flex items-end justify-start gap-1 sm:gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
                     {/* Grupo A: 4 Lombadas Verticais */}
                     <div className="flex items-end gap-1">
                       {prateleira.slice(0, 4).map((livro, idx) => (
@@ -553,7 +553,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                 <>
                   <div className="w-2" />
 
-                  <div className="flex items-end justify-start gap-2.5 sm:gap-4 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                  <div className="flex items-end justify-start gap-2.5 sm:gap-4 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
                     {/* Grupo A: 3 Lombadas Verticais */}
                     <div className="flex items-end gap-1">
                       {prateleira.slice(0, 3).map((livro, idx) => (
@@ -600,7 +600,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                 <>
                   <DecorCanecaEOculos />
 
-                  <div className="flex items-end justify-start gap-1.5 sm:gap-3 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                  <div className="flex items-end justify-start gap-1.5 sm:gap-3 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
                     {/* Grupo A: 3 Lombadas Verticais */}
                     <div className="flex items-end gap-1">
                       {prateleira.slice(0, 3).map((livro, idx) => (
@@ -647,7 +647,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
               {/* DEMAIS PRATELEIRAS (se a biblioteca do usuário crescer acima de 19 livros) */}
               {idxPrateleira > 2 && (
-                <div className="flex items-end justify-start gap-1.5 sm:gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none]">
+                <div className="flex items-end justify-start gap-1.5 sm:gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
                   {prateleira.map((livro, idx) => (
                     <LombadaVertical
                       key={livro.id}
@@ -685,7 +685,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
           <p className="text-[10px] text-tinta-2 truncate mt-0.5">{livroHover.autor || "Autor desconhecido"}</p>
           <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-papel-3/50 text-[10px]">
             <span className="font-num text-amora font-semibold">
-              {livroHover.avaliacao ? `★ ${livroHover.avaliacao}/5` : "Sem nota"}
+              {livroHover.nota ? `★ ${livroHover.nota}/5` : "Sem nota"}
             </span>
             <span className="text-tinta-3 font-num">{livroHover.paginas || 0} págs</span>
           </div>
