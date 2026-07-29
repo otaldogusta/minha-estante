@@ -620,7 +620,7 @@ function ToolbarEdicaoLivro({
   );
 }
 
-// Renderizador individual de livro de acordo com o formato resolvido
+// Renderizador individual de livro de acordo com o formato resolvido (com animação de metamorfose)
 function RenderLivroItem({
   livro,
   estilo,
@@ -646,7 +646,10 @@ function RenderLivroItem({
   const capaImg = obterCapaReal(livro);
 
   return (
-    <div className="relative group/item-livro flex flex-col justify-end flex-shrink-0">
+    <div
+      key={`${livro.id}-${estilo}`}
+      className="relative group/item-livro flex flex-col justify-end flex-shrink-0 transition-all duration-300 ease-out animate-book-morph"
+    >
       {modoEdicao && (
         <ToolbarEdicaoLivro
           livroId={livro.id}
@@ -703,6 +706,7 @@ function RenderLivroItem({
     </div>
   );
 }
+
 
 export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps) {
   const [livroHover, setLivroHover] = useState<Livro | null>(null);
@@ -811,6 +815,27 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
   return (
     <div className="relative mt-4 space-y-10 pb-12 select-none">
+      <style>{`
+        @keyframes book-pop-morph {
+          0% {
+            transform: scale(0.85) translateY(10px) rotate(-3deg);
+            opacity: 0.5;
+          }
+          60% {
+            transform: scale(1.06) translateY(-4px) rotate(1deg);
+            opacity: 0.95;
+          }
+          100% {
+            transform: scale(1) translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+        }
+
+        .animate-book-morph {
+          animation: book-pop-morph 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+      `}</style>
+
       {/* BANNER DE CONTROLE DO MODO EDIÇÃO */}
       <div className="flex items-center justify-between px-2 sm:px-6 mb-2">
         <div className="flex items-center gap-2">
