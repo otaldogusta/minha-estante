@@ -442,20 +442,219 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
 }
 
 
+export type EstiloLivro = "vertical" | "frontal" | "deitado" | "inclinado";
+type LayoutMap = Record<number, EstiloLivro>;
+
+const LAYOUT_STORAGE_KEY = "minha_estante_layout_v2";
+const ORDEM_STORAGE_KEY = "minha_estante_ordem_v2";
+
+function carregarLayout(): LayoutMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {};
+}
+
+function salvarLayout(map: LayoutMap) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(map));
+  } catch (e) {}
+}
+
+function carregarOrdem(): number[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(ORDEM_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function salvarOrdem(ids: number[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(ORDEM_STORAGE_KEY, JSON.stringify(ids));
+  } catch (e) {}
+}
+
+// Barra de Ações Flutuante sobre o livro no Modo Edição
+function ToolbarEdicaoLivro({
+  livroId,
+  estiloAtual,
+  onChangeEstilo,
+  onMover,
+}: {
+  livroId: number;
+  estiloAtual: EstiloLivro;
+  onChangeEstilo: (id: number, estilo: EstiloLivro) => void;
+  onMover: (id: number, direcao: -1 | 1) => void;
+}) {
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+      className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1 rounded-xl bg-stone-950/95 border border-amber-500/60 shadow-2xl text-[11px] backdrop-blur-md select-none pointer-events-auto"
+    >
+      <button
+        type="button"
+        title="Em pé (Vertical)"
+        onClick={() => onChangeEstilo(livroId, "vertical")}
+        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
+          estiloAtual === "vertical" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        }`}
+      >
+        ❚
+      </button>
+      <button
+        type="button"
+        title="Capa Frontal"
+        onClick={() => onChangeEstilo(livroId, "frontal")}
+        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
+          estiloAtual === "frontal" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        }`}
+      >
+        📖
+      </button>
+      <button
+        type="button"
+        title="Deitado"
+        onClick={() => onChangeEstilo(livroId, "deitado")}
+        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
+          estiloAtual === "deitado" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        }`}
+      >
+        ▔
+      </button>
+      <button
+        type="button"
+        title="Inclinado"
+        onClick={() => onChangeEstilo(livroId, "inclinado")}
+        className={`px-1.5 py-0.5 rounded-md font-bold transition-all ${
+          estiloAtual === "inclinado" ? "bg-amber-500 text-stone-950 shadow-xs scale-105" : "text-stone-300 hover:bg-stone-800"
+        }`}
+      >
+        ⧸
+      </button>
+      <span className="w-[1px] h-3.5 bg-stone-700 mx-0.5" />
+      <button
+        type="button"
+        title="Mover para esquerda"
+        onClick={() => onMover(livroId, -1)}
+        className="px-1.5 py-0.5 text-stone-300 hover:bg-stone-800 rounded-md font-bold transition-colors"
+      >
+        ←
+      </button>
+      <button
+        type="button"
+        title="Mover para direita"
+        onClick={() => onMover(livroId, 1)}
+        className="px-1.5 py-0.5 text-stone-300 hover:bg-stone-800 rounded-md font-bold transition-colors"
+      >
+        →
+      </button>
+    </div>
+  );
+}
+
+// Renderizador individual de livro de acordo com o formato resolvido
+function RenderLivroItem({
+  livro,
+  estilo,
+  idxLivro,
+  modoEdicao,
+  onChangeEstilo,
+  onMoverLivro,
+  onMouseEnter,
+  onMouseLeave,
+  onSelectLivro,
+}: {
+  livro: Livro;
+  estilo: EstiloLivro;
+  idxLivro: number;
+  modoEdicao: boolean;
+  onChangeEstilo: (id: number, estilo: EstiloLivro) => void;
+  onMoverLivro: (id: number, dir: -1 | 1) => void;
+  onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
+  onMouseLeave: () => void;
+  onSelectLivro?: (livro: Livro) => void;
+}) {
+  const paleta = getPaleta(livro.titulo + (livro.autor || ""));
+  const capaImg = obterCapaReal(livro);
+
+  return (
+    <div className="relative group/item-livro flex flex-col justify-end flex-shrink-0">
+      {modoEdicao && (
+        <ToolbarEdicaoLivro
+          livroId={livro.id}
+          estiloAtual={estilo}
+          onChangeEstilo={onChangeEstilo}
+          onMover={onMoverLivro}
+        />
+      )}
+
+      {estilo === "frontal" && (
+        <LivroCapaFrontal
+          livro={livro}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onSelectLivro={onSelectLivro}
+        />
+      )}
+
+      {estilo === "deitado" && (
+        <LivroDeitadoItem
+          livro={livro}
+          capaImg={capaImg}
+          paleta={paleta}
+          larguraPx={148}
+          espessuraPx={38}
+          deslocamento={0}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onSelectLivro={onSelectLivro}
+        />
+      )}
+
+      {estilo === "inclinado" && (
+        <LombadaVertical
+          livro={livro}
+          idxLivro={idxLivro}
+          inclinada={true}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onSelectLivro={onSelectLivro}
+        />
+      )}
+
+      {estilo === "vertical" && (
+        <LombadaVertical
+          livro={livro}
+          idxLivro={idxLivro}
+          inclinada={false}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onSelectLivro={onSelectLivro}
+        />
+      )}
+    </div>
+  );
+}
+
 export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps) {
   const [livroHover, setLivroHover] = useState<Livro | null>(null);
   const [posPopover, setPosPopover] = useState<{ x: number; y: number } | null>(null);
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [layoutCustom, setLayoutCustom] = useState<LayoutMap>(() => carregarLayout());
+  const [ordemCustom, setOrdemCustom] = useState<number[]>(() => carregarOrdem());
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => {
-    // getBoundingClientRect() retorna coordenadas relativas ao VIEWPORT.
-    // Adicionamos scrollY/scrollX para coordenadas absolutas de página (Portal renderiza no body).
-    // Usamos rect.top (topo do livro antes da animação hover) como referência.
+    if (modoEdicao) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setLivroHover(livro);
     setPosPopover({
       x: rect.left + rect.width / 2 + window.scrollX,
-      // Subtraímos 30px extras além do scrollY para garantir folga acima do livro,
-      // mesmo levando em conta o hover-translate-y-3.5 (~14px) de animação
       y: rect.top + window.scrollY - 30,
     });
   };
@@ -463,6 +662,38 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
   const handleMouseLeave = () => {
     setLivroHover(null);
     setPosPopover(null);
+  };
+
+  const handleChangeEstilo = (id: number, novoEstilo: EstiloLivro) => {
+    const nextMap = { ...layoutCustom, [id]: novoEstilo };
+    setLayoutCustom(nextMap);
+    salvarLayout(nextMap);
+  };
+
+  // Reordena o livro movendo para esquerda (-1) ou direita (1)
+  const handleMoverLivro = (livroId: number, direcao: -1 | 1) => {
+    const idsAtuais = listaOrdenada.map((l) => l.id);
+    const idx = idsAtuais.indexOf(livroId);
+    if (idx === -1) return;
+    const targetIdx = idx + direcao;
+    if (targetIdx < 0 || targetIdx >= idsAtuais.length) return;
+
+    const copy = [...idsAtuais];
+    const temp = copy[idx];
+    copy[idx] = copy[targetIdx];
+    copy[targetIdx] = temp;
+
+    setOrdemCustom(copy);
+    salvarOrdem(copy);
+  };
+
+  const handleRestaurarPadrao = () => {
+    setLayoutCustom({});
+    setOrdemCustom([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(LAYOUT_STORAGE_KEY);
+      localStorage.removeItem(ORDEM_STORAGE_KEY);
+    }
   };
 
   if (livros.length === 0) {
@@ -473,9 +704,19 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     );
   }
 
+  // Ordena lista de livros com base em ordemCustom
+  const listaOrdenada = [...livros].sort((a, b) => {
+    if (ordemCustom.length === 0) return 0;
+    const idxA = ordemCustom.indexOf(a.id);
+    const idxB = ordemCustom.indexOf(b.id);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return 0;
+  });
+
   // 1. CÁLCULO DINÂMICO DA QUANTIDADE DE PRATELEIRAS
-  // 1-8 livros = 1 prateleira; 9-16 livros = 2 prateleiras; 17-26 livros = 3 prateleiras (EXATAMENTE o caso dos 19 livros!)
-  const totalLivros = livros.length;
+  const totalLivros = listaOrdenada.length;
   let numPrateleiras = 1;
   if (totalLivros >= 9 && totalLivros <= 16) {
     numPrateleiras = 2;
@@ -486,178 +727,177 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     }
   }
 
-  // Distribui os livros equilibradamente entre as prateleiras necessárias
+  // Distribui os livros entre as prateleiras necessárias
   const livrosPorPrateleira: Livro[][] = Array.from({ length: numPrateleiras }, () => []);
-  livros.forEach((livro, i) => {
+  listaOrdenada.forEach((livro, i) => {
     const prateleiraIdx = i % numPrateleiras;
     livrosPorPrateleira[prateleiraIdx].push(livro);
   });
 
+  const temCustomizacao = Object.keys(layoutCustom).length > 0 || ordemCustom.length > 0;
+
+  // Função para resolver o estilo de um livro (customizado vs padrão curado)
+  const getEstiloResolvido = (livroId: number, globalIdx: number): EstiloLivro => {
+    if (layoutCustom[livroId]) return layoutCustom[livroId];
+    if (globalIdx === 4 || globalIdx === 16) return "frontal";
+    if (globalIdx === 5 || globalIdx === 6 || globalIdx === 10 || globalIdx === 11) return "deitado";
+    if (globalIdx === 12) return "inclinado";
+    return "vertical";
+  };
+
+  let globalCount = 0;
+
   return (
-    <div className="relative mt-6 space-y-12 pb-12 select-none">
+    <div className="relative mt-4 space-y-10 pb-12 select-none">
+      {/* BANNER DE CONTROLE DO MODO EDIÇÃO */}
+      <div className="flex items-center justify-between px-2 sm:px-6 mb-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setModoEdicao(!modoEdicao)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer ${
+              modoEdicao
+                ? "bg-amber-500 text-stone-950 ring-2 ring-amber-400 ring-offset-2 ring-offset-stone-950 font-bold"
+                : "bg-stone-800/80 hover:bg-stone-700 text-stone-200 border border-white/10"
+            }`}
+          >
+            <span>{modoEdicao ? "✓ Concluir Edição" : "✏️ Personalizar Estante"}</span>
+          </button>
+
+          {temCustomizacao && (
+            <button
+              type="button"
+              onClick={handleRestaurarPadrao}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium text-stone-400 hover:text-amber-400 bg-stone-900/60 hover:bg-stone-800 border border-stone-800 transition-colors"
+            >
+              🔄 Restaurar Padrão
+            </button>
+          )}
+        </div>
+
+        {modoEdicao && (
+          <span className="text-[11px] text-amber-400 font-medium animate-pulse hidden sm:inline">
+            Clique nos botões sobre cada livro para mudar o estilo (❚ 📖 ▔ ⧸) ou mover (← →)!
+          </span>
+        )}
+      </div>
+
       {livrosPorPrateleira.map((prateleira, idxPrateleira) => {
-        // COMPOSIÇÃO FIXA E CURADA PARA OS 19 LIVROS ATUAIS (3 PRATELEIRAS)
         return (
           <div key={idxPrateleira} className="relative group/prateleira">
             {/* Conteúdo da Prateleira com Blocos Compactos e Naturais */}
-            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[240px] pt-2">
+            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[245px] pt-6">
 
-              {/* PRATELEIRA 1: [Cacto] [4 Lombadas] [1 Capa Frontal] [2 Livros Deitados em Pilha] [Gato] */}
+              {/* PRATELEIRA 1 */}
               {idxPrateleira === 0 && (
                 <>
                   <DecorCacto />
 
-                  <div className="flex items-end justify-start gap-1 sm:gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
-                    {/* Grupo A: 4 Lombadas Verticais */}
-                    <div className="flex items-end gap-1">
-                      {prateleira.slice(0, 4).map((livro, idx) => (
-                        <LombadaVertical
+                  <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                    {prateleira.map((livro) => {
+                      const idxAtual = globalCount++;
+                      const estilo = getEstiloResolvido(livro.id, idxAtual);
+                      return (
+                        <RenderLivroItem
                           key={livro.id}
                           livro={livro}
-                          idxLivro={idx}
+                          estilo={estilo}
+                          idxLivro={idxAtual}
+                          modoEdicao={modoEdicao}
+                          onChangeEstilo={handleChangeEstilo}
+                          onMoverLivro={handleMoverLivro}
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                           onSelectLivro={onSelectLivro}
                         />
-                      ))}
-                    </div>
-
-                    {/* Grupo B: 1 Capa Frontal em Destaque */}
-                    {prateleira[4] && (
-                      <LivroCapaFrontal
-                        livro={prateleira[4]}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onSelectLivro={onSelectLivro}
-                      />
-                    )}
-
-                    {/* Grupo C: Pilha Horizontal com 2 Livros */}
-                    {prateleira.length >= 6 && (
-                      <PilhaLivros
-                        livrosPilha={prateleira.slice(5, 7)}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onSelectLivro={onSelectLivro}
-                      />
-                    )}
-
-                    {/* Gatinho Dormindo na madeira (Reduzido em 20% e próximo ao bloco) */}
+                      );
+                    })}
                     <SleepingLottieCat />
                   </div>
                 </>
               )}
 
-              {/* PRATELEIRA 2: [3 Lombadas] [Pilha com 2 livros] [1 Lombada Inclinada] [Planta Pendente] */}
+              {/* PRATELEIRA 2 */}
               {idxPrateleira === 1 && (
                 <>
                   <div className="w-2" />
 
-                  <div className="flex items-end justify-start gap-2.5 sm:gap-4 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
-                    {/* Grupo A: 3 Lombadas Verticais */}
-                    <div className="flex items-end gap-1">
-                      {prateleira.slice(0, 3).map((livro, idx) => (
-                        <LombadaVertical
+                  <div className="flex items-end justify-start gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                    {prateleira.map((livro) => {
+                      const idxAtual = globalCount++;
+                      const estilo = getEstiloResolvido(livro.id, idxAtual);
+                      return (
+                        <RenderLivroItem
                           key={livro.id}
                           livro={livro}
-                          idxLivro={idx + 10}
+                          estilo={estilo}
+                          idxLivro={idxAtual}
+                          modoEdicao={modoEdicao}
+                          onChangeEstilo={handleChangeEstilo}
+                          onMoverLivro={handleMoverLivro}
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                           onSelectLivro={onSelectLivro}
                         />
-                      ))}
-                    </div>
-
-                    {/* Grupo B: Pilha Horizontal com 2 Livros */}
-                    {prateleira.length >= 5 && (
-                      <PilhaLivros
-                        livrosPilha={prateleira.slice(3, 5)}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onSelectLivro={onSelectLivro}
-                      />
-                    )}
-
-                    {/* Grupo C: 1 Lombada Inclinada */}
-                    {prateleira[5] && (
-                      <LombadaVertical
-                        livro={prateleira[5]}
-                        idxLivro={15}
-                        inclinada={true}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onSelectLivro={onSelectLivro}
-                      />
-                    )}
+                      );
+                    })}
                   </div>
 
                   <DecorPlantaPendente />
                 </>
               )}
 
-              {/* PRATELEIRA 3: [Caneca + Óculos] [3 Lombadas] [1 Capa Frontal Menor] [2 Lombadas] */}
+              {/* PRATELEIRA 3 */}
               {idxPrateleira === 2 && (
                 <>
                   <DecorCanecaEOculos />
 
-                  <div className="flex items-end justify-start gap-1.5 sm:gap-3 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
-                    {/* Grupo A: 3 Lombadas Verticais */}
-                    <div className="flex items-end gap-1">
-                      {prateleira.slice(0, 3).map((livro, idx) => (
-                        <LombadaVertical
+                  <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                    {prateleira.map((livro) => {
+                      const idxAtual = globalCount++;
+                      const estilo = getEstiloResolvido(livro.id, idxAtual);
+                      return (
+                        <RenderLivroItem
                           key={livro.id}
                           livro={livro}
-                          idxLivro={idx + 20}
+                          estilo={estilo}
+                          idxLivro={idxAtual}
+                          modoEdicao={modoEdicao}
+                          onChangeEstilo={handleChangeEstilo}
+                          onMoverLivro={handleMoverLivro}
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                           onSelectLivro={onSelectLivro}
                         />
-                      ))}
-                    </div>
-
-                    {/* Grupo B: 1 Capa Frontal Menor em Destaque */}
-                    {prateleira[3] && (
-                      <LivroCapaFrontal
-                        livro={prateleira[3]}
-                        tamanhoMenor={true}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onSelectLivro={onSelectLivro}
-                      />
-                    )}
-
-                    {/* Grupo C: 2 Lombadas Verticais Finais */}
-                    <div className="flex items-end gap-1">
-                      {prateleira.slice(4).map((livro, idx) => (
-                        <LombadaVertical
-                          key={livro.id}
-                          livro={livro}
-                          idxLivro={idx + 25}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                          onSelectLivro={onSelectLivro}
-                        />
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
 
                   <div className="w-2" />
                 </>
               )}
 
-              {/* DEMAIS PRATELEIRAS (se a biblioteca do usuário crescer acima de 19 livros) */}
+              {/* DEMAIS PRATELEIRAS */}
               {idxPrateleira > 2 && (
-                <div className="flex items-end justify-start gap-1.5 sm:gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-6 pb-1">
-                  {prateleira.map((livro, idx) => (
-                    <LombadaVertical
-                      key={livro.id}
-                      livro={livro}
-                      idxLivro={idx + 30}
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
-                      onSelectLivro={onSelectLivro}
-                    />
-                  ))}
+                <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                  {prateleira.map((livro) => {
+                    const idxAtual = globalCount++;
+                    const estilo = getEstiloResolvido(livro.id, idxAtual);
+                    return (
+                      <RenderLivroItem
+                        key={livro.id}
+                        livro={livro}
+                        estilo={estilo}
+                        idxLivro={idxAtual}
+                        modoEdicao={modoEdicao}
+                        onChangeEstilo={handleChangeEstilo}
+                        onMoverLivro={handleMoverLivro}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onSelectLivro={onSelectLivro}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -671,8 +911,8 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
         );
       })}
 
-      {/* Popover Flutuante via React Portal — escapa de qualquer contexto de transform do pai */}
-      {livroHover && posPopover && typeof document !== "undefined" && createPortal(
+      {/* Popover Flutuante via React Portal */}
+      {!modoEdicao && livroHover && posPopover && typeof document !== "undefined" && createPortal(
         <div
           className="absolute z-[9999] pointer-events-none w-44 rounded-xl border border-papel-3 bg-papel/95 backdrop-blur-2xl px-3 py-2 shadow-xl surgir drop-shadow-xl"
           style={{
@@ -695,3 +935,4 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     </div>
   );
 }
+
