@@ -808,6 +808,9 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
   const [ordemCustom, setOrdemCustom] = useState<number[]>(() => carregarOrdem());
   const [arrastandoId, setArrastandoId] = useState<number | null>(null);
 
+  const lastSwapTimeRef = React.useRef<number>(0);
+  const lastTargetIdRef = React.useRef<number | null>(null);
+
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => {
     if (modoEdicao || arrastandoId !== null) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -855,8 +858,12 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     }
   };
 
-  // Handlers de Drag & Drop Pegman (Google Maps Style)
+  // Handlers de Drag & Drop Pegman (permitidos EXCLUSIVAMENTE com modoEdicao = true)
   const handleDragStart = (e: React.DragEvent, id: number) => {
+    if (!modoEdicao) {
+      e.preventDefault();
+      return;
+    }
     setArrastandoId(id);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(id));
@@ -864,9 +871,16 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
   const handleDragOver = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
+    if (!modoEdicao || !arrastandoId || arrastandoId === targetId) return;
     e.dataTransfer.dropEffect = "move";
 
-    if (!arrastandoId || arrastandoId === targetId) return;
+    const now = Date.now();
+    if (targetId === lastTargetIdRef.current || now - lastSwapTimeRef.current < 180) {
+      return;
+    }
+
+    lastTargetIdRef.current = targetId;
+    lastSwapTimeRef.current = now;
 
     const idsAtuais = listaOrdenada.map((l) => l.id);
     const fromIdx = idsAtuais.indexOf(arrastandoId);
@@ -886,6 +900,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     if (arrastandoId) {
       salvarOrdem(listaOrdenada.map((l) => l.id));
       setArrastandoId(null);
+      lastTargetIdRef.current = null;
     }
   };
 
@@ -893,6 +908,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     if (arrastandoId) {
       salvarOrdem(listaOrdenada.map((l) => l.id));
       setArrastandoId(null);
+      lastTargetIdRef.current = null;
     }
   };
 
@@ -927,7 +943,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     }
   }
 
-  // Distribui os livros SEQUENCIADAMENTE entre as prateleiras (preenche a prateleira 1 primeiro, depois a 2...)
+  // Distribui os livros SEQUENCIADAMENTE entre as prateleiras
   const porPrateleira = Math.ceil(totalLivros / numPrateleiras);
   const livrosPorPrateleira: Livro[][] = Array.from({ length: numPrateleiras }, () => []);
   listaOrdenada.forEach((livro, i) => {
@@ -937,10 +953,9 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
   const temCustomizacao = Object.keys(layoutCustom).length > 0 || ordemCustom.length > 0;
 
-  // Função para resolver o estilo de um livro DETERMINISTICAMENTE por livroId (não pela posição no array!)
+  // Função para resolver o estilo de um livro DETERMINISTICAMENTE por livroId
   const getEstiloResolvido = (livroId: number): EstiloLivro => {
     if (layoutCustom[livroId]) return layoutCustom[livroId];
-    // Hash determinístico fixo do livro (garante estilo estável ao reordenar)
     const hash = Math.abs((livroId * 2654435761) % 100);
     if (hash < 14) return "frontal";
     if (hash < 32) return "deitado";
@@ -1110,15 +1125,15 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
       {livrosPorPrateleira.map((prateleira, idxPrateleira) => {
         return (
           <div key={idxPrateleira} className="relative group/prateleira">
-            {/* Conteúdo da Prateleira com Blocos Compactos e Naturais */}
-            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[245px] pt-6">
+            {/* Conteúdo da Prateleira com Espaçamento Amplo (pt-14 pb-2 px-4) */}
+            <div className="relative flex items-end justify-between px-2 sm:px-6 min-h-[255px] pt-6">
 
               {/* PRATELEIRA 1 */}
               {idxPrateleira === 0 && (
                 <>
                   <DecorCacto />
 
-                  <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                  <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-14 pb-2 px-4">
                     {renderPrateleiraLivros(prateleira)}
                     <SleepingLottieCat />
                   </div>
@@ -1130,7 +1145,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                 <>
                   <div className="w-2" />
 
-                  <div className="flex items-end justify-start gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                  <div className="flex items-end justify-start gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-14 pb-2 px-4">
                     {renderPrateleiraLivros(prateleira)}
                   </div>
 
@@ -1143,7 +1158,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                 <>
                   <DecorCanecaEOculos />
 
-                  <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                  <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-14 pb-2 px-4">
                     {renderPrateleiraLivros(prateleira)}
                   </div>
 
@@ -1153,7 +1168,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
               {/* DEMAIS PRATELEIRAS */}
               {idxPrateleira > 2 && (
-                <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
+                <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-14 pb-2 px-4">
                   {renderPrateleiraLivros(prateleira)}
                 </div>
               )}
