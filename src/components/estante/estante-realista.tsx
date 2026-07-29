@@ -927,25 +927,99 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     }
   }
 
-  // Distribui os livros entre as prateleiras necessárias
+  // Distribui os livros SEQUENCIADAMENTE entre as prateleiras (preenche a prateleira 1 primeiro, depois a 2...)
+  const porPrateleira = Math.ceil(totalLivros / numPrateleiras);
   const livrosPorPrateleira: Livro[][] = Array.from({ length: numPrateleiras }, () => []);
   listaOrdenada.forEach((livro, i) => {
-    const prateleiraIdx = i % numPrateleiras;
+    const prateleiraIdx = Math.min(numPrateleiras - 1, Math.floor(i / porPrateleira));
     livrosPorPrateleira[prateleiraIdx].push(livro);
   });
 
   const temCustomizacao = Object.keys(layoutCustom).length > 0 || ordemCustom.length > 0;
 
-  // Função para resolver o estilo de um livro (customizado vs padrão curado)
-  const getEstiloResolvido = (livroId: number, globalIdx: number): EstiloLivro => {
+  // Função para resolver o estilo de um livro DETERMINISTICAMENTE por livroId (não pela posição no array!)
+  const getEstiloResolvido = (livroId: number): EstiloLivro => {
     if (layoutCustom[livroId]) return layoutCustom[livroId];
-    if (globalIdx === 4 || globalIdx === 16) return "frontal";
-    if (globalIdx === 5 || globalIdx === 6 || globalIdx === 10 || globalIdx === 11) return "deitado";
-    if (globalIdx === 12) return "inclinado";
+    // Hash determinístico fixo do livro (garante estilo estável ao reordenar)
+    const hash = Math.abs((livroId * 2654435761) % 100);
+    if (hash < 14) return "frontal";
+    if (hash < 32) return "deitado";
+    if (hash < 42) return "inclinado";
     return "vertical";
   };
 
   let globalCount = 0;
+
+  // Renderizador inteligente de itens e pilhas dentro de cada prateleira
+  const renderPrateleiraLivros = (prateleira: Livro[]) => {
+    const elementos: React.ReactNode[] = [];
+    let i = 0;
+
+    while (i < prateleira.length) {
+      const livro = prateleira[i];
+      const estilo = getEstiloResolvido(livro.id);
+
+      if (estilo === "deitado") {
+        const pilha = [livro];
+        let j = i + 1;
+        while (j < prateleira.length) {
+          const prox = prateleira[j];
+          if (getEstiloResolvido(prox.id) === "deitado") {
+            pilha.push(prox);
+            j++;
+          } else {
+            break;
+          }
+        }
+
+        if (pilha.length > 1) {
+          elementos.push(
+            <PilhaLivros
+              key={`pilha-${livro.id}`}
+              livrosPilha={pilha}
+              modoEdicao={modoEdicao}
+              onChangeEstilo={handleChangeEstilo}
+              onMoverLivro={handleMoverLivro}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onSelectLivro={onSelectLivro}
+              arrastandoId={arrastandoId}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+            />
+          );
+          i = j;
+          continue;
+        }
+      }
+
+      const idxAtual = globalCount++;
+      elementos.push(
+        <RenderLivroItem
+          key={livro.id}
+          livro={livro}
+          estilo={estilo}
+          idxLivro={idxAtual}
+          modoEdicao={modoEdicao}
+          onChangeEstilo={handleChangeEstilo}
+          onMoverLivro={handleMoverLivro}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onSelectLivro={onSelectLivro}
+          arrastandoId={arrastandoId}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
+        />
+      );
+      i++;
+    }
+
+    return elementos;
+  };
 
   return (
     <div className="relative mt-4 space-y-10 pb-12 select-none">
@@ -1045,29 +1119,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   <DecorCacto />
 
                   <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
-                    {prateleira.map((livro) => {
-                      const idxAtual = globalCount++;
-                      const estilo = getEstiloResolvido(livro.id, idxAtual);
-                      return (
-                        <RenderLivroItem
-                          key={livro.id}
-                          livro={livro}
-                          estilo={estilo}
-                          idxLivro={idxAtual}
-                          modoEdicao={modoEdicao}
-                          onChangeEstilo={handleChangeEstilo}
-                          onMoverLivro={handleMoverLivro}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                          onSelectLivro={onSelectLivro}
-                          arrastandoId={arrastandoId}
-                          onDragStart={handleDragStart}
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                          onDragEnd={handleDragEnd}
-                        />
-                      );
-                    })}
+                    {renderPrateleiraLivros(prateleira)}
                     <SleepingLottieCat />
                   </div>
                 </>
@@ -1079,29 +1131,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   <div className="w-2" />
 
                   <div className="flex items-end justify-start gap-2.5 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
-                    {prateleira.map((livro) => {
-                      const idxAtual = globalCount++;
-                      const estilo = getEstiloResolvido(livro.id, idxAtual);
-                      return (
-                        <RenderLivroItem
-                          key={livro.id}
-                          livro={livro}
-                          estilo={estilo}
-                          idxLivro={idxAtual}
-                          modoEdicao={modoEdicao}
-                          onChangeEstilo={handleChangeEstilo}
-                          onMoverLivro={handleMoverLivro}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                          onSelectLivro={onSelectLivro}
-                          arrastandoId={arrastandoId}
-                          onDragStart={handleDragStart}
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                          onDragEnd={handleDragEnd}
-                        />
-                      );
-                    })}
+                    {renderPrateleiraLivros(prateleira)}
                   </div>
 
                   <DecorPlantaPendente />
@@ -1114,29 +1144,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                   <DecorCanecaEOculos />
 
                   <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
-                    {prateleira.map((livro) => {
-                      const idxAtual = globalCount++;
-                      const estilo = getEstiloResolvido(livro.id, idxAtual);
-                      return (
-                        <RenderLivroItem
-                          key={livro.id}
-                          livro={livro}
-                          estilo={estilo}
-                          idxLivro={idxAtual}
-                          modoEdicao={modoEdicao}
-                          onChangeEstilo={handleChangeEstilo}
-                          onMoverLivro={handleMoverLivro}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                          onSelectLivro={onSelectLivro}
-                          arrastandoId={arrastandoId}
-                          onDragStart={handleDragStart}
-                          onDragOver={handleDragOver}
-                          onDrop={handleDrop}
-                          onDragEnd={handleDragEnd}
-                        />
-                      );
-                    })}
+                    {renderPrateleiraLivros(prateleira)}
                   </div>
 
                   <div className="w-2" />
@@ -1146,29 +1154,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
               {/* DEMAIS PRATELEIRAS */}
               {idxPrateleira > 2 && (
                 <div className="flex items-end justify-start gap-2 flex-1 mx-2 overflow-x-auto [scrollbar-width:none] pt-10 pb-1">
-                  {prateleira.map((livro) => {
-                    const idxAtual = globalCount++;
-                    const estilo = getEstiloResolvido(livro.id, idxAtual);
-                    return (
-                      <RenderLivroItem
-                        key={livro.id}
-                        livro={livro}
-                        estilo={estilo}
-                        idxLivro={idxAtual}
-                        modoEdicao={modoEdicao}
-                        onChangeEstilo={handleChangeEstilo}
-                        onMoverLivro={handleMoverLivro}
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        onSelectLivro={onSelectLivro}
-                        arrastandoId={arrastandoId}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        onDragEnd={handleDragEnd}
-                      />
-                    );
-                  })}
+                  {renderPrateleiraLivros(prateleira)}
                 </div>
               )}
             </div>
