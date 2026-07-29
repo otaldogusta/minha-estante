@@ -266,48 +266,69 @@ function LivroCapaFrontal({ livro, tamanhoMenor = false, onMouseEnter, onMouseLe
   );
 }
 
-// Subcomponente 2: Pilhas Horizontais de Livros Reais (Com Espessura 3D e Corte de Páginas)
+// Subcomponente 2: Pilhas Horizontais de Livros Reais Empilhados 3D
 interface PilhaLivrosProps {
   livrosPilha: Livro[];
+  modoEdicao: boolean;
+  onChangeEstilo: (id: number, estilo: EstiloLivro) => void;
+  onMoverLivro: (id: number, dir: -1 | 1) => void;
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
   onMouseLeave: () => void;
   onSelectLivro?: (livro: Livro) => void;
+  arrastandoId: number | null;
+  onDragStart: (e: React.DragEvent, id: number) => void;
+  onDragOver: (e: React.DragEvent, id: number) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
 }
 
-function PilhaLivros({ livrosPilha, onMouseEnter, onMouseLeave, onSelectLivro }: PilhaLivrosProps) {
+function PilhaLivros({
+  livrosPilha,
+  modoEdicao,
+  onChangeEstilo,
+  onMoverLivro,
+  onMouseEnter,
+  onMouseLeave,
+  onSelectLivro,
+  arrastandoId,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+}: PilhaLivrosProps) {
   if (livrosPilha.length === 0) return null;
 
   return (
-    <div className="relative flex flex-col justify-end items-start flex-shrink-0 mx-2 sm:mx-3 group/pilha z-10 hover:z-40">
+    <div className="relative flex flex-col-reverse justify-end items-start flex-shrink-0 mx-2 sm:mx-3 group/pilha z-10 hover:z-40">
       {livrosPilha.map((livro, idx) => {
         const paleta = getPaleta(livro.titulo + (livro.autor || ""));
         const capaImg = obterCapaReal(livro);
 
-        // Livro deitado: largura = altura de um livro em pé (~150px), espessura = lombada (~38-42px)
-        const larguraPx = idx === 0 ? 152 : 140;
+        const larguraPx = idx === 0 ? 152 : Math.max(136, 152 - idx * 6);
         const espessuraPx = idx === 0 ? 40 : 36;
         const deslocamento = idx === 0 ? 0 : 6;
 
         return (
-          <LivroDeitadoItem
-            key={livro.id}
-            livro={livro}
-            capaImg={capaImg}
-            paleta={paleta}
-            larguraPx={larguraPx}
-            espessuraPx={espessuraPx}
-            deslocamento={deslocamento}
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
-            onSelectLivro={onSelectLivro}
-          />
+          <div key={livro.id} style={{ marginTop: idx > 0 ? "-6px" : "0px" }}>
+            <LivroDeitadoItem
+              livro={livro}
+              capaImg={capaImg}
+              paleta={paleta}
+              larguraPx={larguraPx}
+              espessuraPx={espessuraPx}
+              deslocamento={deslocamento}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              onSelectLivro={onSelectLivro}
+            />
+          </div>
         );
       })}
     </div>
   );
 }
 
-// Item individual de livro deitado (precisa de useState, por isso componente separado)
+// Item individual de livro deitado
 function LivroDeitadoItem({
   livro, capaImg, paleta, larguraPx, espessuraPx, deslocamento,
   onMouseEnter, onMouseLeave, onSelectLivro
@@ -338,11 +359,7 @@ function LivroDeitadoItem({
       {/* Gradiente da paleta (fallback) */}
       <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
 
-      {/*
-        Capa rotacionada -90°: o livro em pé tinha (espessuraPx)×(larguraPx).
-        Rotacionado fica (larguraPx)×(espessuraPx) — encaixe perfeito no container deitado.
-        translate(-50%, -50%) centraliza antes da rotação.
-      */}
+      {/* Capa rotacionada -90° */}
       {temCapa ? (
         <img
           src={capaImg!}
@@ -360,23 +377,15 @@ function LivroDeitadoItem({
         />
       ) : null}
 
-      {/* Sombra nas extremidades para efeito 3D de espessura */}
+      {/* Sombra nas extremidades para efeito 3D */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/25 pointer-events-none" />
-
-      {/* Corte de páginas em bege no lado direito (lombo do livro) */}
       <div className="absolute right-0 inset-y-0 w-3 bg-gradient-to-l from-amber-100/35 to-transparent border-l border-black/20 pointer-events-none" />
-
-      {/* Reflexo de luz na borda superior */}
       <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none" />
     </Link>
   );
 }
 
-
-
-
-
-// Subcomponente 3: Lombada Vertical REALISTA com Cor Derivada Limpa
+// Subcomponente 3: Lombada Vertical REALISTA
 interface LombadaVerticalProps {
   livro: Livro;
   idxLivro: number;
@@ -410,10 +419,7 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
       onClick={() => onSelectLivro?.(livro)}
       className={`group/spine relative flex-shrink-0 rounded-sm border-l border-r ${paleta.border} shadow-[0_8px_16px_rgba(0,0,0,0.5)] cursor-pointer transition-all duration-300 hover:-translate-y-3.5 hover:shadow-[0_14px_28px_rgba(0,0,0,0.7)] z-10 hover:z-50 hover:scale-105 mx-0.5 overflow-hidden bg-stone-950`}
     >
-      {/* Gradiente da paleta (fallback) */}
       <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
-
-      {/* Capa real dominando */}
       {temCapaReal ? (
         <img
           src={capaImg!}
@@ -422,15 +428,10 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
           className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover/spine:opacity-100 transition-opacity duration-300"
         />
       ) : null}
-
-      {/* Sombra lateral esquerda (efeito 3D de lombada) */}
       <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/55 to-transparent pointer-events-none z-10" />
-      {/* Sombra lateral direita */}
       <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-black/45 to-transparent pointer-events-none z-10" />
-      {/* Reflexo de luz na borda esquerda */}
       <div className="absolute inset-y-0 left-0 w-[2px] bg-white/20 pointer-events-none z-10" />
 
-      {/* Fita marcador no topo (detalhe físico) */}
       {idxLivro % 3 === 0 && (
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-4 rounded-b-xs shadow-md pointer-events-none z-20"
@@ -440,7 +441,6 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
     </Link>
   );
 }
-
 
 export type EstiloLivro = "vertical" | "frontal" | "deitado" | "inclinado";
 type LayoutMap = Record<number, EstiloLivro>;
@@ -532,7 +532,7 @@ function IconChevronRight({ className = "w-3.5 h-3.5" }: { className?: string })
   );
 }
 
-// Barra de Ações Flutuante sobre o livro no Modo Edição (Seguindo o Design System do App)
+// Barra de Ações Flutuante sobre o livro no Modo Edição
 function ToolbarEdicaoLivro({
   livroId,
   estiloAtual,
@@ -620,7 +620,7 @@ function ToolbarEdicaoLivro({
   );
 }
 
-// Renderizador individual de livro de acordo com o formato resolvido (com animação de metamorfose)
+// Renderizador individual de livro (com física de Drag & Drop Pegman)
 function RenderLivroItem({
   livro,
   estilo,
@@ -631,6 +631,11 @@ function RenderLivroItem({
   onMouseEnter,
   onMouseLeave,
   onSelectLivro,
+  arrastandoId,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: {
   livro: Livro;
   estilo: EstiloLivro;
@@ -641,12 +646,19 @@ function RenderLivroItem({
   onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => void;
   onMouseLeave: () => void;
   onSelectLivro?: (livro: Livro) => void;
+  arrastandoId: number | null;
+  onDragStart: (e: React.DragEvent, id: number) => void;
+  onDragOver: (e: React.DragEvent, id: number) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
 }) {
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
   const capaImg = obterCapaReal(livro);
   const [toolbarAberta, setToolbarAberta] = useState(false);
   const [posToolbar, setPosToolbar] = useState<{ x: number; y: number } | null>(null);
   const itemRef = React.useRef<HTMLDivElement>(null);
+
+  const isArrastandoEste = arrastandoId === livro.id;
 
   const atualizarPosicaoToolbar = () => {
     if (itemRef.current) {
@@ -671,13 +683,23 @@ function RenderLivroItem({
     <div
       ref={itemRef}
       key={`${livro.id}-${estilo}`}
+      draggable={modoEdicao}
+      onDragStart={(e) => onDragStart(e, livro.id)}
+      onDragOver={(e) => onDragOver(e, livro.id)}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
       onMouseEnter={handleMouseEnterItem}
       onMouseLeave={handleMouseLeaveItem}
-      className="relative group/item-livro flex flex-col justify-end flex-shrink-0 transition-all duration-300 ease-out animate-book-morph z-10 hover:z-40"
+      className={`relative group/item-livro flex flex-col justify-end flex-shrink-0 transition-all duration-300 ease-out animate-book-morph z-10 hover:z-40 ${
+        modoEdicao ? "cursor-grab active:cursor-grabbing" : ""
+      } ${
+        isArrastandoEste
+          ? "opacity-90 scale-108 -rotate-6 shadow-2xl z-50 animate-pegman-float cursor-grabbing"
+          : ""
+      }`}
     >
       {modoEdicao && (
         <>
-          {/* Badge Indicador de Edição Minimalista no Canto do Livro */}
           <button
             type="button"
             onClick={(e) => {
@@ -698,7 +720,6 @@ function RenderLivroItem({
             </svg>
           </button>
 
-          {/* Barra de Ferramentas via React Portal no body — escapa do overflow-x-auto e z-index dos vizinhos */}
           {toolbarAberta && posToolbar && typeof document !== "undefined" && createPortal(
             <div
               className="absolute pointer-events-auto"
@@ -728,7 +749,6 @@ function RenderLivroItem({
           )}
         </>
       )}
-
 
       {estilo === "frontal" && (
         <LivroCapaFrontal
@@ -786,9 +806,10 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
   const [modoEdicao, setModoEdicao] = useState(false);
   const [layoutCustom, setLayoutCustom] = useState<LayoutMap>(() => carregarLayout());
   const [ordemCustom, setOrdemCustom] = useState<number[]>(() => carregarOrdem());
+  const [arrastandoId, setArrastandoId] = useState<number | null>(null);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, livro: Livro) => {
-    if (modoEdicao) return;
+    if (modoEdicao || arrastandoId !== null) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setLivroHover(livro);
     setPosPopover({
@@ -834,6 +855,47 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     }
   };
 
+  // Handlers de Drag & Drop Pegman (Google Maps Style)
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setArrastandoId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+
+    if (!arrastandoId || arrastandoId === targetId) return;
+
+    const idsAtuais = listaOrdenada.map((l) => l.id);
+    const fromIdx = idsAtuais.indexOf(arrastandoId);
+    const toIdx = idsAtuais.indexOf(targetId);
+
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    const copy = [...idsAtuais];
+    copy.splice(fromIdx, 1);
+    copy.splice(toIdx, 0, arrastandoId);
+
+    setOrdemCustom(copy);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (arrastandoId) {
+      salvarOrdem(listaOrdenada.map((l) => l.id));
+      setArrastandoId(null);
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (arrastandoId) {
+      salvarOrdem(listaOrdenada.map((l) => l.id));
+      setArrastandoId(null);
+    }
+  };
+
   if (livros.length === 0) {
     return (
       <div className="mt-8 rounded-2xl border border-dashed border-papel-3 p-10 text-center text-tinta-2">
@@ -853,7 +915,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
     return 0;
   });
 
-  // 1. CÁLCULO DINÂMICO DA QUANTIDADE DE PRATELEIRAS
+  // CÁLCULO DINÂMICO DA QUANTIDADE DE PRATELEIRAS
   const totalLivros = listaOrdenada.length;
   let numPrateleiras = 1;
   if (totalLivros >= 9 && totalLivros <= 16) {
@@ -903,8 +965,21 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
           }
         }
 
+        @keyframes pegman-float {
+          0%, 100% {
+            transform: scale(1.08) rotate(-6deg) translateY(-8px);
+          }
+          50% {
+            transform: scale(1.10) rotate(-4deg) translateY(-12px);
+          }
+        }
+
         .animate-book-morph {
           animation: book-pop-morph 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .animate-pegman-float {
+          animation: pegman-float 1.2s ease-in-out infinite;
         }
       `}</style>
 
@@ -953,7 +1028,7 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
 
         {modoEdicao && (
           <span className="text-xs text-amora font-semibold animate-pulse hidden sm:inline">
-            Clique nos ícones sobre cada livro para alternar o estilo ou alterar a posição!
+            Segure e arraste os livros para reordenar, ou use as barras flutuantes!
           </span>
         )}
       </div>
@@ -985,6 +1060,11 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                           onSelectLivro={onSelectLivro}
+                          arrastandoId={arrastandoId}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          onDragEnd={handleDragEnd}
                         />
                       );
                     })}
@@ -1014,6 +1094,11 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                           onSelectLivro={onSelectLivro}
+                          arrastandoId={arrastandoId}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          onDragEnd={handleDragEnd}
                         />
                       );
                     })}
@@ -1044,6 +1129,11 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
                           onSelectLivro={onSelectLivro}
+                          arrastandoId={arrastandoId}
+                          onDragStart={handleDragStart}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          onDragEnd={handleDragEnd}
                         />
                       );
                     })}
@@ -1071,6 +1161,11 @@ export function EstanteRealista({ livros, onSelectLivro }: EstanteRealistaProps)
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                         onSelectLivro={onSelectLivro}
+                        arrastandoId={arrastandoId}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onDragEnd={handleDragEnd}
                       />
                     );
                   })}
