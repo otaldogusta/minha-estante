@@ -547,7 +547,7 @@ function ToolbarEdicaoLivro({
   return (
     <div
       onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
-      className="absolute -top-11 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-xl border border-papel-3/90 bg-papel-2/95 p-1 backdrop-blur-md shadow-xl select-none pointer-events-auto"
+      className="flex items-center gap-1 rounded-xl border border-papel-3/90 bg-papel-2/98 p-1 backdrop-blur-md shadow-2xl select-none pointer-events-auto Surgir"
     >
       <button
         type="button"
@@ -645,13 +645,35 @@ function RenderLivroItem({
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
   const capaImg = obterCapaReal(livro);
   const [toolbarAberta, setToolbarAberta] = useState(false);
+  const [posToolbar, setPosToolbar] = useState<{ x: number; y: number } | null>(null);
+  const itemRef = React.useRef<HTMLDivElement>(null);
+
+  const atualizarPosicaoToolbar = () => {
+    if (itemRef.current) {
+      const rect = itemRef.current.getBoundingClientRect();
+      setPosToolbar({
+        x: rect.left + rect.width / 2 + window.scrollX,
+        y: rect.top + window.scrollY - 10,
+      });
+    }
+  };
+
+  const handleMouseEnterItem = () => {
+    atualizarPosicaoToolbar();
+    setToolbarAberta(true);
+  };
+
+  const handleMouseLeaveItem = () => {
+    setToolbarAberta(false);
+  };
 
   return (
     <div
+      ref={itemRef}
       key={`${livro.id}-${estilo}`}
-      onMouseEnter={() => setToolbarAberta(true)}
-      onMouseLeave={() => setToolbarAberta(false)}
-      className="relative group/item-livro flex flex-col justify-end flex-shrink-0 transition-all duration-300 ease-out animate-book-morph"
+      onMouseEnter={handleMouseEnterItem}
+      onMouseLeave={handleMouseLeaveItem}
+      className="relative group/item-livro flex flex-col justify-end flex-shrink-0 transition-all duration-300 ease-out animate-book-morph z-10 hover:z-40"
     >
       {modoEdicao && (
         <>
@@ -661,6 +683,7 @@ function RenderLivroItem({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
+              atualizarPosicaoToolbar();
               setToolbarAberta(!toolbarAberta);
             }}
             title="Editar estilo ou posição"
@@ -675,17 +698,37 @@ function RenderLivroItem({
             </svg>
           </button>
 
-          {/* Barra de Ferramentas que aparece apenas ao passar o mouse ou clicar no livro */}
-          {toolbarAberta && (
-            <ToolbarEdicaoLivro
-              livroId={livro.id}
-              estiloAtual={estilo}
-              onChangeEstilo={onChangeEstilo}
-              onMover={onMoverLivro}
-            />
+          {/* Barra de Ferramentas via React Portal no body — escapa do overflow-x-auto e z-index dos vizinhos */}
+          {toolbarAberta && posToolbar && typeof document !== "undefined" && createPortal(
+            <div
+              className="absolute pointer-events-auto"
+              style={{
+                left: `${posToolbar.x}px`,
+                top: `${posToolbar.y}px`,
+                transform: "translateX(-50%) translateY(-100%)",
+                zIndex: 999999,
+              }}
+              onMouseEnter={() => setToolbarAberta(true)}
+              onMouseLeave={() => setToolbarAberta(false)}
+            >
+              <ToolbarEdicaoLivro
+                livroId={livro.id}
+                estiloAtual={estilo}
+                onChangeEstilo={(id, nEstilo) => {
+                  onChangeEstilo(id, nEstilo);
+                  setTimeout(atualizarPosicaoToolbar, 50);
+                }}
+                onMover={(id, dir) => {
+                  onMoverLivro(id, dir);
+                  setTimeout(atualizarPosicaoToolbar, 50);
+                }}
+              />
+            </div>,
+            document.body
           )}
         </>
       )}
+
 
       {estilo === "frontal" && (
         <LivroCapaFrontal
