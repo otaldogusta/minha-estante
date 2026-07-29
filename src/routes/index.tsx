@@ -854,11 +854,11 @@ function PaginaEstante() {
         </div>
 
         {generos.length > 1 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1 px-0.5">
             <button
               onClick={() => setGenero(null)}
-              className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                genero === null ? "bg-tinta text-papel" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
+              className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                genero === null ? "bg-tinta text-papel shadow-xs" : "bg-papel-2/80 text-tinta-2 hover:bg-papel-3/70 hover:text-tinta border border-papel-3/40"
               }`}
             >
               Todos
@@ -867,8 +867,8 @@ function PaginaEstante() {
               <button
                 key={g}
                 onClick={() => setGenero(genero === g ? null : g)}
-                className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                  genero === g ? "bg-amora text-papel" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
+                className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  genero === g ? "bg-amora text-papel shadow-xs" : "bg-papel-2/80 text-tinta-2 hover:bg-papel-3/70 hover:text-tinta border border-papel-3/40"
                 }`}
               >
                 {g}
