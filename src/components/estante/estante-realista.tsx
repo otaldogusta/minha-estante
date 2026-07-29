@@ -138,52 +138,32 @@ function DecorPlantaPendente() {
   );
 }
 
-// Conjunto Aconchegante Unificado: Caneca de Café com Vapor + Óculos de Leitura
+// Decorativo Aconchegante: Caneca de Café com Vapor
 function DecorCanecaEOculos() {
   return (
-    <div className="relative flex items-end justify-start gap-1.5 h-14 w-20 mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
+    <div className="relative flex items-end justify-center h-14 w-10 mx-2 pointer-events-none opacity-90 select-none flex-shrink-0">
       <style>{`
         @keyframes steam-rise-1 {
           0% { opacity: 0; transform: translateY(0px) scaleX(1); }
           50% { opacity: 0.7; transform: translateY(-6px) scaleX(1.2); }
           100% { opacity: 0; transform: translateY(-12px) scaleX(1.5); }
         }
-        @keyframes glasses-glint {
-          0%, 88%, 100% { opacity: 0.15; transform: translateX(-3px); }
-          93% { opacity: 0.75; transform: translateX(3px); }
-        }
       `}</style>
 
-      {/* Caneca Aconchegante */}
+      {/* Caneca de Café Aconchegante */}
       <div className="relative flex flex-col items-center justify-end h-12 w-9">
-        <svg className="w-8 h-10 text-rose-600 drop-shadow-sm overflow-visible" viewBox="0 0 28 28" fill="none">
+        <svg className="w-8 h-10 drop-shadow-sm overflow-visible" viewBox="0 0 28 28" fill="none">
           <path
             d="M 8 6 C 7 3, 9 1, 8 -2"
-            stroke="var(--color-papel-3)"
-            strokeWidth="1.2"
+            stroke="#d1d5db"
+            strokeWidth="1.4"
             strokeLinecap="round"
             opacity="0.75"
             style={{ animation: "steam-rise-1 3s infinite ease-out" }}
           />
-          <rect x="4" y="9" width="14" height="16" rx="3.5" fill="var(--color-amora)" />
-          <path d="M 18 12 h 4 a 3 3 0 0 1 0 6 h -4" stroke="var(--color-amora)" strokeWidth="2.5" fill="none" />
-          <rect x="6" y="11" width="10" height="2" rx="1" fill="var(--color-papel-2)" opacity="0.6" />
-        </svg>
-      </div>
-
-      {/* Óculos de Leitura apoiados na madeira */}
-      <div className="relative flex items-center justify-center h-6 w-10 mb-0.5">
-        <svg className="w-9 h-5 text-amber-300 drop-shadow-xs overflow-visible" viewBox="0 0 32 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="9" cy="8" r="6" stroke="currentColor" fill="rgba(255,255,255,0.12)" />
-          <circle cx="23" cy="8" r="6" stroke="currentColor" fill="rgba(255,255,255,0.12)" />
-          <line
-            x1="6" y1="5" x2="12" y2="11"
-            stroke="white" strokeWidth="1.5" strokeLinecap="round"
-            style={{ animation: "glasses-glint 14s infinite ease-in-out" }}
-          />
-          <path d="M15 8 Q 16 6, 17 8" stroke="currentColor" />
-          <path d="M3 8 L 0 5" stroke="currentColor" />
-          <path d="M29 8 L 32 5" stroke="currentColor" />
+          <rect x="4" y="9" width="14" height="15" rx="3.5" fill="#9f1239" className="dark:fill-rose-900" />
+          <path d="M 18 12 h 4 a 3 3 0 0 1 0 6 h -4" stroke="#9f1239" strokeWidth="2.5" fill="none" className="dark:stroke-rose-900" />
+          <rect x="6" y="11" width="10" height="2" rx="1" fill="#fecdd3" opacity="0.6" />
         </svg>
       </div>
     </div>
