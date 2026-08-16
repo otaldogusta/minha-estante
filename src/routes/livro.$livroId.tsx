@@ -231,9 +231,16 @@ function PaginaLivro() {
               )}
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/ler/$livroId"
+                  params={{ livroId: String(livro.id) }}
+                  className="rounded-xl bg-amora px-6 py-2.5 text-sm font-medium text-papel transition-all hover:bg-amora-escura active:translate-y-[1px] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  📖 Ler no Leitor Digital
+                </Link>
                 <button
                   onClick={() => setEditando(true)}
-                  className="rounded-xl bg-amora px-6 py-2.5 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px]"
+                  className="rounded-xl border border-papel-3 px-6 py-2.5 text-sm font-medium text-tinta transition-colors hover:border-amora hover:text-amora active:translate-y-[1px] cursor-pointer"
                 >
                   Editar
                 </button>

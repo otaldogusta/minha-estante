@@ -61,6 +61,9 @@ const livroInput = z.object({
   sinopse: z.string().max(2000).nullish(),
   pagina_atual: z.number().int().min(0).max(20000).nullish(),
   privado: z.boolean().default(false),
+  arquivo_url: z.string().max(10000000).nullish(),
+  gutenberg_id: z.number().int().nullish(),
+  preview_url: z.string().max(2000).nullish(),
 });
 
 export const salvarLivro = createServerFn({ method: "POST" })
@@ -85,19 +88,22 @@ export const salvarLivro = createServerFn({ method: "POST" })
       capa: data.capa ?? null,
       sinopse: data.sinopse ?? null,
       pagina_atual: data.pagina_atual ?? null,
+      arquivo_url: data.arquivo_url ?? null,
+      gutenberg_id: data.gutenberg_id ?? null,
+      preview_url: data.preview_url ?? null,
     };
     if (d.id) {
       await db()
         .prepare(
           `UPDATE livros SET titulo=?, autor=?, pais=?, genero=?, editora=?, ano=?, paginas=?, formato=?,
            status=?, ano_leitura=?, inicio=?, fim=?, nota=?, palavra=?, resenha=?, adaptacao=?, vi_adaptacao=?,
-           valor=?, capa=?, sinopse=?, pagina_atual=?, privado=? WHERE id=? AND usuario_id=?`
+           valor=?, capa=?, sinopse=?, pagina_atual=?, privado=?, arquivo_url=?, gutenberg_id=?, preview_url=? WHERE id=? AND usuario_id=?`
         )
         .bind(
           d.titulo, d.autor, d.pais, d.genero, d.editora, d.ano, d.paginas, d.formato,
           d.status, d.ano_leitura, d.inicio, d.fim, d.nota, d.palavra, d.resenha,
           d.adaptacao ? 1 : 0, d.vi_adaptacao ? 1 : 0, d.valor, d.capa, d.sinopse,
-          d.pagina_atual, d.privado ? 1 : 0, d.id, u.id
+          d.pagina_atual, d.privado ? 1 : 0, d.arquivo_url, d.gutenberg_id, d.preview_url, d.id, u.id
         )
         .run();
       return { id: d.id };
@@ -105,14 +111,14 @@ export const salvarLivro = createServerFn({ method: "POST" })
     const res = await db()
       .prepare(
         `INSERT INTO livros (usuario_id, titulo, autor, pais, genero, editora, ano, paginas, formato, status, ano_leitura,
-         inicio, fim, nota, palavra, resenha, adaptacao, vi_adaptacao, valor, capa, sinopse, pagina_atual, privado)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+         inicio, fim, nota, palavra, resenha, adaptacao, vi_adaptacao, valor, capa, sinopse, pagina_atual, privado, arquivo_url, gutenberg_id, preview_url)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
       )
       .bind(
         u.id, d.titulo, d.autor, d.pais, d.genero, d.editora, d.ano, d.paginas, d.formato, d.status,
         d.ano_leitura, d.inicio, d.fim, d.nota, d.palavra, d.resenha,
         d.adaptacao ? 1 : 0, d.vi_adaptacao ? 1 : 0, d.valor, d.capa, d.sinopse, d.pagina_atual,
-        d.privado ? 1 : 0
+        d.privado ? 1 : 0, d.arquivo_url, d.gutenberg_id, d.preview_url
       )
       .run();
     return { id: Number(res.meta.last_row_id) };

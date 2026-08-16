@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AcervoRouteImport } from './routes/acervo'
 import { Route as CartaRouteImport } from './routes/carta'
 import { Route as CartasRouteImport } from './routes/cartas'
 import { Route as ContaRouteImport } from './routes/conta'
@@ -22,6 +23,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiCapaRouteImport } from './routes/api.capa'
 import { Route as ConviteCodigoRouteImport } from './routes/convite.$codigo'
 import { Route as LeitorUsuarioRouteImport } from './routes/leitor.$usuario'
+import { Route as LerLivroIdRouteImport } from './routes/ler.$livroId'
 import { Route as LivroLivroIdRouteImport } from './routes/livro.$livroId'
 import { Route as RedefinirTokenRouteImport } from './routes/redefinir.$token'
 import { Route as RetrospectivaAnoRouteImport } from './routes/retrospectiva.$ano'
@@ -29,6 +31,11 @@ import { Route as RetrospectivaAnoRouteImport } from './routes/retrospectiva.$an
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcervoRoute = AcervoRouteImport.update({
+  id: '/acervo',
+  path: '/acervo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartaRoute = CartaRouteImport.update({
@@ -91,6 +98,11 @@ const LeitorUsuarioRoute = LeitorUsuarioRouteImport.update({
   path: '/leitor/$usuario',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LerLivroIdRoute = LerLivroIdRouteImport.update({
+  id: '/ler/$livroId',
+  path: '/ler/$livroId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LivroLivroIdRoute = LivroLivroIdRouteImport.update({
   id: '/livro/$livroId',
   path: '/livro/$livroId',
@@ -109,6 +121,7 @@ const RetrospectivaAnoRoute = RetrospectivaAnoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acervo': typeof AcervoRoute
   '/carta': typeof CartaRoute
   '/cartas': typeof CartasRoute
   '/conta': typeof ContaRoute
@@ -121,12 +134,14 @@ export interface FileRoutesByFullPath {
   '/api/capa': typeof ApiCapaRoute
   '/convite/$codigo': typeof ConviteCodigoRoute
   '/leitor/$usuario': typeof LeitorUsuarioRoute
+  '/ler/$livroId': typeof LerLivroIdRoute
   '/livro/$livroId': typeof LivroLivroIdRoute
   '/redefinir/$token': typeof RedefinirTokenRoute
   '/retrospectiva/$ano': typeof RetrospectivaAnoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acervo': typeof AcervoRoute
   '/carta': typeof CartaRoute
   '/cartas': typeof CartasRoute
   '/conta': typeof ContaRoute
@@ -139,6 +154,7 @@ export interface FileRoutesByTo {
   '/api/capa': typeof ApiCapaRoute
   '/convite/$codigo': typeof ConviteCodigoRoute
   '/leitor/$usuario': typeof LeitorUsuarioRoute
+  '/ler/$livroId': typeof LerLivroIdRoute
   '/livro/$livroId': typeof LivroLivroIdRoute
   '/redefinir/$token': typeof RedefinirTokenRoute
   '/retrospectiva/$ano': typeof RetrospectivaAnoRoute
@@ -146,6 +162,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/acervo': typeof AcervoRoute
   '/carta': typeof CartaRoute
   '/cartas': typeof CartasRoute
   '/conta': typeof ContaRoute
@@ -158,6 +175,7 @@ export interface FileRoutesById {
   '/api/capa': typeof ApiCapaRoute
   '/convite/$codigo': typeof ConviteCodigoRoute
   '/leitor/$usuario': typeof LeitorUsuarioRoute
+  '/ler/$livroId': typeof LerLivroIdRoute
   '/livro/$livroId': typeof LivroLivroIdRoute
   '/redefinir/$token': typeof RedefinirTokenRoute
   '/retrospectiva/$ano': typeof RetrospectivaAnoRoute
@@ -166,6 +184,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acervo'
     | '/carta'
     | '/cartas'
     | '/conta'
@@ -178,12 +197,14 @@ export interface FileRouteTypes {
     | '/api/capa'
     | '/convite/$codigo'
     | '/leitor/$usuario'
+    | '/ler/$livroId'
     | '/livro/$livroId'
     | '/redefinir/$token'
     | '/retrospectiva/$ano'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/acervo'
     | '/carta'
     | '/cartas'
     | '/conta'
@@ -196,12 +217,14 @@ export interface FileRouteTypes {
     | '/api/capa'
     | '/convite/$codigo'
     | '/leitor/$usuario'
+    | '/ler/$livroId'
     | '/livro/$livroId'
     | '/redefinir/$token'
     | '/retrospectiva/$ano'
   id:
     | '__root__'
     | '/'
+    | '/acervo'
     | '/carta'
     | '/cartas'
     | '/conta'
@@ -214,6 +237,7 @@ export interface FileRouteTypes {
     | '/api/capa'
     | '/convite/$codigo'
     | '/leitor/$usuario'
+    | '/ler/$livroId'
     | '/livro/$livroId'
     | '/redefinir/$token'
     | '/retrospectiva/$ano'
@@ -221,6 +245,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcervoRoute: typeof AcervoRoute
   CartaRoute: typeof CartaRoute
   CartasRoute: typeof CartasRoute
   ContaRoute: typeof ContaRoute
@@ -233,6 +258,7 @@ export interface RootRouteChildren {
   ApiCapaRoute: typeof ApiCapaRoute
   ConviteCodigoRoute: typeof ConviteCodigoRoute
   LeitorUsuarioRoute: typeof LeitorUsuarioRoute
+  LerLivroIdRoute: typeof LerLivroIdRoute
   LivroLivroIdRoute: typeof LivroLivroIdRoute
   RedefinirTokenRoute: typeof RedefinirTokenRoute
   RetrospectivaAnoRoute: typeof RetrospectivaAnoRoute
@@ -245,6 +271,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/acervo': {
+      id: '/acervo'
+      path: '/acervo'
+      fullPath: '/acervo'
+      preLoaderRoute: typeof AcervoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/carta': {
@@ -331,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeitorUsuarioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ler/$livroId': {
+      id: '/ler/$livroId'
+      path: '/ler/$livroId'
+      fullPath: '/ler/$livroId'
+      preLoaderRoute: typeof LerLivroIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/livro/$livroId': {
       id: '/livro/$livroId'
       path: '/livro/$livroId'
@@ -357,6 +397,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcervoRoute: AcervoRoute,
   CartaRoute: CartaRoute,
   CartasRoute: CartasRoute,
   ContaRoute: ContaRoute,
@@ -369,6 +410,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCapaRoute: ApiCapaRoute,
   ConviteCodigoRoute: ConviteCodigoRoute,
   LeitorUsuarioRoute: LeitorUsuarioRoute,
+  LerLivroIdRoute: LerLivroIdRoute,
   LivroLivroIdRoute: LivroLivroIdRoute,
   RedefinirTokenRoute: RedefinirTokenRoute,
   RetrospectivaAnoRoute: RetrospectivaAnoRoute,

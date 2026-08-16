@@ -25,7 +25,7 @@ export function BotaoAdicionar() {
 export function Cabecalho({
   paginaAtiva,
 }: {
-  paginaAtiva?: "estante" | "retrospectiva" | "cartas" | "leitores" | "conta";
+  paginaAtiva?: "estante" | "retrospectiva" | "cartas" | "leitores" | "conta" | "acervo";
 }) {
   const [novas, setNovas] = useState(0);
   const [tema, setTema] = useState<"light" | "dark">("light");
@@ -161,6 +161,15 @@ export function Cabecalho({
               }`}
             >
               Leitores
+            </Link>
+            <Link
+              to="/acervo"
+              data-active={paginaAtiva === "acervo"}
+              className={`relative z-10 shrink-0 rounded-full px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm cursor-pointer transition-colors duration-200 ${
+                paginaAtiva === "acervo" ? "font-semibold text-amora" : "text-tinta-2 hover:text-tinta"
+              }`}
+            >
+              Acervo
             </Link>
           </div>
         </nav>

@@ -25,6 +25,9 @@ export type Livro = {
   capa: string | null;
   sinopse: string | null;
   pagina_atual: number | null;
+  arquivo_url?: string | null;
+  gutenberg_id?: number | null;
+  preview_url?: string | null;
 };
 
 export const GENEROS = [
