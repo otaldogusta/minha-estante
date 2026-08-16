@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
-import type { Livro } from "@/lib/api/livros.functions";
+import type { Livro } from "../../lib/livros";
 import { SleepingLottieCat } from "./sleeping-lottie-cat";
 
 interface EstanteRealistaProps {
@@ -181,7 +181,7 @@ interface LivroCapaFrontalProps {
 
 function LivroCapaFrontal({ livro, tamanhoMenor = false, onMouseEnter, onMouseLeave, onSelectLivro }: LivroCapaFrontalProps) {
   const paleta = getPaleta(livro.titulo + (livro.autor || ""));
-  const estaLendo = livro.status === "Lendo";
+  const estaLendo = livro.status === "lendo";
   const capaImg = obterCapaReal(livro);
   const [imgError, setImgError] = useState(false);
 

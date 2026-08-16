@@ -27,6 +27,7 @@ export type CartaEnviada = {
   destinatario: string;
   criado_em: string;
   lida: number;
+  lida_em: string | null;
   desbloqueada: number;
   livro_titulo: string | null;
 };
@@ -55,7 +56,7 @@ export const listarCartas = createServerFn({ method: "GET" }).handler(async () =
     .all<CartaRecebida>();
   const enviadas = await db()
     .prepare(
-      `SELECT c.id, c.corpo, ud.nome AS destinatario, c.criado_em, c.lida,
+      `SELECT c.id, c.corpo, ud.nome AS destinatario, c.criado_em, c.lida, c.lida_em,
               ${SQL_DESBLOQUEADA} AS desbloqueada,
               l.titulo AS livro_titulo
        FROM cartas c

@@ -31,10 +31,26 @@ export const Route = createFileRoute("/")({
   component: PaginaEstante,
 });
 
-function CartaoLendoAgora({ livro }: { livro: Livro }) {
+function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
   const router = useRouter();
-  const [pagina, setPagina] = useState<string>(livro.pagina_atual?.toString() ?? "");
+  const [indexAtivo, setIndexAtivo] = useState(0);
+  const [animState, setAnimState] = useState<"visible" | "exit-left" | "exit-right" | "enter-left" | "enter-right">("visible");
+  const [direcao, setDirecao] = useState<"next" | "prev">("next");
+
+  const totalLendo = livros.length;
+  const seguroIndex = indexAtivo >= totalLendo ? 0 : indexAtivo;
+  const livro = livros[seguroIndex];
+
+  const [pagina, setPagina] = useState<string>(livro?.pagina_atual?.toString() ?? "");
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (livro) {
+      setPagina(livro.pagina_atual?.toString() ?? "");
+    }
+  }, [livro?.id, livro?.pagina_atual]);
+
+  if (!livro) return null;
 
   const progresso =
     livro.paginas && livro.pagina_atual ? Math.min(100, Math.round((livro.pagina_atual / livro.paginas) * 100)) : 0;
@@ -54,86 +70,219 @@ function CartaoLendoAgora({ livro }: { livro: Livro }) {
     }
   }
 
+  function trocarCard(novoIndex: number, dir: "next" | "prev") {
+    if (animState !== "visible") return;
+    setDirecao(dir);
+    // 1) dispara o exit na direção correta
+    setAnimState(dir === "next" ? "exit-left" : "exit-right");
+    setTimeout(() => {
+      // 2) troca o conteúdo e posiciona o enter no lado oposto (fora da tela)
+      setIndexAtivo(novoIndex);
+      setAnimState(dir === "next" ? "enter-right" : "enter-left");
+      // 3) no próximo frame, anima para visible
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimState("visible");
+        });
+      });
+    }, 220);
+  }
+
+  function proximoLivro() {
+    trocarCard((seguroIndex + 1) % totalLendo, "next");
+  }
+
+  function livroAnterior() {
+    trocarCard((seguroIndex - 1 + totalLendo) % totalLendo, "prev");
+  }
+
+  function irPara(idx: number) {
+    if (idx === seguroIndex) return;
+    trocarCard(idx, idx > seguroIndex ? "next" : "prev");
+  }
+
+  // Livros adicionais para o efeito visual de cartas empilhadas atrás
+  const proximoLivro1 = totalLendo > 1 ? livros[(seguroIndex + 1) % totalLendo] : null;
+  const proximoLivro2 = totalLendo > 2 ? livros[(seguroIndex + 2) % totalLendo] : null;
+
+  // Classes de animação para o conteúdo interno
+  const contentAnimClass = {
+    visible:      "opacity-100 translate-x-0  scale-100",
+    "exit-left":  "opacity-0   -translate-x-6 scale-[0.97]",
+    "exit-right": "opacity-0    translate-x-6 scale-[0.97]",
+    "enter-left": "opacity-0   -translate-x-6 scale-[0.97]",
+    "enter-right":"opacity-0    translate-x-6 scale-[0.97]",
+  }[animState];
+
   return (
     <section className="surgir mx-auto mt-6 max-w-6xl px-4 sm:px-6">
-      <div className="overflow-hidden rounded-2xl border border-papel-3 bg-papel-2 textura-papel p-5 sm:p-7 shadow-sm">
-        {/* Top Row: Capa na Esquerda + Título/Autor na Direita */}
-        <div className="flex items-start gap-4 sm:gap-6">
-          <Link
-            to="/livro/$livroId"
-            params={{ livroId: String(livro.id) }}
-            className="w-24 sm:w-36 md:w-40 shrink-0 spring-bounce"
-          >
-            <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
-          </Link>
-          <div className="min-w-0 flex-1 pt-1">
-            <span className="inline-block rounded-full bg-amora-clara/60 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-amora">
-              Lendo agora
+
+      {/* Controles de navegação — sempre estáveis, fora da área animada */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amora-clara/60 px-3 py-1 text-xs font-semibold text-amora">
+          <span className="h-2 w-2 rounded-full bg-amora animate-pulse" />
+          Lendo agora
+          {totalLendo > 1 && (
+            <span className="ml-1.5 rounded-full bg-amora px-2 py-0.5 text-[10px] font-bold text-papel shadow-xs">
+              +{totalLendo - 1}
             </span>
+          )}
+        </span>
+
+        {totalLendo > 1 && (
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1 text-xs font-medium text-tinta-2 font-num">
+              <span>{seguroIndex + 1}</span>
+              <span className="text-tinta-3">/</span>
+              <span>{totalLendo}</span>
+            </div>
+            <div className="flex items-center gap-1 rounded-full border border-papel-3 bg-papel/90 p-0.5 shadow-xs">
+              <button
+                onClick={livroAnterior}
+                aria-label="Livro anterior"
+                title="Livro anterior"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-tinta-2 transition-colors hover:bg-amora-clara/50 hover:text-amora active:scale-95 cursor-pointer"
+              >
+                ‹
+              </button>
+
+              <div className="flex items-center gap-1 px-1">
+                {livros.map((l, idx) => (
+                  <button
+                    key={l.id}
+                    onClick={() => irPara(idx)}
+                    title={l.titulo}
+                    aria-label={`Ir para ${l.titulo}`}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      idx === seguroIndex
+                        ? "w-5 bg-amora"
+                        : "w-2 bg-tinta-3/40 hover:bg-tinta-3"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={proximoLivro}
+                aria-label="Próximo livro"
+                title="Próximo livro"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-tinta-2 transition-colors hover:bg-amora-clara/50 hover:text-amora active:scale-95 cursor-pointer"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Conteúdo animado — sem card, sem borda, sem fundo */}
+      <div
+        className={`group transition-all duration-[240ms] ease-out will-change-transform ${contentAnimClass}`}
+      >
+        {/* Layout: pilha de capas à esquerda + info à direita */}
+        <div className="flex items-start gap-5 sm:gap-8">
+
+          {/* Stack 3D de Capas dos livros */}
+          <div className="relative w-28 sm:w-40 md:w-44 shrink-0">
+            {/* Capa 2 — atrás de tudo */}
+            {proximoLivro2 && (
+              <div className="absolute inset-0 translate-x-5 translate-y-1 rotate-6 scale-90 opacity-50 transition-transform duration-300 group-hover:rotate-8 group-hover:translate-x-6">
+                <CapaLivro titulo={proximoLivro2.titulo} autor={proximoLivro2.autor} capa={proximoLivro2.capa} />
+              </div>
+            )}
+            {/* Capa 1 — intermediária */}
+            {proximoLivro1 && (
+              <div className="absolute inset-0 translate-x-2.5 translate-y-0.5 rotate-3 scale-95 opacity-80 transition-transform duration-300 group-hover:rotate-5 group-hover:translate-x-4">
+                <CapaLivro titulo={proximoLivro1.titulo} autor={proximoLivro1.autor} capa={proximoLivro1.capa} />
+              </div>
+            )}
+            {/* Capa ativa — frente */}
+            <Link
+              to="/livro/$livroId"
+              params={{ livroId: String(livro.id) }}
+              className="relative z-10 block spring-bounce"
+            >
+              <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
+            </Link>
+          </div>
+
+          {/* Info do livro */}
+          <div className="min-w-0 flex-1 pt-1">
             <h1
               title={livro.titulo}
-              className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-semibold leading-snug tracking-tight text-tinta line-clamp-2 text-ellipsis overflow-hidden"
+              className="font-display text-xl sm:text-2xl md:text-3xl font-semibold leading-snug tracking-tight text-tinta line-clamp-2"
             >
               {livro.titulo}
             </h1>
             <p title={livro.autor} className="mt-1 text-xs sm:text-sm font-medium text-tinta-2 truncate">
               {livro.autor}
             </p>
-          </div>
-        </div>
 
-        {/* Bottom Section: Infos abaixo das páginas, progresso e marcação */}
-        <div className="mt-5 border-t border-papel-3/50 pt-4">
-          {/* Datas e Páginas */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-num text-xs sm:text-sm text-tinta-2">
-            {livro.inicio && <span>começou em {dataCurta(livro.inicio)}</span>}
-            {diasLendo !== null && (
-              <span>
-                {diasLendo === 0 ? "• hoje" : `• ${diasLendo} ${diasLendo === 1 ? "dia" : "dias"} de leitura`}
-              </span>
-            )}
-            {livro.paginas && <span>• {livro.paginas} páginas</span>}
-          </div>
-
-          {/* Progresso e formulário */}
-          <div className="mt-3.5">
-            <div className="fita-progresso">
-              <span style={{ width: `${progresso}%` }} />
+            {/* Badges */}
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              {livro.genero && (
+                <span className="rounded-md border border-papel-3 bg-papel px-2 py-0.5 text-[11px] font-medium text-tinta-2">
+                  {livro.genero}
+                </span>
+              )}
+              {livro.formato && (
+                <span className="rounded-md border border-papel-3 bg-papel px-2 py-0.5 text-[11px] font-medium text-tinta-2">
+                  {livro.formato}
+                </span>
+              )}
             </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <label className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-tinta-2">
-                <span>na página</span>
-                <input
-                  inputMode="numeric"
-                  value={pagina}
-                  onChange={(e) => setPagina(e.target.value.replace(/\D/g, ""))}
-                  onKeyDown={(e) => e.key === "Enter" && salvarPagina()}
-                  className="w-16 sm:w-20 rounded-lg border border-papel-3 bg-papel px-2 py-1 font-num text-xs sm:text-sm text-tinta focus:border-amora focus:outline-none"
-                  placeholder="0"
-                  aria-label="Página atual"
-                />
-                <button
-                  onClick={salvarPagina}
-                  disabled={salvando}
-                  className="rounded-lg border border-tinta-3 px-2.5 py-1 text-xs sm:text-sm text-tinta transition-colors hover:border-amora hover:text-amora active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+
+            {/* Meta info */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-num text-xs sm:text-sm text-tinta-2">
+              {livro.inicio && <span>começou em {dataCurta(livro.inicio)}</span>}
+              {diasLendo !== null && (
+                <span>
+                  {diasLendo === 0 ? "• hoje" : `• ${diasLendo} ${diasLendo === 1 ? "dia" : "dias"} de leitura`}
+                </span>
+              )}
+              {livro.paginas && <span>• {livro.paginas} páginas</span>}
+            </div>
+
+            {/* Barra de progresso */}
+            <div className="mt-3">
+              <div className="fita-progresso">
+                <span style={{ width: `${progresso}%` }} />
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <label className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-tinta-2">
+                  <span>na página</span>
+                  <input
+                    inputMode="numeric"
+                    value={pagina}
+                    onChange={(e) => setPagina(e.target.value.replace(/\D/g, ""))}
+                    onKeyDown={(e) => e.key === "Enter" && salvarPagina()}
+                    className="w-16 sm:w-20 rounded-lg border border-papel-3 bg-papel px-2 py-1 font-num text-xs sm:text-sm text-tinta focus:border-amora focus:outline-none"
+                    placeholder="0"
+                    aria-label="Página atual"
+                  />
+                  <button
+                    onClick={salvarPagina}
+                    disabled={salvando}
+                    className="rounded-lg border border-tinta-3 px-2.5 py-1 text-xs sm:text-sm text-tinta transition-colors hover:border-amora hover:text-amora active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  >
+                    {salvando ? "salvando" : "marcar"}
+                  </button>
+                  {livro.paginas ? <span className="font-num text-tinta-3 ml-1">{progresso}%</span> : null}
+                </label>
+                <Link
+                  to="/livro/$livroId"
+                  params={{ livroId: String(livro.id) }}
+                  search={{ concluir: true }}
+                  className="group/link inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amora"
                 >
-                  {salvando ? "salvando" : "marcar"}
-                </button>
-                {livro.paginas ? <span className="font-num text-tinta-3 ml-1">{progresso}%</span> : null}
-              </label>
-              <Link
-                to="/livro/$livroId"
-                params={{ livroId: String(livro.id) }}
-                search={{ concluir: true }}
-                className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amora"
-              >
-                <span className="border-b border-amora/40 pb-px transition-colors group-hover:border-amora">
-                  Terminei este livro
-                </span>
-                <span aria-hidden className="transition-transform duration-300 motion-safe:group-hover:translate-x-1">
-                  →
-                </span>
-              </Link>
+                  <span className="border-b border-amora/40 pb-px transition-colors group-hover/link:border-amora">
+                    Terminei este livro
+                  </span>
+                  <span aria-hidden className="transition-transform duration-300 motion-safe:group-hover/link:translate-x-1">
+                    →
+                  </span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -825,7 +974,7 @@ function PaginaEstante() {
       <Cabecalho paginaAtiva="estante" />
 
       {lendo.length > 0 ? (
-        lendo.map((l) => <CartaoLendoAgora key={l.id} livro={l} />)
+        <CartaoLendoAgora livros={lendo} />
       ) : (
         <section className="surgir mx-auto mt-8 max-w-6xl px-4 sm:px-6">
           <div className="rounded-2xl border border-dashed border-tinta-3 p-8 text-center">
@@ -917,12 +1066,12 @@ function PaginaEstante() {
               <Link
                 key={l.id}
                 to="/livro/$livroId"
-                params={{ livroId: l.id }}
+                params={{ livroId: String(l.id) }}
                 className="flex items-center justify-between py-3 px-2 hover:bg-papel-2/60 transition-colors rounded-lg group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  {l.capaUrl ? (
-                    <img src={l.capaUrl} alt={l.titulo} className="w-9 h-12 object-cover rounded-sm border border-papel-3" />
+                  {l.capa ? (
+                    <img src={l.capa} alt={l.titulo} className="w-9 h-12 object-cover rounded-sm border border-papel-3" />
                   ) : (
                     <div className="w-9 h-12 rounded-sm bg-papel-3/60 flex items-center justify-center text-[9px] text-tinta-3">Livro</div>
                   )}
@@ -933,7 +1082,7 @@ function PaginaEstante() {
                 </div>
                 <div className="flex items-center gap-4 text-xs font-num text-tinta-2">
                   <span>{l.ano_leitura || "-"}</span>
-                  <span className="text-amber-400 font-bold">{l.avaliacao ? `★ ${l.avaliacao}` : "-"}</span>
+                  <span className="text-amber-400 font-bold">{l.nota ? `★ ${l.nota}` : "-"}</span>
                 </div>
               </Link>
             ))}

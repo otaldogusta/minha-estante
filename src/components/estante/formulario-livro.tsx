@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useBlocker } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
 
@@ -13,6 +13,346 @@ export type ValoresLivro = Partial<Omit<Livro, "id">> & { id?: number };
 const campo =
   "w-full rounded-lg border border-papel-3 bg-papel px-3 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none transition-colors";
 const rotulo = "block text-sm font-medium text-tinta-2 mb-1";
+
+/** Combobox com autocomplete: digita, filtra a lista e aceita valor livre */
+function CampoCombo({
+  valor,
+  onChange,
+  opcoes,
+  placeholder,
+  id,
+}: {
+  valor: string | null | undefined;
+  onChange: (v: string | null) => void;
+  opcoes: string[];
+  placeholder?: string;
+  id?: string;
+}) {
+  const [texto, setTexto] = useState(valor ?? "");
+  const [aberto, setAberto] = useState(false);
+  const [cursor, setCursor] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listaRef = useRef<HTMLUListElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Sincroniza quando o valor externo muda (ex: ao carregar o livro)
+  useEffect(() => { setTexto(valor ?? ""); }, [valor]);
+
+  const filtradas = texto.trim() === ""
+    ? opcoes
+    : opcoes.filter((o) => o.toLowerCase().includes(texto.toLowerCase()));
+
+  // Fechar ao clicar fora
+  useEffect(() => {
+    if (!aberto) return;
+    function fora(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setAberto(false);
+        // confirma o texto atual como valor (livre)
+        onChange(texto.trim() || null);
+      }
+    }
+    document.addEventListener("mousedown", fora);
+    return () => document.removeEventListener("mousedown", fora);
+  }, [aberto, texto, onChange]);
+
+  function selecionar(op: string) {
+    setTexto(op);
+    onChange(op || null);
+    setAberto(false);
+    setCursor(-1);
+    inputRef.current?.blur();
+  }
+
+  function teclado(e: React.KeyboardEvent) {
+    if (!aberto && e.key !== "Escape") { setAberto(true); }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCursor((c) => Math.min(c + 1, filtradas.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCursor((c) => Math.max(c - 1, -1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (cursor >= 0 && filtradas[cursor]) {
+        selecionar(filtradas[cursor]);
+      } else {
+        onChange(texto.trim() || null);
+        setAberto(false);
+      }
+    } else if (e.key === "Escape") {
+      setAberto(false);
+      inputRef.current?.blur();
+    }
+  }
+
+  return (
+    <div ref={wrapRef} className="relative mt-1">
+      <input
+        ref={inputRef}
+        id={id}
+        type="text"
+        value={texto}
+        placeholder={placeholder ?? "digitar ou escolher"}
+        autoComplete="off"
+        spellCheck={false}
+        className={campo}
+        onChange={(e) => {
+          setTexto(e.target.value);
+          onChange(e.target.value.trim() || null);
+          setCursor(-1);
+          setAberto(true);
+        }}
+        onFocus={() => setAberto(true)}
+        onKeyDown={teclado}
+      />
+      {/* Chevron icon */}
+      <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-tinta-3">
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </span>
+
+      {aberto && filtradas.length > 0 && (
+        <ul
+          ref={listaRef}
+          role="listbox"
+          className="absolute z-50 mt-1 w-full rounded-xl border border-papel-3 bg-papel shadow-xl overflow-auto max-h-52 text-sm animate-[fadeIn_80ms_ease-out]"
+        >
+          {filtradas.map((op, i) => (
+            <li
+              key={op}
+              role="option"
+              aria-selected={op === texto}
+              onMouseDown={(e) => { e.preventDefault(); selecionar(op); }}
+              className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
+                i === cursor
+                  ? "bg-amora-clara text-amora"
+                  : op === texto
+                  ? "bg-papel-2 text-tinta font-medium"
+                  : "text-tinta hover:bg-papel-2"
+              }`}
+            >
+              {op === texto && (
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-amora shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {op}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** URL da bandeira real via flagcdn.com (sem dependências) */
+function urlBandeira(code: string): string {
+  return `https://flagcdn.com/w20/${code.toLowerCase()}.png`;
+}
+
+const PAISES: Array<{ code: string; nome: string }> = [
+  { code: "BR", nome: "Brasil" },
+  { code: "US", nome: "Estados Unidos" },
+  { code: "GB", nome: "Reino Unido" },
+  { code: "PT", nome: "Portugal" },
+  { code: "FR", nome: "França" },
+  { code: "DE", nome: "Alemanha" },
+  { code: "ES", nome: "Espanha" },
+  { code: "IT", nome: "Itália" },
+  { code: "JP", nome: "Japão" },
+  { code: "CN", nome: "China" },
+  { code: "RU", nome: "Rússia" },
+  { code: "AR", nome: "Argentina" },
+  { code: "MX", nome: "México" },
+  { code: "CO", nome: "Colômbia" },
+  { code: "CL", nome: "Chile" },
+  { code: "PE", nome: "Peru" },
+  { code: "AU", nome: "Austrália" },
+  { code: "CA", nome: "Canadá" },
+  { code: "SE", nome: "Suécia" },
+  { code: "NO", nome: "Noruega" },
+  { code: "DK", nome: "Dinamarca" },
+  { code: "FI", nome: "Finlândia" },
+  { code: "NL", nome: "Países Baixos" },
+  { code: "BE", nome: "Bélgica" },
+  { code: "CH", nome: "Suíça" },
+  { code: "AT", nome: "Austria" },
+  { code: "PL", nome: "Polônia" },
+  { code: "CZ", nome: "República Tcheca" },
+  { code: "HU", nome: "Hungria" },
+  { code: "GR", nome: "Grécia" },
+  { code: "TR", nome: "Turquia" },
+  { code: "IL", nome: "Israel" },
+  { code: "IN", nome: "India" },
+  { code: "KR", nome: "Coreia do Sul" },
+  { code: "IR", nome: "Irã" },
+  { code: "ZA", nome: "Africa do Sul" },
+  { code: "NG", nome: "Nigéria" },
+  { code: "EG", nome: "Egito" },
+  { code: "UA", nome: "Ucrânia" },
+  { code: "NZ", nome: "Nova Zelândia" },
+  { code: "IE", nome: "Irlanda" },
+  { code: "CU", nome: "Cuba" },
+  { code: "VE", nome: "Venezuela" },
+  { code: "UY", nome: "Uruguai" },
+  { code: "BO", nome: "Bolívia" },
+  { code: "PY", nome: "Paraguai" },
+  { code: "EC", nome: "Equador" },
+  { code: "RO", nome: "Romênia" },
+  { code: "SK", nome: "Eslováquia" },
+  { code: "HR", nome: "Croácia" },
+  { code: "RS", nome: "Sérvia" },
+  { code: "AF", nome: "Afeganistão" },
+  { code: "MO", nome: "Macau" },
+  { code: "TW", nome: "Taiwan" },
+];
+
+/** Combobox de países com bandeira emoji */
+function CampoPais({
+  valor,
+  onChange,
+}: {
+  valor: string | null | undefined;
+  onChange: (v: string | null) => void;
+}) {
+  const [texto, setTexto] = useState(valor ?? "");
+  const [aberto, setAberto] = useState(false);
+  const [cursor, setCursor] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setTexto(valor ?? ""); }, [valor]);
+
+  const filtrados = PAISES.filter((p) => {
+    if (texto.trim() === "") return true;
+    const q = texto.toLowerCase();
+    return p.nome.toLowerCase().includes(q) || p.code.toLowerCase().includes(q);
+  });
+
+  useEffect(() => {
+    if (!aberto) return;
+    function fora(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setAberto(false);
+        onChange(texto.trim() || null);
+      }
+    }
+    document.addEventListener("mousedown", fora);
+    return () => document.removeEventListener("mousedown", fora);
+  }, [aberto, texto, onChange]);
+
+  function selecionar(p: { code: string; nome: string }) {
+    setTexto(p.nome);
+    onChange(p.nome);
+    setAberto(false);
+    setCursor(-1);
+    inputRef.current?.blur();
+  }
+
+  function teclado(e: React.KeyboardEvent) {
+    if (!aberto && e.key !== "Escape") setAberto(true);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCursor((c) => Math.min(c + 1, filtrados.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCursor((c) => Math.max(c - 1, -1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (cursor >= 0 && filtrados[cursor]) {
+        selecionar(filtrados[cursor]);
+      } else {
+        onChange(texto.trim() || null);
+        setAberto(false);
+      }
+    } else if (e.key === "Escape") {
+      setAberto(false);
+      inputRef.current?.blur();
+    }
+  }
+
+  // Tenta encontrar o país pelo texto para mostrar bandeira no input
+  const paisAtual = PAISES.find(
+    (p) => p.nome.toLowerCase() === texto.toLowerCase() || p.code.toLowerCase() === texto.toLowerCase()
+  );
+
+  return (
+    <div ref={wrapRef} className="relative mt-1">
+      <div className="relative">
+        {paisAtual && (
+          <img
+            src={urlBandeira(paisAtual.code)}
+            alt={paisAtual.nome}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-5 rounded-[2px] object-cover shadow-xs"
+          />
+        )}
+        <input
+          ref={inputRef}
+          type="text"
+          value={texto}
+          placeholder="Digitar ou escolher..."
+          autoComplete="off"
+          spellCheck={false}
+          className={`${campo} ${paisAtual ? "pl-9" : ""}`}
+          onChange={(e) => {
+            setTexto(e.target.value);
+            onChange(e.target.value.trim() || null);
+            setCursor(-1);
+            setAberto(true);
+          }}
+          onFocus={() => setAberto(true)}
+          onKeyDown={teclado}
+        />
+        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-tinta-3">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </div>
+
+      {aberto && filtrados.length > 0 && (
+        <ul
+          role="listbox"
+          className="absolute z-50 mt-1 w-full rounded-xl border border-papel-3 bg-papel shadow-xl overflow-auto max-h-60 text-sm"
+        >
+          {filtrados.map((p, i) => {
+            const selecionado = paisAtual?.code === p.code;
+            return (
+              <li
+                key={p.code}
+                role="option"
+                aria-selected={selecionado}
+                onMouseDown={(e) => { e.preventDefault(); selecionar(p); }}
+                className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors ${
+                  i === cursor
+                    ? "bg-amora-clara text-amora"
+                    : selecionado
+                    ? "bg-papel-2 font-medium text-tinta"
+                    : "text-tinta hover:bg-papel-2"
+                }`}
+              >
+                <img
+                  src={urlBandeira(p.code)}
+                  alt={p.nome}
+                  className="h-3.5 w-5 rounded-[2px] object-cover shadow-xs shrink-0"
+                />
+                <span className="flex-1 truncate">{p.nome}</span>
+                <span className="text-[11px] font-mono text-tinta-3 shrink-0">{p.code}</span>
+                {selecionado && (
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-amora shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function verificarAlteracao(v: ValoresLivro, i: ValoresLivro) {
   const normStr = (val: any) => (val === null || val === undefined ? "" : String(val).trim());
@@ -226,42 +566,37 @@ export function FormularioLivro({
             Autor(a)
             <input className={`${campo} mt-1`} value={v.autor ?? ""} onChange={(e) => set("autor", e.target.value)} />
           </label>
-          <label className={rotulo}>
-            Gênero
-            <select className={`${campo} mt-1`} value={v.genero ?? ""} onChange={(e) => set("genero", e.target.value || null)}>
-              <option value="">escolher</option>
-              {GENEROS.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-              {v.genero && !GENEROS.includes(v.genero) && <option value={v.genero}>{v.genero}</option>}
-            </select>
-          </label>
-          <label className={rotulo}>
-            Formato
-            <select className={`${campo} mt-1`} value={v.formato ?? ""} onChange={(e) => set("formato", e.target.value || null)}>
-              {FORMATOS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div>
+            <label htmlFor="campo-genero" className={rotulo}>Gênero</label>
+            <CampoCombo
+              id="campo-genero"
+              valor={v.genero}
+              onChange={(val) => set("genero", val)}
+              opcoes={GENEROS}
+              placeholder="Ex: Ficção, Romance..."
+            />
+          </div>
+          <div>
+            <label htmlFor="campo-formato" className={rotulo}>Formato</label>
+            <CampoCombo
+              id="campo-formato"
+              valor={v.formato}
+              onChange={(val) => set("formato", val)}
+              opcoes={FORMATOS}
+              placeholder="Ex: Kindle, Físico..."
+            />
+          </div>
           <label className={rotulo}>
             Editora
             <input className={`${campo} mt-1`} value={v.editora ?? ""} onChange={(e) => set("editora", e.target.value || null)} />
           </label>
-          <label className={rotulo}>
-            País do autor
-            <input
-              className={`${campo} mt-1`}
-              value={v.pais ?? ""}
-              onChange={(e) => set("pais", e.target.value || null)}
-              placeholder="BR, US, JP..."
-              maxLength={20}
+          <div>
+            <label htmlFor="campo-pais" className={rotulo}>País do autor</label>
+            <CampoPais
+              valor={v.pais}
+              onChange={(val) => set("pais", val)}
             />
-          </label>
+          </div>
           <label className={rotulo}>
             Ano de publicação
             <input

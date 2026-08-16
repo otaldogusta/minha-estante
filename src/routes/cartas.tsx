@@ -1,5 +1,5 @@
-﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useState, useRef, useEffect } from "react";
 
 import {
   listarCartas,
@@ -46,18 +46,21 @@ function Lacre({ tamanho = 12 }: { tamanho?: number }) {
 
 function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
   const router = useRouter();
-  const [aberta, setAberta] = useState(false);
   const jaLida = carta.lida === 1;
+  // Já lidas começam recolhidas; novas começam abertas
+  const [expandida, setExpandida] = useState(!jaLida);
+  const [marcando, setMarcando] = useState(false);
 
-  async function abrir() {
-    setAberta(true);
-    if (!jaLida) {
+  async function abrirELer() {
+    setExpandida(true);
+    if (!jaLida && !marcando) {
+      setMarcando(true);
       await lerCarta({ data: { id: carta.id } });
       router.invalidate();
     }
   }
 
-  // Lacrada a um livro ainda não terminado
+  // Lacrada ainda
   if (!carta.desbloqueada) {
     return (
       <div className="rounded-2xl border border-dashed border-tinta-3 bg-papel-2/60 p-5">
@@ -74,35 +77,68 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
     );
   }
 
-  if (!aberta && !jaLida) {
+  // Carta nova — ainda não lida, fechada como envelope
+  if (!jaLida && !expandida) {
     return (
       <button
-        onClick={abrir}
-        className="group w-full rounded-2xl border border-amora/40 bg-amora-clara p-5 text-left transition-all hover:border-amora"
+        onClick={abrirELer}
+        className="group w-full rounded-2xl border border-amora/40 bg-amora-clara p-5 text-left transition-all hover:border-amora hover:shadow-md"
       >
         <div className="flex items-center gap-4">
           <Lacre />
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-display text-lg italic text-amora-escura">Carta nova de {carta.remetente}</p>
             <p className="mt-0.5 text-sm text-amora-escura/70">
-              {carta.livro_titulo ? `Desbloqueada por ${carta.livro_titulo}. ` : ""}Toque para abrir
+              {carta.livro_titulo ? `Desbloqueada por "${carta.livro_titulo}". ` : ""}Toque para abrir
             </p>
           </div>
+          <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-amora transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14m-7-7 7 7-7 7" />
+          </svg>
         </div>
       </button>
     );
   }
 
+  // Carta aberta (lida ou acabou de abrir)
   return (
-    <div className="rounded-2xl border border-[#d9c9a8] bg-[#fdfaf1] p-6">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="font-display italic text-amora">De {carta.remetente}</p>
-        <p className="font-num text-xs text-tinta-3">{dataLonga(carta.criado_em)}</p>
-      </div>
-      {carta.livro_titulo && (
-        <p className="mt-1 text-xs text-tinta-3">Desbloqueada ao terminar {carta.livro_titulo}</p>
+    <div className="rounded-2xl border border-[#d9c9a8] bg-[#fdfaf1] overflow-hidden transition-all">
+      {/* Cabeçalho clicável para recolher/expandir */}
+      <button
+        onClick={() => setExpandida((v) => !v)}
+        className="w-full flex items-center justify-between gap-3 px-6 pt-5 pb-3 text-left group"
+      >
+        <div className="flex items-baseline gap-3 min-w-0">
+          <p className="font-display italic text-amora shrink-0">
+            {carta.remetente ? `De ${carta.remetente}` : "De Carteiro"}
+          </p>
+          {!expandida && carta.corpo && (
+            <p className="text-sm text-[#9a8c78] truncate min-w-0">
+              — {carta.corpo.slice(0, 60)}{carta.corpo.length > 60 ? "…" : ""}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <p className="font-num text-xs text-[#9a8c78]">{dataLonga(carta.criado_em)}</p>
+          <svg
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 text-[#9a8c78] transition-transform duration-200 ${expandida ? "rotate-180" : ""}`}
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Corpo expansível */}
+      {expandida && (
+        <div className="px-6 pb-6">
+          {carta.livro_titulo && (
+            <p className="mb-3 text-xs text-[#9a8c78]">Desbloqueada ao terminar "{carta.livro_titulo}"</p>
+          )}
+          <p className="whitespace-pre-wrap font-display leading-relaxed text-[#2d2520]">{carta.corpo}</p>
+        </div>
       )}
-      <p className="mt-4 whitespace-pre-wrap font-display leading-relaxed text-tinta">{carta.corpo}</p>
     </div>
   );
 }
@@ -112,6 +148,7 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
   const [editando, setEditando] = useState(false);
   const [corpo, setCorpo] = useState(carta.corpo);
   const [excluindo, setExcluindo] = useState(false);
+  const [expandida, setExpandida] = useState(false);
 
   async function salvar() {
     await editarCarta({ data: { id: carta.id, corpo } });
@@ -124,69 +161,101 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
   }
 
   return (
-    <div className="rounded-2xl border border-papel-3 card-surface p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm text-tinta-2">
-          Para <span className="font-medium text-tinta">{carta.destinatario}</span>
+    <div className="rounded-2xl border border-papel-3 card-surface overflow-hidden">
+      {/* Cabeçalho clicável */}
+      <button
+        onClick={() => setExpandida((v) => !v)}
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left group"
+      >
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-w-0">
+          <span className="text-sm text-tinta-2 shrink-0">Para</span>
+          <span className="text-sm font-medium text-tinta shrink-0">{carta.destinatario}</span>
           {carta.livro_titulo && (
-            <>
-              {" "}· lacrada até terminar <span className="text-amora">{carta.livro_titulo}</span>
-            </>
+            <span className="text-xs text-tinta-3 truncate">· até terminar "{carta.livro_titulo}"</span>
           )}
-        </p>
-        <p className="font-num text-xs text-tinta-3">{dataLonga(carta.criado_em)}</p>
-      </div>
-
-      {editando ? (
-        <>
-          <textarea
-            value={corpo}
-            onChange={(e) => setCorpo(e.target.value)}
-            className="mt-3 min-h-28 w-full rounded-lg border border-papel-3 bg-papel px-3 py-2 font-display text-tinta focus:border-amora focus:outline-none"
-          />
-          <div className="mt-2 flex gap-2">
-            <button onClick={salvar} className="rounded-lg bg-amora px-4 py-1.5 text-sm text-papel hover:bg-amora-escura transition-colors">
-              Salvar
-            </button>
-            <button onClick={() => setEditando(false)} className="rounded-lg border border-papel-3 px-4 py-1.5 text-sm text-tinta-2">
-              Cancelar
-            </button>
-          </div>
-        </>
-      ) : (
-        <p className="mt-3 whitespace-pre-wrap font-display leading-relaxed text-tinta">{carta.corpo}</p>
-      )}
-
-      <div className="mt-3 flex items-center gap-3 text-xs">
-        {carta.lida === 1 ? (
-          <span className="rounded-full bg-papel-3 px-2.5 py-1 text-tinta-2">Lida</span>
-        ) : (
-          <>
-            <span className="rounded-full bg-amora-clara px-2.5 py-1 text-amora-escura">
-              {carta.desbloqueada ? "Entregue, ainda não lida" : "Aguardando o livro"}
+          {!expandida && (
+            <span className="text-xs text-tinta-3 truncate min-w-0">
+              — {carta.corpo.slice(0, 50)}{carta.corpo.length > 50 ? "…" : ""}
             </span>
-            {!editando && (
-              <button onClick={() => setEditando(true)} className="text-tinta-2 underline underline-offset-2 hover:text-amora">
-                editar
-              </button>
-            )}
-            {!excluindo ? (
-              <button onClick={() => setExcluindo(true)} className="text-tinta-2 underline underline-offset-2 hover:text-amora">
-                excluir
-              </button>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <button onClick={excluir} className="rounded bg-amora-escura px-2 py-0.5 text-papel">
-                  confirmar exclusão
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Badge de status de leitura */}
+          {carta.lida === 1 ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-600">
+              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Lida{carta.lida_em ? ` em ${dataLonga(carta.lida_em)}` : ""}
+            </span>
+          ) : carta.desbloqueada ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amora-clara px-2 py-0.5 text-[11px] text-amora-escura">
+              <span className="h-1.5 w-1.5 rounded-full bg-amora animate-pulse" />
+              Entregue
+            </span>
+          ) : (
+            <span className="rounded-full bg-papel-3 px-2 py-0.5 text-[11px] text-tinta-3">Aguardando livro</span>
+          )}
+          <svg
+            viewBox="0 0 24 24"
+            className={`h-4 w-4 text-tinta-3 transition-transform duration-200 ${expandida ? "rotate-180" : ""}`}
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Corpo expansível */}
+      {expandida && (
+        <div className="border-t border-papel-3/60 px-5 pb-4 pt-3">
+          <p className="font-num text-[11px] text-tinta-3 mb-2">{dataLonga(carta.criado_em)}</p>
+
+          {editando ? (
+            <>
+              <textarea
+                value={corpo}
+                onChange={(e) => setCorpo(e.target.value)}
+                className="min-h-28 w-full rounded-lg border border-papel-3 bg-papel px-3 py-2 font-display text-tinta focus:border-amora focus:outline-none"
+              />
+              <div className="mt-2 flex gap-2">
+                <button onClick={salvar} className="rounded-lg bg-amora px-4 py-1.5 text-sm text-papel hover:bg-amora-escura transition-colors cursor-pointer">
+                  Salvar
                 </button>
-                <button onClick={() => setExcluindo(false)} className="text-tinta-2 underline">
-                  cancelar
+                <button onClick={() => setEditando(false)} className="rounded-lg border border-papel-3 px-4 py-1.5 text-sm text-tinta-2 cursor-pointer">
+                  Cancelar
                 </button>
-              </span>
-            )}
-          </>
-        )}
-      </div>
+              </div>
+            </>
+          ) : (
+            <p className="whitespace-pre-wrap font-display leading-relaxed text-tinta">{carta.corpo}</p>
+          )}
+
+          {carta.lida === 0 && (
+            <div className="mt-3 flex items-center gap-3 text-xs">
+              {!editando && (
+                <button onClick={() => setEditando(true)} className="text-tinta-2 underline underline-offset-2 hover:text-amora cursor-pointer">
+                  editar
+                </button>
+              )}
+              {!excluindo ? (
+                <button onClick={() => setExcluindo(true)} className="text-tinta-2 underline underline-offset-2 hover:text-amora cursor-pointer">
+                  excluir
+                </button>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <button onClick={excluir} className="rounded bg-amora-escura px-2 py-0.5 text-papel cursor-pointer">
+                    confirmar exclusão
+                  </button>
+                  <button onClick={() => setExcluindo(false)} className="text-tinta-2 underline cursor-pointer">
+                    cancelar
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -195,7 +264,11 @@ function PaginaCartas() {
   const { recebidas, enviadas, destinatarios, livros } = Route.useLoaderData();
   const router = useRouter();
   const [aba, setAba] = useState<"recebidas" | "enviadas" | "escrever">("recebidas");
-  const [para, setPara] = useState<number | null>(destinatarios[0]?.id ?? null);
+  const [para, setPara] = useState<number[]>([]);
+  const [busca, setBusca] = useState("");
+  const [listaAberta, setListaAberta] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [corpo, setCorpo] = useState("");
   const [livroId, setLivroId] = useState<number | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -204,18 +277,23 @@ function PaginaCartas() {
   const novas = recebidas.filter((c) => c.desbloqueada === 1 && c.lida === 0).length;
 
   async function enviar() {
-    if (!para || !corpo.trim()) return;
+    if (para.length === 0 || !corpo.trim()) return;
     setEnviando(true);
     setAviso(null);
     try {
-      const res = await enviarCarta({ data: { para, corpo, livroCondicaoId: livroId } });
-      if (res.ok) {
+      const erros: string[] = [];
+      for (const id of para) {
+        const res = await enviarCarta({ data: { para: id, corpo, livroCondicaoId: livroId } });
+        if (!res.ok) erros.push(res.erro);
+      }
+      if (erros.length > 0) {
+        setAviso(erros.join(" "));
+      } else {
         setCorpo("");
         setLivroId(null);
+        setPara([]);
         setAba("enviadas");
         router.invalidate();
-      } else {
-        setAviso(res.erro);
       }
     } catch {
       setAviso("Não foi possível enviar. Tente de novo.");
@@ -223,6 +301,30 @@ function PaginaCartas() {
       setEnviando(false);
     }
   }
+
+  // Fechar lista ao clicar fora
+  useEffect(() => {
+    if (!listaAberta) return;
+    function fora(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setListaAberta(false);
+        setBusca("");
+      }
+    }
+    document.addEventListener("mousedown", fora);
+    return () => document.removeEventListener("mousedown", fora);
+  }, [listaAberta]);
+
+  function togglePara(id: number) {
+    setPara((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setLivroId(null);
+  }
+
+  const destinatariosFiltrados = destinatarios.filter((d) =>
+    busca.trim() === "" || d.nome.toLowerCase().includes(busca.toLowerCase())
+  );
 
   const abaCls = (ativa: boolean) =>
     `rounded-full px-4 py-1.5 text-sm transition-colors ${ativa ? "bg-amora text-papel" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"}`;
@@ -280,23 +382,102 @@ function PaginaCartas() {
               enviar();
             }}
           >
-            <label className="block text-sm font-medium text-tinta-2">
-              Para
-              <select
-                value={para ?? ""}
-                onChange={(e) => {
-                  setPara(Number(e.target.value) || null);
-                  setLivroId(null);
-                }}
-                className="mt-1 w-full rounded-lg border border-papel-3 bg-papel px-3 py-2.5 text-tinta focus:border-amora focus:outline-none"
-              >
-                {destinatarios.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* Multi-select de destinatários */}
+            <div>
+              <label className="block text-sm font-medium text-tinta-2 mb-1">Para</label>
+              <div ref={wrapRef} className="relative">
+                {/* Caixa com pills + input */}
+                <div
+                  onClick={() => { setListaAberta(true); inputRef.current?.focus(); }}
+                  className={`min-h-[42px] w-full flex flex-wrap items-center gap-1.5 rounded-lg border bg-papel px-2.5 py-2 cursor-text transition-colors ${
+                    listaAberta ? "border-amora" : "border-papel-3"
+                  }`}
+                >
+                  {/* Pills dos selecionados */}
+                  {para.map((id) => {
+                    const d = destinatarios.find((x) => x.id === id);
+                    if (!d) return null;
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 rounded-full bg-amora-clara pl-2.5 pr-1 py-0.5 text-xs font-medium text-amora-escura">
+                        {d.nome}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); togglePara(id); }}
+                          className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-amora/20 transition-colors cursor-pointer"
+                          aria-label={`Remover ${d.nome}`}
+                        >
+                          <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    );
+                  })}
+
+                  {/* Input de busca */}
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={busca}
+                    placeholder={para.length === 0 ? "Digitar nome..." : ""}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="flex-1 min-w-[100px] bg-transparent text-sm text-tinta placeholder:text-tinta-3 focus:outline-none"
+                    onChange={(e) => { setBusca(e.target.value); setListaAberta(true); }}
+                    onFocus={() => setListaAberta(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && busca === "" && para.length > 0) {
+                        togglePara(para[para.length - 1]);
+                      }
+                      if (e.key === "Escape") { setListaAberta(false); setBusca(""); }
+                    }}
+                  />
+                </div>
+
+                {/* Dropdown de sugestões */}
+                {listaAberta && destinatariosFiltrados.length > 0 && (
+                  <ul
+                    role="listbox"
+                    className="absolute z-50 mt-1 w-full rounded-xl border border-papel-3 bg-papel shadow-xl overflow-auto max-h-52 text-sm"
+                  >
+                    {destinatariosFiltrados.map((d) => {
+                      const selecionado = para.includes(d.id);
+                      return (
+                        <li
+                          key={d.id}
+                          role="option"
+                          aria-selected={selecionado}
+                          onMouseDown={(e) => { e.preventDefault(); togglePara(d.id); setBusca(""); inputRef.current?.focus(); }}
+                          className={`flex items-center justify-between gap-2 px-3 py-2.5 cursor-pointer transition-colors ${
+                            selecionado
+                              ? "bg-amora-clara/60 text-amora-escura font-medium"
+                              : "text-tinta hover:bg-papel-2"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {/* Avatar inicial */}
+                            <span className="h-6 w-6 rounded-full bg-amora/20 flex items-center justify-center text-[10px] font-bold text-amora shrink-0">
+                              {d.nome.charAt(0).toUpperCase()}
+                            </span>
+                            {d.nome}
+                          </span>
+                          {selecionado && (
+                            <svg viewBox="0 0 24 24" className="h-4 w-4 text-amora shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {listaAberta && destinatariosFiltrados.length === 0 && (
+                  <div className="absolute z-50 mt-1 w-full rounded-xl border border-papel-3 bg-papel px-3 py-3 text-sm text-tinta-3 shadow-xl">
+                    Nenhum leitor encontrado
+                  </div>
+                )}
+              </div>
+            </div>
 
             <label className="block text-sm font-medium text-tinta-2">
               Sua carta
@@ -317,7 +498,7 @@ function PaginaCartas() {
               >
                 <option value="">Entregar agora</option>
                 {livros
-                  .filter((l) => l.usuario_id === para)
+                  .filter((l) => para.includes(l.usuario_id))
                   .map((l) => (
                     <option key={l.id} value={l.id}>
                       Só abrir quando terminar: {l.titulo} {l.status === "lendo" ? "(lendo agora)" : "(quer ler)"}
@@ -333,10 +514,14 @@ function PaginaCartas() {
 
             <button
               type="submit"
-              disabled={enviando || !corpo.trim() || !para}
-              className="w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60"
+              disabled={enviando || !corpo.trim() || para.length === 0}
+              className="w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] disabled:opacity-60 cursor-pointer"
             >
-              {enviando ? "Lacrando o envelope..." : "Enviar carta"}
+              {enviando
+                ? "Lacrando o envelope..."
+                : para.length > 1
+                ? `Enviar ${para.length} cartas`
+                : "Enviar carta"}
             </button>
           </form>
         )}

@@ -207,6 +207,12 @@ export const cadastrarComConvite = createServerFn({ method: "POST" })
     const existe = await db().prepare("SELECT 1 FROM usuarios WHERE usuario = ?").bind(usuario).first();
     if (existe) return { ok: false as const, erro: "Esse nome de usuário já está em uso." };
 
+    const nomeJaExiste = await db()
+      .prepare("SELECT 1 FROM usuarios WHERE lower(trim(nome)) = lower(trim(?))")
+      .bind(data.nome.trim())
+      .first();
+    if (nomeJaExiste) return { ok: false as const, erro: "Já existe um leitor com esse nome. Escolha um nome diferente." };
+
     const hash = await hashSenha(data.senha);
     // carta_vista = 1: a carta de boas-vindas é exclusiva da primeira conta.
     const res = await db()
