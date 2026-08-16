@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Cabecalho } from "../components/estante/cabecalho";
 import {
@@ -18,6 +18,114 @@ export const Route = createFileRoute("/acervo")({
   },
   component: PaginaAcervo,
 });
+
+// Componentes de Ícones Vetoriais SVG Limpos (sem emojis)
+function IconeRaio({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function IconeTrofeu({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+  );
+}
+
+function IconeLivro({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+    </svg>
+  );
+}
+
+function IconeUpload({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+
+function IconeMedalha({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="6" />
+      <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+    </svg>
+  );
+}
+
+function IconeGlobo({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+function IconeEstrela({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function IconeSprout({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 20h10" />
+      <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+      <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4.1 5.5.8z" />
+      <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4.1 1-4.9 2z" />
+    </svg>
+  );
+}
+
+function IconeTemplo({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="2" y1="22" x2="22" y2="22" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+      <line x1="6" y1="18" x2="6" y2="11" />
+      <line x1="10" y1="18" x2="10" y2="11" />
+      <line x1="14" y1="18" x2="14" y2="11" />
+      <line x1="18" y1="18" x2="18" y2="11" />
+      <polygon points="12 2 20 7 4 7 12 2" />
+    </svg>
+  );
+}
+
+function renderIconeConquista(chave: string) {
+  switch (chave) {
+    case "leitor_7_dias":
+      return <IconeRaio className="h-6 w-6 text-amora" />;
+    case "primeiro_livro":
+      return <IconeSprout className="h-6 w-6 text-amora" />;
+    case "devorador_500":
+      return <IconeLivro className="h-6 w-6 text-amora" />;
+    case "viajante_3_paises":
+      return <IconeGlobo className="h-6 w-6 text-amora" />;
+    case "guardiao_classicos":
+      return <IconeTemplo className="h-6 w-6 text-amora" />;
+    default:
+      return <IconeMedalha className="h-6 w-6 text-amora" />;
+  }
+}
 
 function PaginaAcervo() {
   const dados = Route.useLoaderData();
@@ -91,8 +199,8 @@ function PaginaAcervo() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amora">
-                <span className="flex h-2 w-2 rounded-full bg-amora animate-ping" />
-                ⚡ Desafio Semanal de Leitura
+                <IconeRaio className="h-3.5 w-3.5 text-amora animate-pulse" />
+                <span>Desafio Semanal de Leitura</span>
               </div>
               <h2 className="mt-2 font-display text-xl sm:text-2xl font-bold text-tinta">
                 {dados.desafioSemanal.titulo}
@@ -124,8 +232,8 @@ function PaginaAcervo() {
 
             {/* Medalha & Pontos */}
             <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-papel-3 pt-4 md:pt-0 md:pl-6 shrink-0">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amora-clara text-2xl shadow-xs">
-                🏆
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amora-clara text-amora shadow-xs">
+                <IconeTrofeu className="h-7 w-7 text-amora" />
               </div>
               <div>
                 <div className="font-num text-lg sm:text-xl font-bold text-tinta">
@@ -144,11 +252,12 @@ function PaginaAcervo() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setFiltro("todos")}
-              className={`rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                 filtro === "todos" ? "bg-amora text-papel shadow-xs" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
               }`}
             >
-              🌟 Todos os Clássicos
+              <IconeEstrela className="h-3.5 w-3.5" />
+              <span>Todos os Clássicos</span>
             </button>
             <button
               onClick={() => setFiltro("pt")}
@@ -156,7 +265,7 @@ function PaginaAcervo() {
                 filtro === "pt" ? "bg-amora text-papel shadow-xs" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
               }`}
             >
-              🇧🇷 Literatura Brasileira
+              Literatura Brasileira
             </button>
             <button
               onClick={() => setFiltro("en")}
@@ -164,15 +273,16 @@ function PaginaAcervo() {
                 filtro === "en" ? "bg-amora text-papel shadow-xs" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
               }`}
             >
-              🇬🇧 Clássicos Mundiais
+              Clássicos Mundiais
             </button>
             <button
               onClick={() => setFiltro("conquistas")}
-              className={`rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                 filtro === "conquistas" ? "bg-amora text-papel shadow-xs" : "bg-papel-2 text-tinta-2 hover:bg-papel-3"
               }`}
             >
-              🎖️ Minhas Conquistas ({dados.conquistas.filter((c) => c.desbloqueada).length})
+              <IconeMedalha className="h-3.5 w-3.5" />
+              <span>Conquistas ({dados.conquistas.filter((c) => c.desbloqueada).length})</span>
             </button>
           </div>
 
@@ -213,8 +323,8 @@ function PaginaAcervo() {
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-papel text-2xl shadow-xs shrink-0">
-                    {c.icone}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-papel shadow-xs shrink-0">
+                    {renderIconeConquista(c.chave)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -222,8 +332,18 @@ function PaginaAcervo() {
                       <span className="font-num text-xs font-bold text-amora">+{c.pontos} pts</span>
                     </div>
                     <p className="mt-1 text-xs text-tinta-2 leading-relaxed">{c.descricao}</p>
-                    <div className="mt-3 text-[11px] font-medium text-tinta-3">
-                      {c.desbloqueada ? "✓ Desbloqueada" : "🔒 Em andamento"}
+                    <div className="mt-3 text-[11px] font-medium text-tinta-3 flex items-center gap-1">
+                      {c.desbloqueada ? (
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                          <span className="text-emerald-700 dark:text-emerald-400">Desbloqueada</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-tinta-3" />
+                          <span>Em andamento</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -265,9 +385,10 @@ function PaginaAcervo() {
                 <div className="mt-5 border-t border-papel-3/50 pt-3 flex items-center justify-between gap-2">
                   <button
                     onClick={() => setAmostraModal(livro)}
-                    className="text-xs font-medium text-tinta-2 hover:text-amora transition-colors cursor-pointer py-1 px-2"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-tinta-2 hover:text-amora transition-colors cursor-pointer py-1 px-2"
                   >
-                    📖 Degustar
+                    <IconeLivro className="h-3.5 w-3.5" />
+                    <span>Degustar</span>
                   </button>
 
                   <div className="flex items-center gap-1.5">
@@ -293,17 +414,18 @@ function PaginaAcervo() {
 
             {/* Card de Upload Pessoal (BYOB) */}
             <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-papel-3 bg-papel-2/30 p-8 text-center transition-all hover:border-amora hover:bg-papel-2/60">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amora-clara text-xl text-amora shadow-xs">
-                📤
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amora-clara text-amora shadow-xs">
+                <IconeUpload className="h-6 w-6 text-amora" />
               </div>
               <h3 className="mt-3 font-display font-semibold text-base text-tinta">
-                Fazer Upload do seu EPUB / PDF
+                Importar seu EPUB ou PDF
               </h3>
               <p className="mt-1 text-xs text-tinta-2 max-w-xs leading-relaxed">
-                Adicione qualquer livro digital que você tenha para ler direto na aplicação com sincronização automática.
+                Adicione qualquer livro digital que você tenha para ler direto na aplicação com sincronização automática de páginas.
               </p>
-              <label className="mt-4 inline-flex items-center justify-center rounded-full bg-amora px-4 py-2 text-xs font-medium text-papel hover:bg-amora-escura cursor-pointer transition-colors shadow-xs">
-                {uploadando ? "Importando..." : "Selecionar Arquivo"}
+              <label className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-amora px-4 py-2 text-xs font-medium text-papel hover:bg-amora-escura cursor-pointer transition-colors shadow-xs">
+                <IconeUpload className="h-3.5 w-3.5" />
+                <span>{uploadando ? "Importando..." : "Selecionar Arquivo"}</span>
                 <input
                   type="file"
                   accept=".epub,.pdf,.txt"

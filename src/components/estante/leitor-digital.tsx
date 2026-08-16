@@ -199,9 +199,12 @@ export function LeitorDigital({
                 to="/livro/$livroId"
                 params={{ livroId: String(livro.id) }}
                 search={{ concluir: true }}
-                className="rounded-xl bg-emerald-700 text-white px-5 py-2.5 text-xs sm:text-sm font-medium transition-all hover:bg-emerald-800 shadow-md cursor-pointer flex items-center gap-1.5"
+                className="rounded-xl bg-emerald-700 text-white px-5 py-2.5 text-xs sm:text-sm font-medium transition-all hover:bg-emerald-800 shadow-md cursor-pointer inline-flex items-center gap-1.5"
               >
-                ✨ Concluir Livro
+                <span>Concluir Livro</span>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </Link>
             )}
           </div>
@@ -222,7 +225,10 @@ export function LeitorDigital({
           </div>
         </div>
         <div className="flex items-center gap-1 text-[11px] opacity-70">
-          <span>⚡ Progresso em tempo real</span>
+          <svg viewBox="0 0 24 24" className="h-3 w-3 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>Sincronização ativa</span>
         </div>
       </footer>
     </div>

@@ -234,9 +234,12 @@ function PaginaLivro() {
                 <Link
                   to="/ler/$livroId"
                   params={{ livroId: String(livro.id) }}
-                  className="rounded-xl bg-amora px-6 py-2.5 text-sm font-medium text-papel transition-all hover:bg-amora-escura active:translate-y-[1px] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                  className="rounded-xl bg-amora px-6 py-2.5 text-sm font-medium text-papel transition-all hover:bg-amora-escura active:translate-y-[1px] shadow-xs cursor-pointer inline-flex items-center gap-2"
                 >
-                  📖 Ler no Leitor Digital
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                  </svg>
+                  <span>Abrir no Leitor Digital</span>
                 </Link>
                 <button
                   onClick={() => setEditando(true)}
