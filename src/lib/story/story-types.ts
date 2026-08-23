@@ -24,5 +24,7 @@ export interface StoryPersonalizacao {
   mostrarNota: boolean;
   mostrarPaginas: boolean;
   mostrarOpiniao: boolean;
+  mostrarFotoKindle: boolean;
+  mostrarPrintSkoob: boolean;
   tema: "editorial-escuro";
 }

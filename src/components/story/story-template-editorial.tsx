@@ -71,6 +71,9 @@ export const StoryPagina1Resumo = React.forwardRef<
   const dataInicioFmt = formatarDataPtBr(book.inicio);
   const dataFimFmt = formatarDataPtBr(book.fim);
 
+  const exibeKindle = config.mostrarFotoKindle;
+  const exibePrint = config.mostrarPrintSkoob;
+
   return (
     <div
       ref={ref}
@@ -130,16 +133,16 @@ export const StoryPagina1Resumo = React.forwardRef<
         </p>
       </header>
 
-      {/* ÁREA CENTRAL EM GRID (IGUAL À IMAGEM DE REFERÊNCIA 2) */}
+      {/* ÁREA CENTRAL EM GRID (DINÂMICO CONFORME ELEMENTOS VISÍVEIS) */}
       <main className="relative z-10 my-auto flex flex-col gap-5 w-full max-w-[980px] mx-auto py-2">
 
         {/* 2 COLUNAS SUPERIORES */}
-        <div className="grid grid-cols-2 gap-5 w-full">
+        <div className="grid grid-cols-2 gap-5 w-full items-stretch">
 
-          {/* COLUNA DA ESQUERDA: CAPA + PRINT SKOOB */}
+          {/* COLUNA DA ESQUERDA: CAPA + (PRINT SKOOB Opcional) */}
           <div className="flex flex-col gap-5 justify-between">
             {/* Box 1: Capa do Livro */}
-            <div className="h-[440px] rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden group shadow-lg">
+            <div className={`rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-5 flex flex-col items-center justify-center relative overflow-hidden group shadow-lg ${exibePrint ? "h-[420px]" : "h-[690px]"}`}>
               {imagemCapa ? (
                 <img
                   src={imagemCapa}
@@ -157,77 +160,95 @@ export const StoryPagina1Resumo = React.forwardRef<
             </div>
 
             {/* Box 2: Print do Skoob / Print Complementar */}
-            <div className="h-[250px] rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
-              {config.fotoComplementarUrl ? (
-                <img
-                  src={config.fotoComplementarUrl}
-                  alt="Print do Skoob"
-                  className="w-full h-full object-contain rounded-2xl bg-black/40 shadow-md"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center gap-3 text-neutral-400/80">
-                  <svg viewBox="0 0 24 24" className="w-12 h-12 stroke-pink-300/50 fill-none" strokeWidth="1.5">
-                    <path d="M18 20V10M12 20V4M6 20v-6" />
-                  </svg>
-                  <span className="font-serif italic text-2xl text-neutral-300">print do Skoob</span>
-                </div>
-              )}
-            </div>
+            {exibePrint && (
+              <div className="h-[250px] rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
+                {config.fotoComplementarUrl ? (
+                  <img
+                    src={config.fotoComplementarUrl}
+                    alt="Print do Skoob"
+                    className="w-full h-full object-contain rounded-2xl bg-black/40 shadow-md"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center gap-3 text-neutral-400/80">
+                    <svg viewBox="0 0 24 24" className="w-12 h-12 stroke-pink-300/50 fill-none" strokeWidth="1.5">
+                      <path d="M18 20V10M12 20V4M6 20v-6" />
+                    </svg>
+                    <span className="font-serif italic text-2xl text-neutral-300">print do Skoob</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* COLUNA DA DIREITA: FOTO KINDLE + MINHAS INFORMAÇÕES */}
+          {/* COLUNA DA DIREITA: (FOTO KINDLE Opcional) + MINHAS INFORMAÇÕES */}
           <div className="flex flex-col gap-5 justify-between">
             {/* Box 3: Foto do Kindle */}
-            <div className="h-[440px] rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
-              {config.fotoKindleUrl ? (
-                <img
-                  src={config.fotoKindleUrl}
-                  alt="Foto do Kindle"
-                  className="w-full h-full object-cover rounded-2xl shadow-md"
-                />
-              ) : (
-                <div className="w-full h-full rounded-2xl bg-black/30 border border-white/10 flex flex-col items-center justify-center gap-3 p-6 text-neutral-400/80">
-                  <svg viewBox="0 0 24 24" className="w-16 h-16 stroke-pink-300/50 fill-none" strokeWidth="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  <span className="font-serif italic text-2xl text-neutral-300">foto do Kindle</span>
-                </div>
-              )}
-            </div>
+            {exibeKindle && (
+              <div className="h-[420px] rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
+                {config.fotoKindleUrl ? (
+                  <img
+                    src={config.fotoKindleUrl}
+                    alt="Foto do Kindle"
+                    className="w-full h-full object-cover rounded-2xl shadow-md"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-2xl bg-black/30 border border-white/10 flex flex-col items-center justify-center gap-3 p-6 text-neutral-400/80">
+                    <svg viewBox="0 0 24 24" className="w-16 h-16 stroke-pink-300/50 fill-none" strokeWidth="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span className="font-serif italic text-2xl text-neutral-300">foto do Kindle</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Box 4: Minhas Informações */}
-            <div className="h-[250px] rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-5 flex flex-col justify-between shadow-lg relative">
+            <div className={`rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] flex flex-col justify-between shadow-lg relative ${exibeKindle ? "h-[250px] p-5" : "h-[690px] p-8"}`}>
               {/* Badge Header */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-400/20 border border-pink-300/30 text-pink-300 text-sm font-medium w-fit">
+              <div className={`inline-flex items-center gap-2 rounded-full bg-pink-400/20 border border-pink-300/30 text-pink-300 font-medium w-fit ${exibeKindle ? "px-3.5 py-1 text-sm" : "px-5 py-2 text-base"}`}>
                 <span>🔖</span>
                 <span>minhas informações</span>
               </div>
 
               {/* Lista de Metadados */}
-              <div className="space-y-2 text-sm text-neutral-200 pt-1">
-                <div className="flex items-center justify-between gap-2">
+              <div className={`space-y-${exibeKindle ? "2 text-sm" : "4 text-lg"} text-neutral-200 pt-1`}>
+                <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-neutral-300 shrink-0">
                     <span>📖</span>
                     <span className="font-medium">Título</span>
                   </span>
-                  <span className="font-bold text-neutral-100 truncate text-right">{book.titulo}</span>
+                  <span className={`font-bold text-neutral-100 truncate text-right ${exibeKindle ? "text-sm" : "text-xl"}`}>{book.titulo}</span>
                 </div>
 
                 {config.mostrarAutor && (
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-3">
                     <span className="flex items-center gap-2 text-neutral-300 shrink-0">
                       <span>👤</span>
                       <span className="font-medium">Autor</span>
                     </span>
-                    <span className="text-neutral-200 truncate text-right font-serif italic">{book.autor || "—"}</span>
+                    <span className={`text-neutral-200 truncate text-right font-serif italic ${exibeKindle ? "text-sm" : "text-lg"}`}>{book.autor || "—"}</span>
+                  </div>
+                )}
+
+                {config.mostrarPaginas && (book.paginas || book.formato) && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-neutral-300 shrink-0">
+                      <span>📑</span>
+                      <span className="font-medium">Páginas</span>
+                    </span>
+                    <span className="font-mono text-neutral-200">
+                      {book.paginas ? `${book.paginas} págs` : ""}
+                      {book.paginas && book.formato ? " • " : ""}
+                      {book.formato || ""}
+                    </span>
                   </div>
                 )}
 
                 {config.mostrarDatas && (
                   <>
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2 text-neutral-300 shrink-0">
                         <span>📅</span>
                         <span className="font-medium">Comecei em</span>
@@ -235,7 +256,7 @@ export const StoryPagina1Resumo = React.forwardRef<
                       <span className="font-mono text-neutral-300">{dataInicioFmt || "__/__/____"}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2 text-neutral-300 shrink-0">
                         <span>📅</span>
                         <span className="font-medium">Terminei em</span>
@@ -246,12 +267,19 @@ export const StoryPagina1Resumo = React.forwardRef<
                 )}
 
                 {config.mostrarNota && (
-                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                  <div className="flex items-center justify-between gap-3 pt-1">
                     <span className="flex items-center gap-2 text-neutral-300 shrink-0">
                       <span>⭐</span>
                       <span className="font-medium">Nota</span>
                     </span>
-                    <EstrelasStory nota={book.nota} />
+                    <div className="flex items-center gap-3">
+                      <EstrelasStory nota={book.nota} />
+                      {book.nota !== null && book.nota !== undefined && (
+                        <span className="font-mono font-bold text-pink-300 text-xl">
+                          {book.nota.toFixed(1).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

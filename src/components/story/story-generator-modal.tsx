@@ -36,6 +36,8 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       mostrarNota: Boolean(livro.nota !== null && livro.nota !== undefined),
       mostrarPaginas: Boolean(livro.paginas),
       mostrarOpiniao: Boolean(resenhaTexto.trim()),
+      mostrarFotoKindle: false,
+      mostrarPrintSkoob: false,
       tema: "editorial-escuro",
     };
   });
@@ -130,14 +132,14 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       URL.revokeObjectURL(config.fotoKindleUrl);
     }
     const url = URL.createObjectURL(file);
-    setConfig((prev) => ({ ...prev, fotoKindleUrl: url }));
+    setConfig((prev) => ({ ...prev, fotoKindleUrl: url, mostrarFotoKindle: true }));
   }
 
   function handleRemoverFotoKindle() {
     if (config.fotoKindleUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(config.fotoKindleUrl);
     }
-    setConfig((prev) => ({ ...prev, fotoKindleUrl: null }));
+    setConfig((prev) => ({ ...prev, fotoKindleUrl: null, mostrarFotoKindle: false }));
   }
 
   function handleFotoComplementarUpload(file: File) {
@@ -145,14 +147,14 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       URL.revokeObjectURL(config.fotoComplementarUrl);
     }
     const url = URL.createObjectURL(file);
-    setConfig((prev) => ({ ...prev, fotoComplementarUrl: url }));
+    setConfig((prev) => ({ ...prev, fotoComplementarUrl: url, mostrarPrintSkoob: true }));
   }
 
   function handleRemoverFotoComplementar() {
     if (config.fotoComplementarUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(config.fotoComplementarUrl);
     }
-    setConfig((prev) => ({ ...prev, fotoComplementarUrl: null }));
+    setConfig((prev) => ({ ...prev, fotoComplementarUrl: null, mostrarPrintSkoob: false }));
   }
 
   async function handleGerarStory(apenasPaginaAtual = false) {

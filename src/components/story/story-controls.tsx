@@ -345,6 +345,26 @@ export function StoryControls({
             />
             <span>Nº de Páginas</span>
           </label>
+
+          <label className="flex items-center gap-2 rounded-xl border border-papel-3 bg-papel px-3 py-2 cursor-pointer hover:border-amora transition-colors">
+            <input
+              type="checkbox"
+              checked={config.mostrarFotoKindle}
+              onChange={(e) => onChangeConfig({ mostrarFotoKindle: e.target.checked })}
+              className="accent-amora h-4 w-4 rounded"
+            />
+            <span>Foto do Kindle</span>
+          </label>
+
+          <label className="flex items-center gap-2 rounded-xl border border-papel-3 bg-papel px-3 py-2 cursor-pointer hover:border-amora transition-colors">
+            <input
+              type="checkbox"
+              checked={config.mostrarPrintSkoob}
+              onChange={(e) => onChangeConfig({ mostrarPrintSkoob: e.target.checked })}
+              className="accent-amora h-4 w-4 rounded"
+            />
+            <span>Print do Skoob</span>
+          </label>
         </div>
       </div>
 
