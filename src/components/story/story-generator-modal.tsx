@@ -372,8 +372,8 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
 
       {/* NÓS OFF-SCREEN FIXOS EM 1080×1920 PARA EXPORTAÇÃO DAS 3 PÁGINAS */}
       <div
-        className="fixed top-0 left-[-9999px] pointer-events-none z-[-1] overflow-hidden"
-        style={{ width: "1080px", height: "1920px" }}
+        className="fixed top-0 left-0 pointer-events-none opacity-0 z-[-9999] overflow-hidden"
+        style={{ width: "1080px", height: "1920px", transform: "translate(-9999px, -9999px)" }}
       >
         <StoryPagina1Resumo
           ref={exportPagina1Ref}
@@ -384,8 +384,8 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       </div>
 
       <div
-        className="fixed top-0 left-[-9999px] pointer-events-none z-[-1] overflow-hidden"
-        style={{ width: "1080px", height: "1920px" }}
+        className="fixed top-0 left-0 pointer-events-none opacity-0 z-[-9999] overflow-hidden"
+        style={{ width: "1080px", height: "1920px", transform: "translate(-9999px, -9999px)" }}
       >
         <StoryPagina2Fotos
           ref={exportPagina2Ref}
@@ -395,8 +395,8 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       </div>
 
       <div
-        className="fixed top-0 left-[-9999px] pointer-events-none z-[-1] overflow-hidden"
-        style={{ width: "1080px", height: "1920px" }}
+        className="fixed top-0 left-0 pointer-events-none opacity-0 z-[-9999] overflow-hidden"
+        style={{ width: "1080px", height: "1920px", transform: "translate(-9999px, -9999px)" }}
       >
         <StoryPagina3Opiniao
           ref={exportPagina3Ref}

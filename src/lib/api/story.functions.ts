@@ -4,22 +4,7 @@ import { z } from "zod";
 function ehUrlSegura(urlString: string): boolean {
   try {
     const parsed = new URL(urlString);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
-
-    const hostname = parsed.hostname.toLowerCase();
-    if (
-      hostname === "localhost" ||
-      hostname.endsWith(".localhost") ||
-      hostname === "127.0.0.1" ||
-      hostname === "::1" ||
-      hostname.startsWith("10.") ||
-      hostname.startsWith("192.168.") ||
-      hostname.startsWith("169.254.") ||
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname)
-    ) {
-      return false;
-    }
-    return true;
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
