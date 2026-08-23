@@ -99,7 +99,22 @@ class PostgresStatement {
 
   async run(): Promise<{ success: boolean; meta: { changes: number; last_row_id: number } }> {
     try {
-      const pgSql = convertSqliteToPg(this.sql);
+      let pgSql = convertSqliteToPg(this.sql);
+      let lastRowId = 0;
+      if (/^\s*INSERT\s+INTO/i.test(pgSql) && !/RETURNING/i.test(pgSql)) {
+        try {
+          const res = await this.sqlClient.unsafe(pgSql + " RETURNING id", this.params);
+          if (res && res[0] && res[0].id) {
+            lastRowId = Number(res[0].id) || 0;
+          }
+          return {
+            success: true,
+            meta: { changes: res.count ?? 1, last_row_id: lastRowId },
+          };
+        } catch {
+          // Se falhar o RETURNING (ex: tabela sem coluna id), cai no fallback normal
+        }
+      }
       const res = await this.sqlClient.unsafe(pgSql, this.params);
       return {
         success: true,

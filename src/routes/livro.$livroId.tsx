@@ -10,6 +10,7 @@ import { CapaLivro } from "../components/estante/capa-livro";
 import { Estrelas } from "../components/estante/estrelas";
 import { FormularioLivro } from "../components/estante/formulario-livro";
 import { Celebracao } from "../components/estante/celebracao";
+import { StoryGeneratorModal } from "../components/story/story-generator-modal";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
 
@@ -65,6 +66,7 @@ function PaginaLivro() {
   const [cartasNovas, setCartasNovas] = useState<Array<{ id: number; remetente: string }>>([]);
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
+  const [storyModalAberto, setStoryModalAberto] = useState(false);
   const dias = diasDeLeitura(livro);
 
   async function excluir() {
@@ -83,13 +85,13 @@ function PaginaLivro() {
     : livro;
 
   useEffect(() => {
-    if (modalAberto) {
+    if (modalAberto || storyModalAberto) {
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = "";
       };
     }
-  }, [modalAberto]);
+  }, [modalAberto, storyModalAberto]);
 
   return (
     <div className="min-h-dvh pb-24">
@@ -102,6 +104,10 @@ function PaginaLivro() {
           nota={livro.nota}
           dias={dias}
           cartas={cartasNovas}
+          onGerarStory={() => {
+            setCelebrar(false);
+            setStoryModalAberto(true);
+          }}
           aoFechar={() => navigate({ to: "/" })}
         />
       )}
@@ -178,89 +184,134 @@ function PaginaLivro() {
                 </div>
               )}
 
-              <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-                {[
-                  ["Gênero", livro.genero],
-                  ["Editora", livro.editora],
-                  ["Publicado em", livro.ano ? String(livro.ano) : null],
-                  ["Páginas", livro.paginas ? String(livro.paginas) : null],
-                  ["Formato", livro.formato],
-                  ["País", livro.pais],
-                  ["Começou", dataCurta(livro.inicio) || null],
-                  ["Terminou", dataCurta(livro.fim) || null],
-                  ["Tempo de leitura", dias !== null ? (dias === 0 ? "1 dia" : `${dias} dias`) : null],
-                  ["Valor", livro.valor !== null ? brl(livro.valor) : null],
-                  ["Adaptação", livro.adaptacao ? (livro.vi_adaptacao ? "Sim, já assisti" : "Sim, ainda não vi") : "Não tem"],
-                  ["Ano da leitura", livro.ano_leitura ? String(livro.ano_leitura) : null],
-                ]
-                  .filter(([, v]) => v)
-                  .map(([k, v]) => (
-                    <div key={k}>
-                      <dt className="text-tinta-3">{k}</dt>
-                      <dd className="mt-0.5 font-num text-tinta">{v}</dd>
-                    </div>
-                  ))}
-              </dl>
+              <div className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-papel-3 bg-papel-2/50 p-4 text-sm sm:grid-cols-3">
+                {livro.inicio && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Início</span>
+                    <p className="font-medium text-tinta">{dataCurta(livro.inicio)}</p>
+                  </div>
+                )}
+                {livro.fim && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Término</span>
+                    <p className="font-medium text-tinta">{dataCurta(livro.fim)}</p>
+                  </div>
+                )}
+                {dias !== null && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Tempo de leitura</span>
+                    <p className="font-medium text-tinta">{dias === 0 ? "1 dia" : `${dias} dias`}</p>
+                  </div>
+                )}
+                {livro.paginas && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Páginas</span>
+                    <p className="font-medium text-tinta">{livro.paginas}</p>
+                  </div>
+                )}
+                {livro.genero && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Gênero</span>
+                    <p className="font-medium text-tinta">{livro.genero}</p>
+                  </div>
+                )}
+                {livro.formato && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Formato</span>
+                    <p className="font-medium text-tinta">{livro.formato}</p>
+                  </div>
+                )}
+                {livro.editora && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Editora</span>
+                    <p className="font-medium text-tinta">{livro.editora}</p>
+                  </div>
+                )}
+                {livro.ano && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Publicação</span>
+                    <p className="font-medium text-tinta">{livro.ano}</p>
+                  </div>
+                )}
+                {livro.valor !== null && livro.valor !== undefined && (
+                  <div>
+                    <span className="text-xs text-tinta-3">Valor</span>
+                    <p className="font-medium text-tinta">{brl(livro.valor)}</p>
+                  </div>
+                )}
+              </div>
 
-              {livro.resenha && (
-                <div className="mt-6 rounded-2xl bg-papel-2 p-5">
-                  <p className="text-sm text-tinta-3">Suas anotações</p>
-                  {livro.resenha.length > 280 ? (
-                    <>
-                      <p className="mt-2 whitespace-pre-wrap font-display leading-relaxed text-tinta">
-                        {livro.resenha.slice(0, 280)}...
-                      </p>
-                      <button
-                        onClick={() => setModalAberto(true)}
-                        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-amora hover:text-amora-escura underline underline-offset-4 cursor-pointer"
-                      >
-                        ler mais +
-                      </button>
-                    </>
-                  ) : (
-                    <p className="mt-2 whitespace-pre-wrap font-display leading-relaxed text-tinta">{livro.resenha}</p>
-                  )}
+              {livro.sinopse && (
+                <div className="mt-6">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-tinta-3">Sinopse</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-tinta-2 whitespace-pre-line">{livro.sinopse}</p>
                 </div>
               )}
 
-              {livro.sinopse && (
-                <details className="mt-6">
-                  <summary className="cursor-pointer text-sm text-tinta-2 hover:text-amora">Sinopse</summary>
-                  <p className="mt-2 max-w-prose text-sm leading-relaxed text-tinta-2">{livro.sinopse}</p>
-                </details>
+              {livro.resenha && (
+                <div className="mt-6 rounded-2xl border border-papel-3 bg-papel-2/30 p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-tinta-3">Minhas Anotações</h3>
+                    <button
+                      type="button"
+                      onClick={() => setModalAberto(true)}
+                      className="text-xs text-amora hover:underline cursor-pointer"
+                    >
+                      Ver completo
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-tinta-2 line-clamp-4 whitespace-pre-line">
+                    {livro.resenha}
+                  </p>
+                </div>
               )}
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
                   to="/ler/$livroId"
                   params={{ livroId: String(livro.id) }}
-                  className="rounded-xl bg-amora px-6 py-2.5 text-sm font-medium text-papel transition-all hover:bg-amora-escura active:translate-y-[1px] shadow-xs cursor-pointer inline-flex items-center gap-2"
+                  className="rounded-xl bg-amora px-5 py-2.5 text-sm font-medium text-papel transition-all hover:bg-amora-escura active:translate-y-[1px] shadow-xs cursor-pointer inline-flex items-center gap-2"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
                   </svg>
-                  <span>Abrir no Leitor Digital</span>
+                  <span>Abrir no Leitor</span>
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setStoryModalAberto(true)}
+                  className="rounded-xl border border-pink-400/40 bg-pink-500/10 px-5 py-2.5 text-sm font-medium text-pink-600 dark:text-pink-300 transition-all hover:bg-pink-500/20 active:translate-y-[1px] shadow-xs cursor-pointer inline-flex items-center gap-2"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                  <span>Gerar Story</span>
+                </button>
+
                 <button
                   onClick={() => setEditando(true)}
-                  className="rounded-xl border border-papel-3 px-6 py-2.5 text-sm font-medium text-tinta transition-colors hover:border-amora hover:text-amora active:translate-y-[1px] cursor-pointer"
+                  className="rounded-xl border border-papel-3 px-5 py-2.5 text-sm font-medium text-tinta transition-colors hover:border-amora hover:text-amora active:translate-y-[1px] cursor-pointer"
                 >
                   Editar
                 </button>
+
                 {!confirmarExclusao ? (
                   <button
                     onClick={() => setConfirmarExclusao(true)}
-                    className="rounded-xl border border-papel-3 px-6 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora"
+                    className="rounded-xl border border-papel-3 px-5 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora cursor-pointer"
                   >
                     Remover
                   </button>
                 ) : (
                   <span className="inline-flex items-center gap-2 text-sm">
                     <span className="text-tinta-2">Remover da estante?</span>
-                    <button onClick={excluir} className="rounded-lg bg-amora-escura px-3 py-1.5 text-papel">
+                    <button onClick={excluir} className="rounded-lg bg-amora-escura px-3 py-1.5 text-papel cursor-pointer">
                       Sim, remover
                     </button>
-                    <button onClick={() => setConfirmarExclusao(false)} className="rounded-lg border border-papel-3 px-3 py-1.5 text-tinta-2">
+                    <button onClick={() => setConfirmarExclusao(false)} className="rounded-lg border border-papel-3 px-3 py-1.5 text-tinta-2 cursor-pointer">
                       Cancelar
                     </button>
                   </span>
@@ -271,7 +322,12 @@ function PaginaLivro() {
         )}
       </main>
 
-      {/* Modal de Anotações/Resenha Completa */}
+      <StoryGeneratorModal
+        livro={livro}
+        aberto={storyModalAberto}
+        onClose={() => setStoryModalAberto(false)}
+      />
+
       {modalAberto && livro.resenha && (
         <div 
           className="modal-backdrop"

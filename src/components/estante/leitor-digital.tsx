@@ -25,11 +25,13 @@ export function LeitorDigital({
   const totalPaginas = Math.max(livro.paginas || 50, 1);
   const progresso = Math.min(100, Math.round((paginaAtual / totalPaginas) * 100));
 
-  // Texto simulado/real dividido em páginas lógicas
+  // Texto do livro (prioriza texto carregado online/gutenberg, depois sinopse/conteudo salvo)
+  const temTextoReal = Boolean(conteudoTexto || (livro.sinopse && livro.sinopse.length > 50));
+  
   const textoBase =
     conteudoTexto ||
     livro.sinopse ||
-    `Capítulo 1\n\nEra uma vez um leitor apaixonado por histórias. Em cada folha virada, um universo se abria diante dos seus olhos com riqueza de detalhes, pensamentos e memórias que resistem ao tempo.\n\nA leitura é uma viagem sem fronteiras, e cada livro concluído representa um degrau a mais na construção do nosso olhar sobre o mundo.\n\nContinue virando as páginas para sincronizar seu progresso diretamente com a sua estante!`;
+    `Sobre este Livro\n\n"${livro.titulo}" de ${livro.autor}.\n\nEste livro foi adicionado à sua estante pessoal no formato ${livro.formato || "Físico"}.\n\nVocê pode usar este leitor digital para acompanhar o número de páginas e sincronizar o marcador de leitura em tempo real com a sua estante. Para ler o texto completo diretamente na tela, adicione um dos clássicos abertos do Acervo ou faça o upload do seu arquivo EPUB/PDF.`;
 
   // Divide o texto em blocos de parágrafos para simular páginas
   const paragrafos = textoBase.split("\n\n").filter(Boolean);

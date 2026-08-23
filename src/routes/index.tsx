@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-rout
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { listarLivros, atualizarProgresso } from "../lib/api/livros.functions";
+import { listarLivros, atualizarProgresso, excluirLivro, alterarStatusLivro } from "../lib/api/livros.functions";
 import { cartaStatus } from "../lib/api/auth.functions";
 import {
   calcularEstatisticas,
@@ -31,6 +31,97 @@ export const Route = createFileRoute("/")({
   component: PaginaEstante,
 });
 
+interface ModalConfirmacaoProps {
+  aberto: boolean;
+  titulo: string;
+  descricao: string;
+  nomeLivro: string;
+  tipo: "excluir" | "pausar";
+  textoConfirmar: string;
+  carregando?: boolean;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+}
+
+function ModalConfirmacaoAcao({
+  aberto,
+  titulo,
+  descricao,
+  nomeLivro,
+  tipo,
+  textoConfirmar,
+  carregando,
+  onConfirmar,
+  onCancelar,
+}: ModalConfirmacaoProps) {
+  if (!aberto || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-md rounded-2xl border border-papel-3 bg-papel p-6 sm:p-7 shadow-2xl animate-in zoom-in-95 duration-200 text-left"
+      >
+        <div className="flex items-start gap-4">
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+              tipo === "excluir"
+                ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                : "bg-amora-clara text-amora"
+            }`}
+          >
+            {tipo === "excluir" ? (
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-lg font-bold text-tinta">{titulo}</h3>
+            <p className="mt-1.5 text-sm text-tinta-2 leading-relaxed">
+              {descricao} <strong className="font-semibold text-tinta">“{nomeLivro}”</strong>?
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={onCancelar}
+            disabled={carregando}
+            className="rounded-xl border border-papel-3 px-4 py-2.5 text-sm font-medium text-tinta-2 hover:bg-papel-2 hover:text-tinta transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirmar}
+            disabled={carregando}
+            className={`rounded-xl px-5 py-2.5 text-sm font-medium text-papel transition-all cursor-pointer shadow-xs ${
+              tipo === "excluir"
+                ? "bg-red-600 hover:bg-red-700 active:scale-95"
+                : "bg-amora hover:bg-amora-escura active:scale-95"
+            }`}
+          >
+            {carregando ? "Aguarde..." : textoConfirmar}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
   const router = useRouter();
   const [indexAtivo, setIndexAtivo] = useState(0);
@@ -44,9 +135,43 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
   const [pagina, setPagina] = useState<string>(livro?.pagina_atual?.toString() ?? "");
   const [salvando, setSalvando] = useState(false);
 
+  const [modalAcao, setModalAcao] = useState<"excluir" | "pausar" | null>(null);
+  const [executandoAcao, setExecutandoAcao] = useState(false);
+
+  async function pausarLeitura() {
+    if (!livro) return;
+    setExecutandoAcao(true);
+    try {
+      await alterarStatusLivro({ data: { id: livro.id, status: "quero_ler" } });
+      notificar(`Leitura de "${livro.titulo}" pausada — movido para Quero Ler`, "info");
+      setModalAcao(null);
+      await router.invalidate();
+    } catch {
+      notificar("Erro ao pausar leitura", "erro");
+    } finally {
+      setExecutandoAcao(false);
+    }
+  }
+
+  async function excluirLivroLendo() {
+    if (!livro) return;
+    setExecutandoAcao(true);
+    try {
+      await excluirLivro({ data: { id: livro.id } });
+      notificar(`"${livro.titulo}" removido da sua estante`, "info");
+      setModalAcao(null);
+      await router.invalidate();
+    } catch {
+      notificar("Erro ao remover livro", "erro");
+    } finally {
+      setExecutandoAcao(false);
+    }
+  }
+
   useEffect(() => {
     if (livro) {
       setPagina(livro.pagina_atual?.toString() ?? "");
+      setModalAcao(null);
     }
   }, [livro?.id, livro?.pagina_atual]);
 
@@ -196,14 +321,45 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                 <CapaLivro titulo={proximoLivro1.titulo} autor={proximoLivro1.autor} capa={proximoLivro1.capa} />
               </div>
             )}
-            {/* Capa ativa — frente */}
-            <Link
-              to="/livro/$livroId"
-              params={{ livroId: String(livro.id) }}
-              className="relative z-10 block spring-bounce"
-            >
-              <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
-            </Link>
+            {/* Capa ativa — frente com Ações Rápidas no Hover */}
+            <div className="group/capa-ativa relative z-10 block">
+              <Link
+                to="/livro/$livroId"
+                params={{ livroId: String(livro.id) }}
+                className="block spring-bounce"
+              >
+                <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
+              </Link>
+
+              {/* Botões de Ação Rápida Flutuantes no Hover da Capa */}
+              <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover/capa-ativa:opacity-100 transition-all duration-200 z-30">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalAcao("pausar"); }}
+                  disabled={executandoAcao}
+                  title="Parar de ler (mover para Quero Ler)"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/80 backdrop-blur-md text-white border border-white/20 shadow-lg hover:bg-amora hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalAcao("excluir"); }}
+                  disabled={executandoAcao}
+                  title="Excluir livro da estante"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/80 backdrop-blur-md text-white border border-white/20 shadow-lg hover:bg-red-600 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Info do livro */}
@@ -269,24 +425,66 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                   </button>
                   {livro.paginas ? <span className="font-num text-tinta-3 ml-1">{progresso}%</span> : null}
                 </label>
-                <Link
-                  to="/livro/$livroId"
-                  params={{ livroId: String(livro.id) }}
-                  search={{ concluir: true }}
-                  className="group/link inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amora"
-                >
-                  <span className="border-b border-amora/40 pb-px transition-colors group-hover/link:border-amora">
-                    Terminei este livro
-                  </span>
-                  <span aria-hidden className="transition-transform duration-300 motion-safe:group-hover/link:translate-x-1">
-                    →
-                  </span>
-                </Link>
+
+                {/* Ações e Conclusão */}
+                <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setModalAcao("pausar")}
+                    disabled={executandoAcao}
+                    className="text-tinta-3 hover:text-amora transition-colors cursor-pointer text-xs"
+                    title="Pausar leitura e mover para Quero Ler"
+                  >
+                    Pausar leitura
+                  </button>
+                  <span className="text-tinta-3/40">•</span>
+                  <button
+                    type="button"
+                    onClick={() => setModalAcao("excluir")}
+                    disabled={executandoAcao}
+                    className="text-tinta-3 hover:text-red-500 transition-colors cursor-pointer text-xs"
+                    title="Excluir livro da estante"
+                  >
+                    Excluir
+                  </button>
+                  <span className="text-tinta-3/40">•</span>
+
+                  <Link
+                    to="/livro/$livroId"
+                    params={{ livroId: String(livro.id) }}
+                    search={{ concluir: true }}
+                    className="group/link inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amora"
+                  >
+                    <span className="border-b border-amora/40 pb-px transition-colors group-hover/link:border-amora">
+                      Terminei este livro
+                    </span>
+                    <span aria-hidden className="transition-transform duration-300 motion-safe:group-hover/link:translate-x-1">
+                      →
+                    </span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação Oficial do App */}
+      <ModalConfirmacaoAcao
+        aberto={modalAcao !== null}
+        tipo={modalAcao || "excluir"}
+        titulo={modalAcao === "excluir" ? "Remover da Estante" : "Pausar Leitura"}
+        descricao={
+          modalAcao === "excluir"
+            ? "Tem certeza que deseja remover da sua estante o livro"
+            : "Deseja parar de ler agora e mover para a sua lista de Quero Ler o livro"
+        }
+        nomeLivro={livro.titulo}
+        textoConfirmar={modalAcao === "excluir" ? "Sim, remover da estante" : "Pausar leitura"}
+        carregando={executandoAcao}
+        onConfirmar={modalAcao === "excluir" ? excluirLivroLendo : pausarLeitura}
+        onCancelar={() => setModalAcao(null)}
+      />
     </section>
   );
 }
@@ -862,25 +1060,120 @@ function FaixaNumeros({ livros }: { livros: Livro[] }) {
 }
 
 function CardLivro({ livro }: { livro: Livro }) {
+  const router = useRouter();
   const dias = diasDeLeitura(livro);
+  const [modalAcao, setModalAcao] = useState<"excluir" | "pausar" | null>(null);
+  const [carregando, setCarregando] = useState(false);
+
+  async function handleExcluir() {
+    setCarregando(true);
+    try {
+      await excluirLivro({ data: { id: livro.id } });
+      notificar(`"${livro.titulo}" removido da sua estante`, "info");
+      setModalAcao(null);
+      await router.invalidate();
+    } catch {
+      notificar("Erro ao remover livro", "erro");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function handlePausar() {
+    setCarregando(true);
+    try {
+      await alterarStatusLivro({ data: { id: livro.id, status: "quero_ler" } });
+      notificar(`Leitura de "${livro.titulo}" pausada`, "info");
+      setModalAcao(null);
+      await router.invalidate();
+    } catch {
+      notificar("Erro ao pausar leitura", "erro");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   return (
-    <Link
-      to="/livro/$livroId"
-      params={{ livroId: String(livro.id) }}
-      className="livro-hover group block w-32 shrink-0 snap-start sm:w-36"
-    >
-      <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
-      <div className="mt-3 px-0.5">
-        <p className="truncate text-sm font-medium text-tinta" title={livro.titulo}>
-          {livro.titulo}
-        </p>
-        <div className="mt-0.5 flex items-center justify-between gap-2">
-          <Estrelas nota={livro.nota} className="text-[11px]" />
-          {dias !== null && <span className="font-num text-[11px] text-tinta-3">{dias === 0 ? "1 dia" : `${dias}d`}</span>}
-        </div>
-        {livro.palavra && <p className="mt-0.5 truncate font-display text-xs italic text-amora">“{livro.palavra}”</p>}
+    <>
+      <div className="livro-hover group relative block w-32 shrink-0 snap-start sm:w-36">
+        <Link
+          to="/livro/$livroId"
+          params={{ livroId: String(livro.id) }}
+          className="block"
+        >
+          <div className="relative">
+            <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
+
+            {/* Botões de Ação Rápida no Hover da Capa */}
+            <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30">
+              {livro.status === "lendo" && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setModalAcao("pausar");
+                  }}
+                  disabled={carregando}
+                  title="Parar de ler (mover para Quero Ler)"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/80 backdrop-blur-md text-white border border-white/20 shadow-md hover:bg-amora hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setModalAcao("excluir");
+                }}
+                disabled={carregando}
+                title="Excluir livro da estante"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/80 backdrop-blur-md text-white border border-white/20 shadow-md hover:bg-red-600 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3 px-0.5">
+            <p className="truncate text-sm font-medium text-tinta" title={livro.titulo}>
+              {livro.titulo}
+            </p>
+            <div className="mt-0.5 flex items-center justify-between gap-2">
+              <Estrelas nota={livro.nota} className="text-[11px]" />
+              {dias !== null && <span className="font-num text-[11px] text-tinta-3">{dias === 0 ? "1 dia" : `${dias}d`}</span>}
+            </div>
+            {livro.palavra && <p className="mt-0.5 truncate font-display text-xs italic text-amora">“{livro.palavra}”</p>}
+          </div>
+        </Link>
       </div>
-    </Link>
+
+      {/* Modal de Confirmação Oficial do App */}
+      <ModalConfirmacaoAcao
+        aberto={modalAcao !== null}
+        tipo={modalAcao || "excluir"}
+        titulo={modalAcao === "excluir" ? "Remover da Estante" : "Pausar Leitura"}
+        descricao={
+          modalAcao === "excluir"
+            ? "Tem certeza que deseja remover da sua estante o livro"
+            : "Deseja parar de ler agora e mover para a sua lista de Quero Ler o livro"
+        }
+        nomeLivro={livro.titulo}
+        textoConfirmar={modalAcao === "excluir" ? "Sim, remover da estante" : "Pausar leitura"}
+        carregando={carregando}
+        onConfirmar={modalAcao === "excluir" ? handleExcluir : handlePausar}
+        onCancelar={() => setModalAcao(null)}
+      />
+    </>
   );
 }
 

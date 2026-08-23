@@ -22,6 +22,7 @@ export function Celebracao({
   dias,
   cartas = [],
   aoFechar,
+  onGerarStory,
 }: {
   titulo: string;
   autor: string;
@@ -30,6 +31,7 @@ export function Celebracao({
   dias: number | null;
   cartas?: Array<{ id: number; remetente: string }>;
   aoFechar: () => void;
+  onGerarStory?: () => void;
 }) {
   const [carimbado, setCarimbado] = useState(false);
   const [reduzido, setReduzido] = useState(false);
@@ -112,12 +114,29 @@ export function Celebracao({
           </Link>
         )}
 
-        <button
-          onClick={aoFechar}
-          className="mt-7 w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px]"
-        >
-          Voltar para a estante
-        </button>
+        <div className="mt-7 flex flex-col gap-2.5">
+          {onGerarStory && (
+            <button
+              type="button"
+              onClick={onGerarStory}
+              className="w-full rounded-xl border border-pink-400/40 bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 dark:text-pink-300 py-3 px-6 text-sm font-medium transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:translate-y-[1px]"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+              <span>Gerar Story para Instagram</span>
+            </button>
+          )}
+
+          <button
+            onClick={aoFechar}
+            className="w-full rounded-xl bg-amora px-6 py-3 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] cursor-pointer"
+          >
+            Voltar para a estante
+          </button>
+        </div>
       </div>
     </div>
   );

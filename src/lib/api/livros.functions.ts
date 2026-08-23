@@ -144,6 +144,17 @@ export const atualizarProgresso = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const alterarStatusLivro = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number().int(), status: z.enum(["quero_ler", "lendo", "lido", "abandonado"]) }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    await db()
+      .prepare("UPDATE livros SET status = ? WHERE id = ? AND usuario_id = ?")
+      .bind(data.status, data.id, u.id)
+      .run();
+    return { ok: true };
+  });
+
 // ------- Perfis públicos -------
 
 export type StatusPresenca = "online" | "lendo" | "ocupado" | "invisivel" | "offline";
