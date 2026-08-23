@@ -87,7 +87,7 @@ export const StoryPagina1Resumo = React.forwardRef<
           radial-gradient(circle at 0% 50%, rgba(45, 20, 30, 0.5) 0%, transparent 50%)
         `,
       }}
-      className="relative overflow-hidden font-sans text-neutral-100 flex flex-col justify-between p-14 select-none box-border"
+      className="relative overflow-hidden font-sans text-neutral-100 flex flex-col p-12 select-none box-border"
     >
       {/* Topo: Detalhes Decorativos Botânicos em Vetor (Sem emojis de IA) */}
       <div className="absolute top-10 left-12 flex items-center gap-2 pointer-events-none opacity-80">
@@ -113,7 +113,7 @@ export const StoryPagina1Resumo = React.forwardRef<
       </svg>
 
       {/* CABEÇALHO */}
-      <header className="relative z-10 flex flex-col items-center text-center mt-4 mb-2">
+      <header className="relative z-10 flex flex-col items-center text-center mt-2 mb-4 shrink-0">
         <div className="inline-flex items-center gap-3 px-8 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-xs">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-5 bg-pink-400 rounded-full" />
@@ -125,7 +125,7 @@ export const StoryPagina1Resumo = React.forwardRef<
           </span>
         </div>
 
-        <h1 className="mt-6 font-display text-7xl tracking-tight leading-none text-neutral-100 font-semibold">
+        <h1 className="mt-5 font-display text-7xl tracking-tight leading-none text-neutral-100 font-semibold">
           Leitura <span className="font-serif italic font-normal text-pink-300 drop-shadow-sm">finalizada</span>
         </h1>
 
@@ -137,13 +137,13 @@ export const StoryPagina1Resumo = React.forwardRef<
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-400/40 to-transparent" />
         </div>
 
-        <p className="mt-3 text-base font-mono text-neutral-400 tracking-widest uppercase">
+        <p className="mt-2 text-base font-mono text-neutral-400 tracking-widest uppercase">
           • mais uma história que ficou comigo •
         </p>
       </header>
 
-      {/* ÁREA CENTRAL EM GRID (DINÂMICO E PREENCHENDO O ESPAÇO HARMONIOSAMENTE) */}
-      <main className="relative z-10 my-auto flex flex-col gap-6 w-full max-w-[980px] mx-auto">
+      {/* ÁREA CENTRAL EM GRID (COM ENCAIXE COMPACTO E SEM LACUNAS VAZIAS) */}
+      <main className="relative z-10 flex flex-col gap-6 w-full max-w-[980px] mx-auto shrink-0 mt-2">
 
         {/* 2 COLUNAS SUPERIORES */}
         <div className="grid grid-cols-2 gap-6 w-full items-stretch">
@@ -151,7 +151,7 @@ export const StoryPagina1Resumo = React.forwardRef<
           {/* COLUNA DA ESQUERDA: CAPA + (PRINT SKOOB Opcional) */}
           <div className="flex flex-col gap-6 justify-between">
             {/* Box 1: Capa do Livro */}
-            <div className={`rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-6 flex flex-col items-center justify-center relative overflow-hidden group shadow-lg ${exibePrint ? "h-[540px]" : "h-[880px]"}`}>
+            <div className={`rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-6 flex flex-col items-center justify-center relative overflow-hidden group shadow-lg ${exibePrint ? "h-[500px]" : "h-[840px]"}`}>
               {imagemCapa ? (
                 <img
                   src={imagemCapa}
@@ -170,7 +170,7 @@ export const StoryPagina1Resumo = React.forwardRef<
 
             {/* Box 2: Print do Skoob / Print Complementar */}
             {exibePrint && (
-              <div className="h-[320px] rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
+              <div className="h-[310px] rounded-3xl border-2 border-dashed border-pink-400/35 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
                 {config.fotoComplementarUrl ? (
                   <img
                     src={config.fotoComplementarUrl}
@@ -193,7 +193,7 @@ export const StoryPagina1Resumo = React.forwardRef<
           <div className="flex flex-col gap-6 justify-between">
             {/* Box 3: Foto do Kindle */}
             {exibeKindle && (
-              <div className="h-[540px] rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
+              <div className="h-[500px] rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
                 {config.fotoKindleUrl ? (
                   <img
                     src={config.fotoKindleUrl}
@@ -214,51 +214,51 @@ export const StoryPagina1Resumo = React.forwardRef<
             )}
 
             {/* Box 4: Minhas Informações */}
-            <div className={`rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] flex flex-col justify-between shadow-lg relative ${exibeKindle ? "h-[320px] p-6" : "h-[880px] p-10"}`}>
+            <div className={`rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.08] to-white/[0.02] flex flex-col shadow-lg relative ${exibeKindle ? "h-[310px] p-6 justify-between" : "h-[840px] p-8 justify-start gap-6"}`}>
               {/* Badge Header */}
-              <div className={`inline-flex items-center gap-2.5 rounded-full bg-pink-400/20 border border-pink-300/30 text-pink-300 font-medium w-fit ${exibeKindle ? "px-4 py-1.5 text-sm" : "px-5 py-2.5 text-base"}`}>
+              <div className={`inline-flex items-center gap-2.5 rounded-full bg-pink-400/20 border border-pink-300/30 text-pink-300 font-medium w-fit ${exibeKindle ? "px-4 py-1.5 text-sm" : "px-5 py-2 text-base"}`}>
                 <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-pink-300 stroke-pink-300">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
                 <span>minhas informações</span>
               </div>
 
-              {/* Lista de Metadados */}
-              <div className={`space-y-${exibeKindle ? "3 text-base" : "6 text-xl"} text-neutral-200 pt-2`}>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="flex items-center gap-3 text-neutral-300 shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-pink-400 fill-none" strokeWidth="2">
+              {/* Lista de Metadados Distribuída Harmoniosamente */}
+              <div className={`flex flex-col ${exibeKindle ? "space-y-3 text-base" : "flex-1 justify-evenly text-xl"} text-neutral-200`}>
+                <div className={`flex items-center justify-between gap-4 ${!exibeKindle ? "py-2 border-b border-white/10" : ""}`}>
+                  <span className="flex items-center gap-3 text-neutral-300 shrink-0 font-medium">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-pink-400 fill-none" strokeWidth="2">
                       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                     </svg>
-                    <span className="font-medium">Título</span>
+                    <span>Título</span>
                   </span>
                   <span className={`font-bold text-neutral-100 truncate text-right ${exibeKindle ? "text-base" : "text-2xl"}`}>{book.titulo}</span>
                 </div>
 
                 {config.mostrarAutor && (
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="flex items-center gap-3 text-neutral-300 shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-pink-400 fill-none" strokeWidth="2">
+                  <div className={`flex items-center justify-between gap-4 ${!exibeKindle ? "py-2 border-b border-white/10" : ""}`}>
+                    <span className="flex items-center gap-3 text-neutral-300 shrink-0 font-medium">
+                      <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-pink-400 fill-none" strokeWidth="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                       </svg>
-                      <span className="font-medium">Autor</span>
+                      <span>Autor</span>
                     </span>
                     <span className={`text-neutral-200 truncate text-right font-serif italic ${exibeKindle ? "text-base" : "text-xl"}`}>{book.autor || "—"}</span>
                   </div>
                 )}
 
                 {config.mostrarPaginas && (book.paginas || book.formato) && (
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="flex items-center gap-3 text-neutral-300 shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-pink-400 fill-none" strokeWidth="2">
+                  <div className={`flex items-center justify-between gap-4 ${!exibeKindle ? "py-2 border-b border-white/10" : ""}`}>
+                    <span className="flex items-center gap-3 text-neutral-300 shrink-0 font-medium">
+                      <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-pink-400 fill-none" strokeWidth="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                         <polyline points="14 2 14 8 20 8" />
                       </svg>
-                      <span className="font-medium">Páginas</span>
+                      <span>Páginas</span>
                     </span>
-                    <span className="font-mono text-neutral-200">
+                    <span className="font-mono text-neutral-200 text-xl">
                       {book.paginas ? `${book.paginas} págs` : ""}
                       {book.paginas && book.formato ? " • " : ""}
                       {book.formato || ""}
@@ -268,41 +268,41 @@ export const StoryPagina1Resumo = React.forwardRef<
 
                 {config.mostrarDatas && (
                   <>
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="flex items-center gap-3 text-neutral-300 shrink-0">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-pink-400 fill-none" strokeWidth="2">
+                    <div className={`flex items-center justify-between gap-4 ${!exibeKindle ? "py-2 border-b border-white/10" : ""}`}>
+                      <span className="flex items-center gap-3 text-neutral-300 shrink-0 font-medium">
+                        <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-pink-400 fill-none" strokeWidth="2">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                           <line x1="16" y1="2" x2="16" y2="6" />
                           <line x1="8" y1="2" x2="8" y2="6" />
                           <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        <span className="font-medium">Comecei em</span>
+                        <span>Comecei em</span>
                       </span>
-                      <span className="font-mono text-neutral-300">{dataInicioFmt || "__/__/____"}</span>
+                      <span className="font-mono text-neutral-300 text-xl">{dataInicioFmt || "__/__/____"}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="flex items-center gap-3 text-neutral-300 shrink-0">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-pink-400 fill-none" strokeWidth="2">
+                    <div className={`flex items-center justify-between gap-4 ${!exibeKindle ? "py-2 border-b border-white/10" : ""}`}>
+                      <span className="flex items-center gap-3 text-neutral-300 shrink-0 font-medium">
+                        <svg viewBox="0 0 24 24" className="w-6 h-6 stroke-pink-400 fill-none" strokeWidth="2">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                           <line x1="16" y1="2" x2="16" y2="6" />
                           <line x1="8" y1="2" x2="8" y2="6" />
                           <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        <span className="font-medium">Terminei em</span>
+                        <span>Terminei em</span>
                       </span>
-                      <span className="font-mono text-neutral-300">{dataFimFmt || "__/__/____"}</span>
+                      <span className="font-mono text-neutral-300 text-xl">{dataFimFmt || "__/__/____"}</span>
                     </div>
                   </>
                 )}
 
                 {config.mostrarNota && (
                   <div className="flex items-center justify-between gap-4 pt-1">
-                    <span className="flex items-center gap-3 text-neutral-300 shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-pink-400 stroke-pink-400" strokeWidth="1.5">
+                    <span className="flex items-center gap-3 text-neutral-300 shrink-0 font-medium">
+                      <svg viewBox="0 0 24 24" className="w-6 h-6 fill-pink-400 stroke-pink-400" strokeWidth="1.5">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
-                      <span className="font-medium">Nota</span>
+                      <span>Nota</span>
                     </span>
                     <div className="flex items-center gap-3">
                       <EstrelasStory nota={book.nota} />
@@ -321,7 +321,7 @@ export const StoryPagina1Resumo = React.forwardRef<
         </div>
 
         {/* LINHA INFERIOR COMPLETA: MINHA OPINIÃO */}
-        <div className="w-full rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.09] to-white/[0.03] p-8 relative flex flex-col justify-between shadow-xl min-h-[280px]">
+        <div className="w-full rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.09] to-white/[0.03] p-8 relative flex flex-col justify-between shadow-xl min-h-[260px]">
           {/* Badge Header */}
           <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-pink-400/20 border border-pink-300/30 text-pink-300 text-sm font-medium w-fit mb-3">
             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-pink-300 stroke-pink-300">
@@ -357,7 +357,7 @@ export const StoryPagina1Resumo = React.forwardRef<
       </main>
 
       {/* RODAPÉ */}
-      <footer className="relative z-10 flex flex-col items-center mt-4">
+      <footer className="relative z-10 flex flex-col items-center mt-auto mb-2 shrink-0">
         <div className="w-full h-4 bg-gradient-to-b from-amber-900 via-amber-950 to-stone-950 rounded-sm border-t border-amber-500/40 shadow-[0_14px_28px_rgba(0,0,0,0.9)] mb-5" />
 
         <div className="relative px-10 py-3.5 rounded-full bg-black/40 border border-dashed border-pink-400/40 backdrop-blur-xl flex items-center gap-6 shadow-xl text-center">
