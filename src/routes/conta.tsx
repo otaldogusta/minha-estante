@@ -14,6 +14,7 @@ import { Cabecalho } from "../components/estante/cabecalho";
 import { CampoSenha } from "../components/estante/campo-senha";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
+import { copiarTexto } from "../lib/utils";
 
 export const Route = createFileRoute("/conta")({
   beforeLoad: () => exigirLogin(),
@@ -45,12 +46,10 @@ function SecaoRecuperacao({
     (typeof window !== "undefined" ? window.location.origin : "") + `/redefinir/${token}`;
 
   async function copiar(token: string) {
-    try {
-      await navigator.clipboard.writeText(linkDe(token));
+    const ok = await copiarTexto(linkDe(token));
+    if (ok) {
       setCopiado(token);
       setTimeout(() => setCopiado(null), 2000);
-    } catch {
-      // sem clipboard: o link fica visível para copiar manualmente
     }
   }
 

@@ -8,6 +8,7 @@ import { Cabecalho } from "../components/estante/cabecalho";
 import { CapaLivro } from "../components/estante/capa-livro";
 import { Estrelas } from "../components/estante/estrelas";
 import { exigirLogin } from "../lib/exigir-login";
+import { copiarTexto } from "../lib/utils";
 
 export const Route = createFileRoute("/retrospectiva/$ano")({
   beforeLoad: () => exigirLogin(),
@@ -211,10 +212,12 @@ function BotaoSocialKokonut({
   const url = typeof window !== "undefined" ? window.location.href : "";
   const mensagem = `Confira minha retrospectiva de leitura de ${anoNum} no Minha Estante! 📚 (${livrosCount} livros lidos)`;
 
-  function copiarLink() {
-    navigator.clipboard.writeText(url);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 2000);
+  async function copiarLink() {
+    const ok = await copiarTexto(url);
+    if (ok) {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    }
   }
 
   function compartilharWhatsApp() {

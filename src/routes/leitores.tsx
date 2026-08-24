@@ -7,6 +7,7 @@ import { Cabecalho } from "../components/estante/cabecalho";
 import { AvatarLeitor } from "../components/estante/avatar";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
+import { copiarTexto } from "../lib/utils";
 
 export const Route = createFileRoute("/leitores")({
   beforeLoad: () => exigirLogin(),
@@ -202,13 +203,11 @@ function ModalConvites({
   }
 
   async function copiar(codigo: string) {
-    try {
-      await navigator.clipboard.writeText(linkDe(codigo));
+    const ok = await copiarTexto(linkDe(codigo));
+    if (ok) {
       setCopiado(codigo);
       notificar("Link do convite copiado!");
       setTimeout(() => setCopiado(null), 2000);
-    } catch {
-      // sem clipboard
     }
   }
 
