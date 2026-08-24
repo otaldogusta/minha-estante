@@ -77,10 +77,20 @@ export async function criarSessao(usuarioId: number): Promise<void> {
 
 async function garantirColunaUltimoAcesso() {
   try {
-    const info = await db().prepare("PRAGMA table_info(sessoes)").all<{ name: string }>();
-    const colunas = (info.results || []).map((r) => r.name);
-    if (!colunas.includes("ultimo_acesso")) {
-      await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
+    const isPg = (db() as any).isPostgres;
+    if (isPg) {
+      const info = await db()
+        .prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'sessoes' AND column_name = 'ultimo_acesso'")
+        .first();
+      if (!info) {
+        await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
+      }
+    } else {
+      const info = await db().prepare("PRAGMA table_info(sessoes)").all<{ name: string }>();
+      const colunas = (info.results || []).map((r) => r.name);
+      if (!colunas.includes("ultimo_acesso")) {
+        await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
+      }
     }
   } catch (e) {
     console.error("Erro ao garantir coluna ultimo_acesso:", e);

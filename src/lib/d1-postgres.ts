@@ -128,6 +128,7 @@ class PostgresStatement {
 }
 
 export class PostgresD1Database {
+  public isPostgres = true;
   private sqlClient: postgres.Sql;
 
   constructor(connectionString: string) {
