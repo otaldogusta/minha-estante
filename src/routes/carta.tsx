@@ -73,16 +73,16 @@ function PaginaCarta() {
           <div className="rounded-2xl border border-[#d9c9a8] bg-[#fdfaf1] p-7 shadow-[0_20px_50px_-20px_rgba(93,74,43,0.45)] sm:p-10">
             <span aria-hidden className="inline-flex gap-[3px]">
               <span className="inline-block h-5 w-[5px] rounded-sm bg-amora" />
-              <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-tinta-2" />
-              <span className="inline-block h-5 w-[5px] rounded-sm bg-tinta" />
+              <span className="inline-block h-4 w-[5px] translate-y-1 rounded-sm bg-[#9a8c78]" />
+              <span className="inline-block h-5 w-[5px] rounded-sm bg-[#2d2520]" />
             </span>
             <div className="mt-5 flex items-baseline justify-between gap-3">
               <p className="font-display text-xl font-semibold italic text-amora">{CARTA_PARA}</p>
-              <p className="font-num text-xs text-tinta-3">{CARTA_DATA}</p>
+              <p className="font-num text-xs text-[#9a8c78]">{CARTA_DATA}</p>
             </div>
             <div className="mt-4 space-y-4">
               {CARTA.map((p, i) => (
-                <p key={i} className="font-display leading-relaxed text-tinta">
+                <p key={i} className="font-display leading-relaxed text-[#2d2520]">
                   {p}
                 </p>
               ))}
