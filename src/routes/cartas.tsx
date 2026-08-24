@@ -23,8 +23,9 @@ export const Route = createFileRoute("/cartas")({
   component: PaginaCartas,
 });
 
-function dataLonga(iso: string): string {
-  const d = new Date(iso.replace(" ", "T") + "Z");
+function dataLonga(iso: string | Date | null | undefined): string {
+  if (!iso) return "—";
+  const d = typeof iso === "string" ? new Date(iso.replace(" ", "T") + "Z") : new Date(iso);
   return d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
 }
 
@@ -274,7 +275,7 @@ function PaginaCartas() {
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
 
-  const novas = recebidas.filter((c) => c.desbloqueada === 1 && c.lida === 0).length;
+  const novas = recebidas.filter((c) => Boolean(c.desbloqueada) && c.lida === 0).length;
 
   async function enviar() {
     if (para.length === 0 || !corpo.trim()) return;
