@@ -803,3 +803,17 @@ function parseCSV(text: string): string[][] {
   return lines;
 }
 
+export const buscarCapaOriginal = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      titulo: z.string(),
+      autor: z.string(),
+      editora: z.string().nullish(),
+    })
+  )
+  .handler(async ({ data }) => {
+    await exigirUsuario();
+    const url = await fetchCapaGoogleBooks(data.titulo, data.autor, data.editora);
+    return { url };
+  });
+

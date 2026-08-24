@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useBlocker } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
 
-import { salvarLivro } from "../../lib/api/livros.functions";
+import { salvarLivro, buscarCapaOriginal } from "../../lib/api/livros.functions";
 import { GENEROS, FORMATOS, type Livro } from "../../lib/livros";
 import { EstrelasInput } from "./estrelas";
 import { CapaLivro } from "./capa-livro";
@@ -780,6 +780,7 @@ export function FormularioLivro({
         capaAtual={v.capa ?? null}
         titulo={v.titulo || ""}
         autor={v.autor || ""}
+        editora={v.editora || null}
       />
 
       {/* Modal de Confirmação para Remover Capa */}
@@ -875,6 +876,7 @@ function ModalGerenciadorCapa({
   capaAtual,
   titulo,
   autor,
+  editora,
 }: {
   aberto: boolean;
   aoFechar: () => void;
@@ -882,6 +884,7 @@ function ModalGerenciadorCapa({
   capaAtual: string | null;
   titulo: string;
   autor: string;
+  editora?: string | null;
 }) {
   const [aba, setAba] = useState<"upload" | "url">("upload");
   const [arquivoInfo, setArquivoInfo] = useState<{ nome: string; tamanho: string } | null>(null);
@@ -891,6 +894,34 @@ function ModalGerenciadorCapa({
   const [arrastando, setArrastando] = useState(false);
   const [processando, setProcessando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [buscandoCapaOriginal, setBuscandoCapaOriginal] = useState(false);
+
+  async function restaurarOriginal() {
+    if (!titulo || !autor) return;
+    setBuscandoCapaOriginal(true);
+    setErro(null);
+    try {
+      const res = await buscarCapaOriginal({
+        data: {
+          titulo,
+          autor,
+          editora: editora || null,
+        }
+      });
+      if (res.url) {
+        setPreview(res.url);
+        setUrlInput(res.url);
+        setArquivoInfo(null);
+        notificar("Capa original encontrada!");
+      } else {
+        setErro("Nenhuma capa original foi encontrada nos serviços.");
+      }
+    } catch {
+      setErro("Falha ao buscar a capa original.");
+    } finally {
+      setBuscandoCapaOriginal(false);
+    }
+  }
 
   useEffect(() => {
     if (aberto) {
@@ -1116,20 +1147,34 @@ function ModalGerenciadorCapa({
                 className="w-full mt-1.5 rounded-xl border border-papel-3 bg-papel px-3.5 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none"
               />
             </label>
-            <button
-              type="button"
-              onClick={() => {
-                const query = encodeURIComponent(`${titulo || ""} ${autor || ""} capa livro edicao`);
-                window.open(`https://www.google.com/search?tbm=isch&q=${query}`, "_blank");
-              }}
-              className="text-xs font-medium text-amora hover:underline cursor-pointer flex items-center gap-1.5"
-            >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" />
-              </svg>
-              <span>Buscar capas no Google Imagens</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  const query = encodeURIComponent(`${titulo || ""} ${autor || ""} capa livro edicao`);
+                  window.open(`https://www.google.com/search?tbm=isch&q=${query}`, "_blank");
+                }}
+                className="text-xs font-medium text-amora hover:underline cursor-pointer flex items-center gap-1.5"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+                <span>Buscar no Google Imagens</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={restaurarOriginal}
+                disabled={buscandoCapaOriginal}
+                className="text-xs font-medium text-amora hover:underline cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                <span>{buscandoCapaOriginal ? "Buscando..." : "Restaurar capa original"}</span>
+              </button>
+            </div>
           </div>
         )}
 
