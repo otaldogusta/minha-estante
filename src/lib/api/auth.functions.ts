@@ -20,9 +20,13 @@ function db() {
 
 async function garantirColunaStatusPresenca() {
   try {
-    await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
-  } catch {
-    // Coluna já existe
+    const info = await db().prepare("PRAGMA table_info(usuarios)").all<{ name: string }>();
+    const colunas = (info.results || []).map((r) => r.name);
+    if (!colunas.includes("status_presenca")) {
+      await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
+    }
+  } catch (e) {
+    console.error("Erro ao garantir coluna status_presenca:", e);
   }
 }
 
@@ -391,16 +395,8 @@ export const atualizarStatusPresenca = createServerFn({ method: "POST" })
         .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
         .bind(data.status, u.id)
         .run();
-    } catch {
-      try {
-        await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
-        await db()
-          .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
-          .bind(data.status, u.id)
-          .run();
-      } catch {
-        // Silencioso
-      }
+    } catch (e) {
+      console.error("Erro ao atualizar status_presenca:", e);
     }
     return { ok: true as const, status: data.status };
   });

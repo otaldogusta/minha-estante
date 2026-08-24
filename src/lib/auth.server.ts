@@ -75,6 +75,18 @@ export async function criarSessao(usuarioId: number): Promise<void> {
   });
 }
 
+async function garantirColunaUltimoAcesso() {
+  try {
+    const info = await db().prepare("PRAGMA table_info(sessoes)").all<{ name: string }>();
+    const colunas = (info.results || []).map((r) => r.name);
+    if (!colunas.includes("ultimo_acesso")) {
+      await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
+    }
+  } catch (e) {
+    console.error("Erro ao garantir coluna ultimo_acesso:", e);
+  }
+}
+
 export async function usuarioDaSessao(): Promise<Usuario | null> {
   const token = getCookie(COOKIE);
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
@@ -83,6 +95,7 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
   const cached = sessionCache.get(token);
 
   if (!cached || cached.expires <= now) {
+    await garantirColunaUltimoAcesso();
     try {
       await db()
         .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
