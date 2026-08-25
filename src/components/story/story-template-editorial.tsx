@@ -12,6 +12,7 @@ interface StoryTemplateProps {
   onCapaUpload?: (dataUrl: string) => void;
   onFotoKindleUpload?: (file: File) => void;
   onFotoComplementarUpload?: (file: File) => void;
+  onClickCapa?: () => void;
 }
 
 function formatarDataPtBr(dataStr?: string | null): string {
@@ -97,8 +98,9 @@ export const StoryPagina1Resumo = React.forwardRef<
     onUpdateBook?: (novos: Partial<StoryBookData>) => void;
     onUpdateConfig?: (novas: Partial<StoryPersonalizacao>) => void;
     onCapaUpload?: (dataUrl: string) => void;
+    onClickCapa?: () => void;
   }
->(({ book, config, capaDataUrl, isEditable = false, onUpdateBook, onUpdateConfig, onCapaUpload }, ref) => {
+>(({ book, config, capaDataUrl, isEditable = false, onUpdateBook, onUpdateConfig, onCapaUpload, onClickCapa }, ref) => {
   const imagemCapa = capaDataUrl || book.capa;
   const dataInicioFmt = formatarDataPtBr(book.inicio);
   const dataFimFmt = formatarDataPtBr(book.fim);
@@ -141,7 +143,7 @@ export const StoryPagina1Resumo = React.forwardRef<
       <div className="relative z-10 w-[780px] h-[1260px] rounded-[40px] border border-white/10 bg-black/25 backdrop-blur-md p-10 flex flex-col items-center justify-between shadow-2xl mt-12">
         {/* Capa do Livro */}
         <div
-          onClick={isEditable ? () => fileInputRef.current?.click() : undefined}
+          onClick={isEditable ? (onClickCapa || (() => fileInputRef.current?.click())) : undefined}
           className={`flex-1 w-full flex items-center justify-center overflow-hidden mb-6 relative group ${isEditable ? "cursor-pointer" : ""}`}
         >
           {isEditable && (
@@ -655,6 +657,7 @@ export const StoryTemplateEditorial = React.forwardRef<HTMLDivElement, StoryTemp
       onRemoverFotoKindle,
       onFotoComplementarUpload,
       onRemoverFotoComplementar,
+      onClickCapa,
     },
     ref
   ) => {
@@ -695,6 +698,7 @@ export const StoryTemplateEditorial = React.forwardRef<HTMLDivElement, StoryTemp
         onUpdateBook={onUpdateBook}
         onUpdateConfig={onUpdateConfig}
         onCapaUpload={onCapaUpload}
+        onClickCapa={onClickCapa}
       />
     );
   }

@@ -10,6 +10,7 @@ export interface StoryBookData {
   resenha?: string | null;
   genero?: string | null;
   formato?: string | null;
+  editora?: string | null;
 }
 
 export type ModoStory = "rapido" | "completo";

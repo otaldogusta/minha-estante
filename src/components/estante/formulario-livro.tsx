@@ -869,7 +869,7 @@ function redimensionarImagem(file: File): Promise<string> {
   });
 }
 
-function ModalGerenciadorCapa({
+export function ModalGerenciadorCapa({
   aberto,
   aoFechar,
   aoAplicarCapa,

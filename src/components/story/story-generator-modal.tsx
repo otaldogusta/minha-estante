@@ -5,6 +5,7 @@ import { StoryPagina1Resumo, StoryTemplateEditorial } from "./story-template-edi
 import { exportarStoryPng, compartilharOuBaixarStory } from "../../lib/story/export-story";
 import { obterCapaDataUrl } from "../../lib/api/story.functions";
 import { notificar } from "../../lib/toast";
+import { ModalGerenciadorCapa } from "../estante/formulario-livro";
 
 interface StoryGeneratorModalProps {
   livro: StoryBookData;
@@ -45,6 +46,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
   const [capaDataUrl, setCapaDataUrl] = useState<string | null>(null);
   const [gerando, setGerando] = useState(false);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
+  const [modalCapaAberto, setModalCapaAberto] = useState(false);
 
   const exportPagina1Ref = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -234,7 +236,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
               }}
               className="shrink-0"
             >
-              <StoryTemplateEditorial
+               <StoryTemplateEditorial
                 book={bookState}
                 config={config}
                 capaDataUrl={capaDataUrl}
@@ -246,6 +248,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
                   setCapaDataUrl(dataUrl);
                   setBookState((prev) => ({ ...prev, capa: dataUrl }));
                 }}
+                onClickCapa={() => setModalCapaAberto(true)}
               />
             </div>
           </div>
@@ -268,6 +271,21 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
           capaDataUrl={capaDataUrl}
         />
       </div>
+
+      {modalCapaAberto && (
+        <ModalGerenciadorCapa
+          aberto={modalCapaAberto}
+          aoFechar={() => setModalCapaAberto(false)}
+          aoAplicarCapa={(novaCapa) => {
+            setCapaDataUrl(novaCapa || null);
+            setBookState((prev) => ({ ...prev, capa: novaCapa || null }));
+          }}
+          capaAtual={bookState.capa ?? null}
+          titulo={bookState.titulo || ""}
+          autor={bookState.autor || ""}
+          editora={bookState.editora || null}
+        />
+      )}
     </div>,
     document.body
   );
