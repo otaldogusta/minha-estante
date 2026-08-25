@@ -47,6 +47,9 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
   const [gerando, setGerando] = useState(false);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
   const [modalCapaAberto, setModalCapaAberto] = useState(false);
+  const [fundoUrl, setFundoUrl] = useState<string>("https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=1080");
+  const [fundoDataUrl, setFundoDataUrl] = useState<string | null>(null);
+  const [modalFundoAberto, setModalFundoAberto] = useState(false);
 
   const exportPagina1Ref = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +80,31 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       ativo = false;
     };
   }, [aberto, bookState.capa]);
+
+  // Carrega o fundo via proxy seguro de servidor
+  useEffect(() => {
+    if (!aberto) return;
+
+    let ativo = true;
+    if (fundoUrl) {
+      if (fundoUrl.startsWith("data:") || fundoUrl.startsWith("blob:")) {
+        setFundoDataUrl(fundoUrl);
+        return;
+      }
+
+      obterCapaDataUrl({ data: { url: fundoUrl } })
+        .then((res) => {
+          if (ativo && res?.dataUrl) {
+            setFundoDataUrl(res.dataUrl);
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      ativo = false;
+    };
+  }, [aberto, fundoUrl]);
 
   // Bloqueio de scroll do body e evento de tecla ESC
   useEffect(() => {
@@ -249,6 +277,8 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
                   setBookState((prev) => ({ ...prev, capa: dataUrl }));
                 }}
                 onClickCapa={() => setModalCapaAberto(true)}
+                fundoDataUrl={fundoDataUrl}
+                onClickFundo={() => setModalFundoAberto(true)}
               />
             </div>
           </div>
@@ -269,6 +299,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
           book={bookState}
           config={config}
           capaDataUrl={capaDataUrl}
+          fundoDataUrl={fundoDataUrl}
         />
       </div>
 
@@ -286,6 +317,203 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
           editora={bookState.editora || null}
         />
       )}
+
+      {modalFundoAberto && (
+        <ModalGerenciadorFundo
+          aberto={modalFundoAberto}
+          aoFechar={() => setModalFundoAberto(false)}
+          aoAplicarFundo={(novoFundo) => {
+            setFundoUrl(novoFundo);
+          }}
+          fundoAtual={fundoUrl}
+        />
+      )}
+    </div>,
+    document.body
+  );
+}
+
+function ModalGerenciadorFundo({
+  aberto,
+  aoFechar,
+  aoAplicarFundo,
+  fundoAtual,
+}: {
+  aberto: boolean;
+  aoFechar: () => void;
+  aoAplicarFundo: (url: string) => void;
+  fundoAtual: string;
+}) {
+  const [aba, setAba] = useState<"upload" | "url">("upload");
+  const [urlInput, setUrlInput] = useState(fundoAtual.startsWith("data:") ? "" : fundoAtual);
+  const [preview, setPreview] = useState<string | null>(fundoAtual);
+  const [arrastando, setArrastando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  if (!aberto || typeof document === "undefined") return null;
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setErro("Por favor, selecione um arquivo de imagem.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPreview(reader.result);
+        setErro(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const padraoUrl = "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=1080";
+
+  return createPortal(
+    <div className="modal-backdrop z-[120]" onClick={aoFechar}>
+      <div
+        className="relative w-full max-w-lg my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-papel-3/50 pb-4">
+          <div>
+            <h3 className="font-display text-xl font-semibold text-tinta">Alterar imagem de fundo</h3>
+            <p className="text-xs text-tinta-2 mt-0.5">Selecione uma imagem de fundo para o seu Story</p>
+          </div>
+          <button
+            type="button"
+            onClick={aoFechar}
+            className="rounded-full p-1.5 text-tinta-3 hover:bg-papel-2 hover:text-tinta transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Seleção de Aba */}
+        <div className="flex rounded-xl bg-papel-2 p-1 text-sm font-medium">
+          <button
+            type="button"
+            onClick={() => setAba("upload")}
+            className={`flex-1 flex items-center justify-center rounded-lg py-2 transition-all cursor-pointer ${
+              aba === "upload" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
+            }`}
+          >
+            Carregar arquivo
+          </button>
+          <button
+            type="button"
+            onClick={() => setAba("url")}
+            className={`flex-1 flex items-center justify-center rounded-lg py-2 transition-all cursor-pointer ${
+              aba === "url" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
+            }`}
+          >
+            Link (URL)
+          </button>
+        </div>
+
+        {aba === "upload" ? (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setArrastando(true); }}
+            onDragLeave={() => setArrastando(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setArrastando(false);
+              if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
+            }}
+            className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-7 text-center transition-all cursor-pointer ${
+              arrastando ? "border-amora bg-amora-clara/30 scale-[1.01]" : "border-papel-3 hover:border-amora/60 bg-papel-2/40"
+            }`}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              id="bg-file-input"
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleFile(e.target.files[0]);
+              }}
+            />
+            <label htmlFor="bg-file-input" className="cursor-pointer flex flex-col items-center w-full">
+              <div className="rounded-2xl bg-amora-clara/70 p-4 mb-3 text-amora shadow-xs">
+                <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m4-5l5-5 5 5m-5-5v12" />
+                </svg>
+              </div>
+              <p className="font-semibold text-tinta text-sm">Arraste e solte o fundo aqui</p>
+              <p className="text-xs text-tinta-2 mt-1">ou clique para escolher do seu dispositivo</p>
+            </label>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-tinta-2">
+              URL da imagem de fundo
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => {
+                  setUrlInput(e.target.value);
+                  setPreview(e.target.value || null);
+                }}
+                placeholder="https://exemplo.com/fundo.jpg"
+                className="w-full mt-1.5 rounded-xl border border-papel-3 bg-papel px-3.5 py-2 text-sm text-tinta focus:border-amora focus:outline-none"
+              />
+            </label>
+          </div>
+        )}
+
+        {erro && <p className="text-xs text-rose-500 font-medium">{erro}</p>}
+
+        {preview && (
+          <div className="flex items-center gap-4 rounded-2xl border border-papel-3 bg-papel-2 p-3">
+            <div className="w-14 h-14 shrink-0 overflow-hidden rounded-lg shadow-md bg-papel-3">
+              <img src={preview} alt="Prévia do fundo" className="h-full w-full object-cover" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-tinta">Prévia selecionada</p>
+              <p className="text-[11px] text-tinta-2 mt-0.5">Imagem de fundo.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Botões do Modal */}
+        <div className="flex items-center justify-between border-t border-papel-3/50 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              aoAplicarFundo(padraoUrl);
+              aoFechar();
+            }}
+            className="text-xs text-tinta-3 hover:text-amora transition-colors flex items-center gap-1 cursor-pointer font-medium"
+          >
+            Usar fundo padrão
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={aoFechar}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-tinta-2 hover:bg-papel-2 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (preview) {
+                  aoAplicarFundo(preview);
+                  aoFechar();
+                } else {
+                  setErro("Nenhuma imagem selecionada.");
+                }
+              }}
+              disabled={!preview}
+              className="rounded-xl bg-amora px-5 py-2 text-sm font-medium text-papel hover:bg-amora-escura cursor-pointer transition-colors shadow-sm disabled:opacity-50"
+            >
+              Aplicar fundo
+            </button>
+          </div>
+        </div>
+      </div>
     </div>,
     document.body
   );

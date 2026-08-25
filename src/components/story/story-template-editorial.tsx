@@ -13,6 +13,8 @@ interface StoryTemplateProps {
   onFotoKindleUpload?: (file: File) => void;
   onFotoComplementarUpload?: (file: File) => void;
   onClickCapa?: () => void;
+  fundoDataUrl?: string | null;
+  onClickFundo?: () => void;
 }
 
 function formatarDataPtBr(dataStr?: string | null): string {
@@ -99,8 +101,10 @@ export const StoryPagina1Resumo = React.forwardRef<
     onUpdateConfig?: (novas: Partial<StoryPersonalizacao>) => void;
     onCapaUpload?: (dataUrl: string) => void;
     onClickCapa?: () => void;
+    fundoDataUrl?: string | null;
+    onClickFundo?: () => void;
   }
->(({ book, config, capaDataUrl, isEditable = false, onUpdateBook, onUpdateConfig, onCapaUpload, onClickCapa }, ref) => {
+>(({ book, config, capaDataUrl, isEditable = false, onUpdateBook, onUpdateConfig, onCapaUpload, onClickCapa, fundoDataUrl, onClickFundo }, ref) => {
   const imagemCapa = capaDataUrl || book.capa;
   const dataInicioFmt = formatarDataPtBr(book.inicio);
   const dataFimFmt = formatarDataPtBr(book.fim);
@@ -133,11 +137,26 @@ export const StoryPagina1Resumo = React.forwardRef<
     >
       {/* Imagem de Fundo (Stack de livros em grayscale) */}
       <img
-        src="https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=1080"
+        src={fundoDataUrl || "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=1080"}
         alt="Background"
         className="absolute inset-0 w-full h-full object-cover filter grayscale brightness-[0.22] z-0 pointer-events-none"
         crossOrigin="anonymous"
       />
+
+      {isEditable && onClickFundo && (
+        <button
+          type="button"
+          onClick={onClickFundo}
+          className="absolute top-10 right-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-black/60 border border-white/20 text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg active:scale-95"
+          title="Alterar imagem de fundo"
+        >
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+        </button>
+      )}
 
       {/* Container Principal (Capa + Estrelas + Círculo) */}
       <div className="relative z-10 w-[780px] h-[1260px] rounded-[40px] border border-white/10 bg-black/25 backdrop-blur-md p-10 flex flex-col items-center justify-between shadow-2xl mt-12">
@@ -658,6 +677,8 @@ export const StoryTemplateEditorial = React.forwardRef<HTMLDivElement, StoryTemp
       onFotoComplementarUpload,
       onRemoverFotoComplementar,
       onClickCapa,
+      fundoDataUrl,
+      onClickFundo,
     },
     ref
   ) => {
@@ -699,6 +720,8 @@ export const StoryTemplateEditorial = React.forwardRef<HTMLDivElement, StoryTemp
         onUpdateConfig={onUpdateConfig}
         onCapaUpload={onCapaUpload}
         onClickCapa={onClickCapa}
+        fundoDataUrl={fundoDataUrl}
+        onClickFundo={onClickFundo}
       />
     );
   }
