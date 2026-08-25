@@ -796,7 +796,7 @@ export function FormularioLivro({
       {/* Modal de Confirmação para Descartar Alterações Não Salvas no Livro */}
       {blocker.status === "blocked" && typeof document !== "undefined" && createPortal(
         <div
-          className="modal-backdrop z-[70]"
+          className="modal-backdrop z-[120]"
           onClick={() => blocker.reset()}
         >
           <div
@@ -991,7 +991,7 @@ export function ModalGerenciadorCapa({
   }
 
   return createPortal(
-    <div className="modal-backdrop z-[70]" onClick={aoFechar}>
+    <div className="modal-backdrop z-[120]" onClick={aoFechar}>
       <div
         className="relative w-full max-w-lg my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-5"
         onClick={(e) => e.stopPropagation()}
@@ -1256,7 +1256,7 @@ function ModalConfirmarRemoverCapa({
   if (!aberto || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="modal-backdrop z-[70]" onClick={aoFechar}>
+    <div className="modal-backdrop z-[130]" onClick={aoFechar}>
       <div
         className="relative w-full max-w-md my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-4"
         onClick={(e) => e.stopPropagation()}
