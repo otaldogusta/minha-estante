@@ -56,6 +56,12 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
 
     let ativo = true;
     if (bookState.capa) {
+      // Se a capa já for um data URL ou blob local, usa diretamente no client
+      if (bookState.capa.startsWith("data:") || bookState.capa.startsWith("blob:")) {
+        setCapaDataUrl(bookState.capa);
+        return;
+      }
+
       obterCapaDataUrl({ data: { url: bookState.capa } })
         .then((res) => {
           if (ativo && res?.dataUrl) {

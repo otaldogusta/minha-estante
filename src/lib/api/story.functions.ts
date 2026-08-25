@@ -30,7 +30,7 @@ export const obterCapaDataUrl = createServerFn({ method: "POST" })
           "User-Agent": "MinhaEstanteBot/1.0",
           Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
         },
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(4000),
       });
 
       if (!resp.ok) return { dataUrl: null };
