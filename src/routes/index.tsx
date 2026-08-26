@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { listarLivros, atualizarProgresso, excluirLivro, alterarStatusLivro } from "../lib/api/livros.functions";
+import { matchSearch } from "../lib/utils";
 import { cartaStatus } from "../lib/api/auth.functions";
 import {
   calcularEstatisticas,
@@ -1230,11 +1231,10 @@ function PaginaEstante() {
   }, [livros]);
 
   const filtrados = useMemo(() => {
-    const q = busca.trim().toLowerCase();
     return livros.filter((l) => {
       if (l.status !== "lido" && l.status !== "abandonado") return false;
       if (genero && l.genero !== genero) return false;
-      if (q && !`${l.titulo} ${l.autor}`.toLowerCase().includes(q)) return false;
+      if (busca && !matchSearch(busca, l.titulo, l.autor)) return false;
       return true;
     });
   }, [livros, busca, genero]);

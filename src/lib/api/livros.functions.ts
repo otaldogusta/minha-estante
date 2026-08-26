@@ -4,6 +4,7 @@ import { z } from "zod";
 import { bindings } from "../bindings.server";
 import { exigirUsuario } from "../auth.server";
 import type { Livro } from "../livros";
+import { matchSearch } from "../utils";
 
 function db() {
   const { DB } = bindings();
@@ -322,10 +323,9 @@ export const buscarLivroExterno = createServerFn({ method: "GET" })
     await exigirUsuario();
     const out: ResultadoBusca[] = [];
     try {
-      const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(data.q)}&maxResults=8&langRestrict=pt&country=BR`,
-        { signal: AbortSignal.timeout(8000) }
-      );
+      const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(data.q)}&maxResults=8&country=BR${apiKey ? `&key=${apiKey}` : ""}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         const json = (await res.json()) as {
           items?: Array<{ id: string; volumeInfo?: Record<string, unknown> }>;
@@ -362,7 +362,7 @@ export const buscarLivroExterno = createServerFn({ method: "GET" })
     if (out.length === 0) {
       try {
         const res = await fetch(
-          `https://openlibrary.org/search.json?q=${encodeURIComponent(data.q)}&limit=8&fields=title,author_name,publisher,first_publish_year,number_of_pages_median,cover_i`,
+          `https://openlibrary.org/search.json?q=${encodeURIComponent(data.q)}&limit=30&fields=title,author_name,publisher,first_publish_year,number_of_pages_median,cover_i`,
           { signal: AbortSignal.timeout(8000) }
         );
         if (res.ok) {
@@ -376,10 +376,16 @@ export const buscarLivroExterno = createServerFn({ method: "GET" })
               cover_i?: number;
             }>;
           };
-          for (const d of json.docs ?? []) {
-            if (!d.title) continue;
+          
+          const filteredDocs = (json.docs ?? []).filter(d => {
+            if (!d.title) return false;
+            const author = d.author_name?.[0] || "";
+            return matchSearch(data.q, d.title, author);
+          }).slice(0, 8);
+
+          for (const d of filteredDocs) {
             out.push({
-              titulo: d.title,
+              titulo: d.title!,
               autor: d.author_name?.[0] ?? "",
               editora: d.publisher?.[0] ?? null,
               ano: d.first_publish_year ?? null,

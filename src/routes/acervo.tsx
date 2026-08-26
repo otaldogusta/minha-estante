@@ -10,6 +10,7 @@ import {
 import { salvarLivro } from "../lib/api/livros.functions";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
+import { matchSearch } from "../lib/utils";
 
 export const Route = createFileRoute("/acervo")({
   beforeLoad: () => exigirLogin(),
@@ -139,10 +140,7 @@ function PaginaAcervo() {
   const livrosFiltrados = dados.livrosAcervo.filter((l) => {
     if (filtro === "pt" && l.idioma !== "pt") return false;
     if (filtro === "en" && l.idioma !== "en") return false;
-    if (busca.trim()) {
-      const q = busca.toLowerCase();
-      return l.titulo.toLowerCase().includes(q) || l.autor.toLowerCase().includes(q);
-    }
+    if (busca && !matchSearch(busca, l.titulo, l.autor)) return false;
     return true;
   });
 

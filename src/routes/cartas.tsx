@@ -13,6 +13,7 @@ import {
 } from "../lib/api/cartas.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { exigirLogin } from "../lib/exigir-login";
+import { matchSearch } from "../lib/utils";
 
 export const Route = createFileRoute("/cartas")({
   beforeLoad: () => exigirLogin(),
@@ -324,7 +325,7 @@ function PaginaCartas() {
   }
 
   const destinatariosFiltrados = destinatarios.filter((d) =>
-    busca.trim() === "" || d.nome.toLowerCase().includes(busca.toLowerCase())
+    !busca || matchSearch(busca, d.nome)
   );
 
   const abaCls = (ativa: boolean) =>
