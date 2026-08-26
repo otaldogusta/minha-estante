@@ -135,9 +135,10 @@ export class PostgresD1Database {
     this.sqlClient = postgres(connectionString, {
       ssl: "require",
       // Serverless-friendly settings for Vercel + Supabase Transaction Pooler
-      max: 1,
+      max: 4,
       idle_timeout: 10,
-      connect_timeout: 10,
+      connect_timeout: 4,
+      max_lifetime: 30,
       // Required for Transaction Pooler (port 6543): it doesn't support
       // named prepared statements (only simple query protocol).
       prepare: false,
