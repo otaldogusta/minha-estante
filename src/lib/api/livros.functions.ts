@@ -405,8 +405,9 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       throw new Error("Não autorizado");
     }
 
+    const cb = Date.now();
     const res = await fetch(
-      "https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/export?format=csv",
+      `https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/export?format=csv&cb=${cb}`,
       { signal: AbortSignal.timeout(10000) }
     );
     if (!res.ok) {
@@ -420,7 +421,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
     const mapaResenhas = new Map<string, string>();
     try {
       const resResenhas = await fetch(
-        "https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/export?format=csv&gid=1088747500",
+        `https://docs.google.com/spreadsheets/d/1wpuAfQ8WpWhZiXlC0Ovr3OAANWP4ZuAHNem8Ql22qno/export?format=csv&gid=1088747500&cb=${cb}`,
         { signal: AbortSignal.timeout(10000) }
       );
       if (resResenhas.ok) {
@@ -438,6 +439,36 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
         }
       }
     } catch { /* ignora erros na segunda aba, nao bloqueia o sync */ }
+
+    // Mapeamento dinâmico de cabeçalho
+    const headers = rows[1] ? rows[1].map(h => h.trim().toLowerCase()) : [];
+    const getIndexLoose = (names: string[], defaultIdx: number) => {
+      for (const name of names) {
+        const idx = headers.findIndex(h => h.includes(name.toLowerCase()));
+        if (idx !== -1) return idx;
+      }
+      return defaultIdx;
+    };
+
+    const idxTitulo = getIndexLoose(["título", "titulo"], 0);
+    const idxAutor = getIndexLoose(["autor"], 1);
+    const idxLocal = getIndexLoose(["local"], 2);
+    const idxPais = getIndexLoose(["país", "pais"], 3);
+    const idxGenero = getIndexLoose(["gênero", "genero"], 4);
+    const idxEditora = getIndexLoose(["editora"], 5);
+    const idxAno = getIndexLoose(["ano"], 6);
+    const idxPaginas = getIndexLoose(["pág", "pag"], 7);
+    const idxLido = getIndexLoose(["lido"], 8);
+    const idxLeitura = getIndexLoose(["leitura"], 9);
+    const idxInicio = getIndexLoose(["início", "inicio"], 10);
+    const idxFim = getIndexLoose(["fim"], 11);
+    const idxNota = getIndexLoose(["nota"], 13);
+    const idxPalavra = getIndexLoose(["palavra"], 14);
+    const idxResenha = getIndexLoose(["resenha"], 15);
+    const idxAdaptacao = getIndexLoose(["adaptação", "adaptacao"], 16);
+    const idxVi = getIndexLoose(["vi?", "vi"], 17);
+    const idxValor = getIndexLoose(["valor"], 18);
+    const idxCapa = getIndexLoose(["capa", "link", "imagem", "cover"], -1);
 
     const livrosParaInserir: Array<{
       usuario_id: number;
@@ -471,8 +502,8 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       const row = rows[i];
       if (!row || row.length === 0) continue;
 
-      const titulo = row[0]?.trim();
-      const autor = row[1]?.trim();
+      const titulo = row[idxTitulo]?.trim();
+      const autor = row[idxAutor]?.trim();
 
       if (!titulo || !autor) continue;
       if (
@@ -483,15 +514,15 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
         continue;
       }
 
-      const pais = row[2]?.trim() || null;
-      const genero = row[4]?.trim() || null;
-      const editora = row[5]?.trim() || null;
-      const ano = parseInt(row[6], 10) || null;
-      const paginas = parseInt(row[7], 10) || null;
+      const pais = row[idxPais]?.trim() || null;
+      const genero = row[idxGenero]?.trim() || null;
+      const editora = row[idxEditora]?.trim() || null;
+      const ano = parseInt(row[idxAno], 10) || null;
+      const paginas = parseInt(row[idxPaginas], 10) || null;
 
-      const lidoVal = row[8]?.trim();
-      const inicioStr = row[10]?.trim();
-      const fimStr = row[11]?.trim();
+      const lidoVal = row[idxLido]?.trim();
+      const inicioStr = row[idxInicio]?.trim();
+      const fimStr = row[idxFim]?.trim();
 
       let status: "quero_ler" | "lendo" | "lido" | "abandonado" = "quero_ler";
       let formato = "Físico";
@@ -508,7 +539,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
         status = "quero_ler";
       }
 
-      const ano_leitura = parseInt(row[9], 10) || null;
+      const ano_leitura = parseInt(row[idxLeitura], 10) || null;
 
       const helperParseDate = (s: string) => {
         if (!s || s === "0" || s.trim() === "") return null;
@@ -524,26 +555,32 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       const fim = helperParseDate(fimStr);
 
       let nota: number | null = null;
-      const notaStr = row[13]?.trim();
+      const notaStr = row[idxNota]?.trim();
       if (notaStr && notaStr !== "0") {
         nota = parseFloat(notaStr.replace(",", "."));
         if (Number.isNaN(nota)) nota = null;
       }
 
-      const palavra = row[14]?.trim() || null;
-      // Col 15 ("Resenha") na planilha contem "Livros" (local de armazenamento), nao texto de resenha.
-      // Ignoramos esse valor e preservamos a resenha real que esta no banco de dados.
-      const resenhaRaw = row[15]?.trim();
+      const palavra = row[idxPalavra]?.trim() || null;
+      const resenhaRaw = row[idxResenha]?.trim();
       const resenha = (resenhaRaw && resenhaRaw !== "Livros") ? resenhaRaw : null;
-      const adaptacao = row[16]?.trim().toUpperCase() === "SIM" ? 1 : 0;
-      const vi_adaptacao = row[17]?.trim().toUpperCase() === "TRUE" ? 1 : 0;
+      const adaptacao = row[idxAdaptacao]?.trim().toUpperCase() === "SIM" ? 1 : 0;
+      const vi_adaptacao = row[idxVi]?.trim().toUpperCase() === "TRUE" ? 1 : 0;
 
       let valor: number | null = null;
-      const valorStr = row[18]?.trim();
+      const valorStr = row[idxValor]?.trim();
       if (valorStr) {
         const cleanVal = valorStr.replace("R$", "").replace(/\s/g, "").replace(",", ".").trim();
         valor = parseFloat(cleanVal);
         if (Number.isNaN(valor)) valor = null;
+      }
+
+      let capa: string | null = null;
+      if (idxCapa !== -1 && row[idxCapa]) {
+        const cVal = row[idxCapa].trim();
+        if (cVal && (cVal.startsWith("http://") || cVal.startsWith("https://") || cVal.startsWith("data:"))) {
+          capa = cVal;
+        }
       }
 
       livrosParaInserir.push({
@@ -566,7 +603,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
         adaptacao,
         vi_adaptacao,
         valor,
-        capa: null,
+        capa,
         sinopse: null,
         pagina_atual: null,
         privado: 0,
@@ -614,9 +651,9 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       }
     }
 
-    // Busca capas na Google Books API para livros ainda sem capa
-    const semCapa = livrosParaInserir.filter(l => !l.capa);
-    const BATCH_SIZE = 8;
+    // Busca capas na Google Books API para livros ainda sem capa (limite de 12 para evitar timeout na Vercel)
+    const semCapa = livrosParaInserir.filter(l => !l.capa).slice(0, 12);
+    const BATCH_SIZE = 4;
     for (let i = 0; i < semCapa.length; i += BATCH_SIZE) {
       const batch = semCapa.slice(i, i + BATCH_SIZE);
       const results = await Promise.allSettled(
@@ -701,7 +738,7 @@ function titleMatches(buscado: string, retornado: string): boolean {
 async function fetchITunes(query: string, tituloRef: string, titleCheck = true): Promise<string | null> {
   try {
     const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&country=BR&media=ebook&entity=ebook&limit=5`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;
     const data = await res.json() as { results?: Array<{ artworkUrl100?: string; trackName?: string }> };
     for (const item of data?.results ?? []) {
@@ -717,7 +754,7 @@ async function fetchITunes(query: string, tituloRef: string, titleCheck = true):
 async function fetchOpenLibrary(query: string): Promise<string | null> {
   try {
     const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5&fields=cover_i,isbn,title`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;
     const data = await res.json() as { docs?: Array<{ cover_i?: number; isbn?: string[]; title?: string }> };
     for (const doc of data?.docs ?? []) {
