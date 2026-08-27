@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { StoryBookData, StoryPersonalizacao } from "../../lib/story/story-types";
 import { StoryPagina1Resumo, StoryTemplateEditorial } from "./story-template-editorial";
-import { exportarStoryPng, compartilharOuBaixarStory } from "../../lib/story/export-story";
+import { exportarStoryPng, compartilharOuBaixarStory, baixarBlob } from "../../lib/story/export-story";
 import { obterCapaDataUrl } from "../../lib/api/story.functions";
 import { notificar } from "../../lib/toast";
 import { ModalGerenciadorCapa } from "../estante/formulario-livro";
@@ -148,9 +148,11 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
     setConfig((prev) => ({ ...prev, ...novos }));
   }
 
-  async function handleGerarStory() {
-    if (gerando) return;
-    setGerando(true);
+  const [compartilhando, setCompartilhando] = useState(false);
+
+  async function handleCompartilharStory() {
+    if (compartilhando || gerando) return;
+    setCompartilhando(true);
     setMensagemErro(null);
 
     try {
@@ -159,7 +161,28 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
 
       const { blob, nomeArquivo } = await exportarStoryPng(alvoNode, `${bookState.titulo}-story`);
       await compartilharOuBaixarStory(blob, `${bookState.titulo} (Story)`, nomeArquivo);
-      notificar("Story exportado com sucesso!", "sucesso");
+      notificar("Story compartilhado com sucesso!", "sucesso");
+    } catch (e: any) {
+      console.error("Erro ao compartilhar Story:", e);
+      setMensagemErro("Não foi possível compartilhar a imagem. Tente novamente.");
+      notificar("Erro ao compartilhar o Story", "erro");
+    } finally {
+      setCompartilhando(false);
+    }
+  }
+
+  async function handleGerarStory() {
+    if (gerando || compartilhando) return;
+    setGerando(true);
+    setMensagemErro(null);
+
+    try {
+      const alvoNode = exportPagina1Ref.current;
+      if (!alvoNode) throw new Error("Elemento não encontrado para renderização");
+
+      const { blob, nomeArquivo } = await exportarStoryPng(alvoNode, `${bookState.titulo}-story`);
+      baixarBlob(blob, nomeArquivo);
+      notificar("Story baixado com sucesso!", "sucesso");
     } catch (e: any) {
       console.error("Erro ao gerar Story:", e);
       setMensagemErro("Não foi possível exportar a imagem. Tente novamente.");
@@ -206,10 +229,21 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
           </div>
 
           <div className="flex items-center gap-2">
+            {typeof navigator !== "undefined" && navigator.share && (
+              <button
+                type="button"
+                onClick={handleCompartilharStory}
+                disabled={gerando || compartilhando}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-papel-3 hover:bg-papel-3 text-tinta text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              >
+                {compartilhando ? "Enviando..." : "Compartilhar"}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleGerarStory}
-              disabled={gerando}
+              disabled={gerando || compartilhando}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amora text-papel hover:bg-amora/90 text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               {gerando ? (
