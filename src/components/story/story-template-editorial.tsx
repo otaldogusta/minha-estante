@@ -1,6 +1,88 @@
 import React from "react";
 import type { StoryBookData, StoryPersonalizacao } from "../../lib/story/story-types";
 
+const PAISES_SIMPLES = [
+  { code: "BR", nome: "Brasil" },
+  { code: "US", nome: "Estados Unidos" },
+  { code: "GB", nome: "Reino Unido" },
+  { code: "PT", nome: "Portugal" },
+  { code: "FR", nome: "França" },
+  { code: "DE", nome: "Alemanha" },
+  { code: "ES", nome: "Espanha" },
+  { code: "IT", nome: "Itália" },
+  { code: "JP", nome: "Japão" },
+  { code: "CN", nome: "China" },
+  { code: "RU", nome: "Rússia" },
+  { code: "AR", nome: "Argentina" },
+  { code: "MX", nome: "México" },
+  { code: "CO", nome: "Colômbia" },
+  { code: "CL", nome: "Chile" },
+  { code: "PE", nome: "Peru" },
+  { code: "AU", nome: "Austrália" },
+  { code: "CA", nome: "Canadá" },
+  { code: "SE", nome: "Suécia" },
+  { code: "NO", nome: "Noruega" },
+  { code: "DK", nome: "Dinamarca" },
+  { code: "FI", nome: "Finlândia" },
+  { code: "NL", nome: "Países Baixos" },
+  { code: "BE", nome: "Bélgica" },
+  { code: "CH", nome: "Suíça" },
+  { code: "AT", nome: "Áustria" },
+  { code: "PL", nome: "Polônia" },
+  { code: "CZ", nome: "República Tcheca" },
+  { code: "HU", nome: "Hungria" },
+  { code: "GR", nome: "Grécia" },
+  { code: "TR", nome: "Turquia" },
+  { code: "IL", nome: "Israel" },
+  { code: "IN", nome: "Índia" },
+  { code: "KR", nome: "Coreia do Sul" },
+  { code: "IR", nome: "Irã" },
+  { code: "ZA", nome: "África do Sul" },
+  { code: "NG", nome: "Nigéria" },
+  { code: "EG", nome: "Egito" },
+  { code: "UA", nome: "Ucrânia" },
+  { code: "NZ", nome: "Nova Zelândia" },
+  { code: "IE", nome: "Irlanda" },
+  { code: "CU", nome: "Cuba" },
+  { code: "VE", nome: "Venezuela" },
+  { code: "UY", nome: "Uruguai" },
+  { code: "BO", nome: "Bolívia" },
+  { code: "PY", nome: "Paraguai" },
+  { code: "EC", nome: "Equador" },
+  { code: "RO", nome: "Romênia" },
+  { code: "SK", nome: "Eslováquia" },
+  { code: "HR", nome: "Croácia" },
+  { code: "RS", nome: "Sérvia" },
+  { code: "AF", nome: "Afeganistão" },
+  { code: "MO", nome: "Macau" },
+  { code: "TW", nome: "Taiwan" },
+  { code: "IS", nome: "Islândia" },
+];
+
+function obterBandeiraEPais(nomePais?: string | null): { code: string; url: string } | null {
+  if (!nomePais) return null;
+  const clean = nomePais.trim().toLowerCase();
+  if (clean.length === 2) {
+    const code = clean.toUpperCase();
+    return { code, url: `https://flagcdn.com/w40/${code.toLowerCase()}.png` };
+  }
+  
+  const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const cleanNorm = norm(clean);
+
+  const encontrado = PAISES_SIMPLES.find(
+    (p) => norm(p.nome) === cleanNorm || p.code.toLowerCase() === clean
+  );
+  if (encontrado) {
+    return {
+      code: encontrado.code,
+      url: `https://flagcdn.com/w40/${encontrado.code.toLowerCase()}.png`,
+    };
+  }
+  return null;
+}
+
+
 interface StoryTemplateProps {
   book: StoryBookData;
   config: StoryPersonalizacao;
@@ -110,6 +192,8 @@ export const StoryPagina1Resumo = React.forwardRef<
   const dataFimFmt = formatarDataPtBr(book.fim);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const bandeira = React.useMemo(() => obterBandeiraEPais(book.pais), [book.pais]);
+
   const diasLidos = React.useMemo(() => {
     if (!book.inicio || !book.fim) return null;
     try {
@@ -160,6 +244,13 @@ export const StoryPagina1Resumo = React.forwardRef<
 
       {/* Container Principal (Capa + Estrelas + Círculo) */}
       <div className="relative z-10 w-[780px] h-[1260px] rounded-[40px] border border-white/10 bg-black/25 backdrop-blur-md p-10 flex flex-col items-center justify-between shadow-2xl mt-12">
+        {/* Bandeira e Sigla do País */}
+        {bandeira && (
+          <div className="absolute top-6 right-6 z-20 flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/45 border border-white/10 backdrop-blur-md">
+            <img src={bandeira.url} alt={bandeira.code} className="w-5 h-3.5 object-cover rounded-xs" crossOrigin="anonymous" />
+            <span className="font-mono text-sm font-bold text-neutral-300">{bandeira.code}</span>
+          </div>
+        )}
         {/* Capa do Livro */}
         <div
           onClick={isEditable ? (onClickCapa || (() => fileInputRef.current?.click())) : undefined}
@@ -536,6 +627,7 @@ export const StoryPagina3Opiniao = React.forwardRef<
   }
 >(({ book, config, capaDataUrl, isEditable = false, onUpdateBook, onUpdateConfig }, ref) => {
   const imagemCapa = capaDataUrl || book.capa;
+  const bandeira = React.useMemo(() => obterBandeiraEPais(book.pais), [book.pais]);
 
   return (
     <div
@@ -572,9 +664,17 @@ export const StoryPagina3Opiniao = React.forwardRef<
               className="w-12 h-18 object-cover rounded-lg shadow-md border border-white/15"
             />
           )}
-          <div className="text-left">
+          <div className="text-left flex-1 min-w-0">
             <p className="font-display text-2xl font-bold text-neutral-100 line-clamp-1">{book.titulo}</p>
-            <p className="text-base font-serif italic text-neutral-400">{book.autor}</p>
+            <div className="flex items-center gap-2.5 mt-1">
+              <span className="text-lg font-serif italic text-neutral-400 leading-none">{book.autor}</span>
+              {bandeira && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 shrink-0">
+                  <img src={bandeira.url} alt={bandeira.code} className="w-4 h-2.5 object-cover rounded-xs" crossOrigin="anonymous" />
+                  <span className="font-mono text-[10px] font-bold text-neutral-300 leading-none">{bandeira.code}</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>

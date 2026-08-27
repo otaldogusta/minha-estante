@@ -11,6 +11,7 @@ export interface StoryBookData {
   genero?: string | null;
   formato?: string | null;
   editora?: string | null;
+  pais?: string | null;
 }
 
 export type ModoStory = "rapido" | "completo";
