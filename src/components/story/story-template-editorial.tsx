@@ -82,6 +82,123 @@ function obterBandeiraEPais(nomePais?: string | null): { code: string; url: stri
   return null;
 }
 
+function SeletorPaisStory({
+  valor,
+  onChange,
+  onClose,
+}: {
+  valor?: string | null;
+  onChange: (v: string | null) => void;
+  onClose: () => void;
+}) {
+  const [texto, setTexto] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const filtrados = React.useMemo(() => {
+    const q = texto.toLowerCase().trim();
+    if (q === "") return PAISES_SIMPLES;
+    return PAISES_SIMPLES.filter(
+      (p) => p.nome.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
+    );
+  }, [texto]);
+
+  React.useEffect(() => {
+    function clickFora(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", clickFora);
+    return () => document.removeEventListener("mousedown", clickFora);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="absolute top-16 right-0 z-50 w-72 rounded-2xl border border-white/15 bg-[#17141d] p-3 shadow-2xl text-left animate-[fadeIn_100ms_ease-out] text-neutral-100 font-sans"
+    >
+      <div className="relative mb-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder="Buscar país..."
+          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:border-pink-400 focus:outline-none"
+        />
+        {texto && (
+          <button
+            type="button"
+            onClick={() => setTexto("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs cursor-pointer"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      <div className="max-h-60 overflow-y-auto space-y-0.5 custom-scrollbar pr-1">
+        <button
+          type="button"
+          onClick={() => {
+            onChange(null);
+            onClose();
+          }}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5 hover:text-white text-left transition-colors cursor-pointer"
+        >
+          <span>Nenhum país</span>
+          {!valor && <span className="text-pink-400 font-bold">✓</span>}
+        </button>
+
+        {filtrados.map((p) => {
+          const bandeiraUrl = `https://flagcdn.com/w40/${p.code.toLowerCase()}.png`;
+          const ativo =
+            valor?.toLowerCase() === p.nome.toLowerCase() ||
+            valor?.toUpperCase() === p.code;
+          return (
+            <button
+              key={p.code}
+              type="button"
+              onClick={() => {
+                onChange(p.nome);
+                onClose();
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors text-left cursor-pointer ${
+                ativo
+                  ? "bg-pink-500/20 text-pink-300 font-semibold"
+                  : "hover:bg-white/5 text-neutral-200"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={bandeiraUrl}
+                  alt={p.code}
+                  className="w-5 h-3.5 object-cover rounded-xs border border-white/10"
+                  crossOrigin="anonymous"
+                />
+                <span className="truncate max-w-[150px]">{p.nome}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-neutral-500 font-medium">{p.code}</span>
+                {ativo && <span className="text-pink-400 font-bold text-xs">✓</span>}
+              </div>
+            </button>
+          );
+        })}
+        {filtrados.length === 0 && (
+          <p className="text-center text-xs text-neutral-500 py-4 font-sans">Nenhum país encontrado</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 
 interface StoryTemplateProps {
   book: StoryBookData;
@@ -209,6 +326,8 @@ export const StoryPagina1Resumo = React.forwardRef<
     }
   }, [book.inicio, book.fim]);
 
+  const [seletorAberto, setSeletorAberto] = React.useState(false);
+
   return (
     <div
       ref={ref}
@@ -244,13 +363,40 @@ export const StoryPagina1Resumo = React.forwardRef<
 
       {/* Container Principal (Capa + Estrelas + Círculo) */}
       <div className="relative z-10 w-[780px] h-[1260px] rounded-[40px] border border-white/10 bg-black/25 backdrop-blur-md p-10 flex flex-col items-center justify-between shadow-2xl mt-12">
-        {/* Bandeira e Sigla do País */}
-        {bandeira && (
-          <div className="absolute top-6 right-6 z-20 flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/45 border border-white/10 backdrop-blur-md">
-            <img src={bandeira.url} alt={bandeira.code} className="w-5 h-3.5 object-cover rounded-xs" crossOrigin="anonymous" />
-            <span className="font-mono text-sm font-bold text-neutral-300">{bandeira.code}</span>
-          </div>
-        )}
+        {/* Bandeira e Sigla do País com Seletor Interativo */}
+        <div className="absolute top-6 right-6 z-30">
+          {bandeira ? (
+            <button
+              type="button"
+              disabled={!isEditable}
+              onClick={() => isEditable && setSeletorAberto((prev) => !prev)}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-full border bg-black/45 hover:bg-black/60 transition-all ${
+                isEditable ? "cursor-pointer border-white/20 active:scale-95" : "border-white/10"
+              }`}
+            >
+              <img src={bandeira.url} alt={bandeira.code} className="w-5 h-3.5 object-cover rounded-xs" crossOrigin="anonymous" />
+              <span className="font-mono text-sm font-bold text-neutral-300">{bandeira.code}</span>
+            </button>
+          ) : (
+            isEditable && (
+              <button
+                type="button"
+                onClick={() => setSeletorAberto((prev) => !prev)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-dashed border-white/25 bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/40 transition-all text-xs text-neutral-400 hover:text-neutral-200 cursor-pointer active:scale-95"
+              >
+                🌍 + País
+              </button>
+            )
+          )}
+
+          {seletorAberto && isEditable && (
+            <SeletorPaisStory
+              valor={book.pais}
+              onChange={(novoPais) => onUpdateBook?.({ pais: novoPais })}
+              onClose={() => setSeletorAberto(false)}
+            />
+          )}
+        </div>
         {/* Capa do Livro */}
         <div
           onClick={isEditable ? (onClickCapa || (() => fileInputRef.current?.click())) : undefined}
@@ -628,6 +774,7 @@ export const StoryPagina3Opiniao = React.forwardRef<
 >(({ book, config, capaDataUrl, isEditable = false, onUpdateBook, onUpdateConfig }, ref) => {
   const imagemCapa = capaDataUrl || book.capa;
   const bandeira = React.useMemo(() => obterBandeiraEPais(book.pais), [book.pais]);
+  const [seletorAberto, setSeletorAberto] = React.useState(false);
 
   return (
     <div
@@ -666,13 +813,38 @@ export const StoryPagina3Opiniao = React.forwardRef<
           )}
           <div className="text-left flex-1 min-w-0">
             <p className="font-display text-2xl font-bold text-neutral-100 line-clamp-1">{book.titulo}</p>
-            <div className="flex items-center gap-2.5 mt-1">
+            <div className="flex items-center gap-2.5 mt-1 relative z-30">
               <span className="text-lg font-serif italic text-neutral-400 leading-none">{book.autor}</span>
-              {bandeira && (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 shrink-0">
+              {bandeira ? (
+                <button
+                  type="button"
+                  disabled={!isEditable}
+                  onClick={() => isEditable && setSeletorAberto((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border hover:bg-white/10 transition-all shrink-0 ${
+                    isEditable ? "cursor-pointer border-white/20 active:scale-95" : "border-white/10"
+                  }`}
+                >
                   <img src={bandeira.url} alt={bandeira.code} className="w-4 h-2.5 object-cover rounded-xs" crossOrigin="anonymous" />
                   <span className="font-mono text-[10px] font-bold text-neutral-300 leading-none">{bandeira.code}</span>
-                </span>
+                </button>
+              ) : (
+                isEditable && (
+                  <button
+                    type="button"
+                    onClick={() => setSeletorAberto((prev) => !prev)}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-white/25 bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/40 transition-all text-[10px] text-neutral-400 hover:text-neutral-200 cursor-pointer active:scale-95 shrink-0"
+                  >
+                    🌍 + País
+                  </button>
+                )
+              )}
+
+              {seletorAberto && isEditable && (
+                <SeletorPaisStory
+                  valor={book.pais}
+                  onChange={(novoPais) => onUpdateBook?.({ pais: novoPais })}
+                  onClose={() => setSeletorAberto(false)}
+                />
               )}
             </div>
           </div>
