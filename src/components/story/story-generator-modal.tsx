@@ -54,6 +54,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
   const exportPagina1Ref = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.32);
+  const [manualZoom, setManualZoom] = useState(1.0);
 
   // Carrega a capa via proxy seguro de servidor
   useEffect(() => {
@@ -136,7 +137,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
       const escalaX = clientWidth / 1080;
       const escalaY = clientHeight / 1920;
       const escala = Math.min(escalaX, escalaY, 0.45);
-      setPreviewScale(Math.max(0.20, escala));
+      setPreviewScale(Math.max(0.12, escala));
     }
 
     atualizarEscala();
@@ -279,42 +280,73 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
         </div>
 
         {/* CORPO - EXCLUSIVAMENTE VERTICAL */}
-        <div className="flex-1 overflow-y-auto p-5 flex flex-col items-center justify-center bg-papel-2/20">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center bg-papel-2/20">
           <div
             ref={previewContainerRef}
-            className="relative flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl border border-white/10"
-            style={{
-              width: "100%",
-              maxWidth: "420px",
-              height: "746px",
-            }}
+            className="relative w-full max-w-[380px] aspect-[9/16] max-h-[50vh] sm:max-h-[60vh] overflow-auto rounded-2xl shadow-2xl border border-white/10 bg-[#120e15] flex items-start justify-start select-none"
           >
             <div
               style={{
-                width: "1080px",
-                height: "1920px",
-                transform: `scale(${previewScale})`,
-                transformOrigin: "center center",
+                width: `${1080 * (previewScale * manualZoom)}px`,
+                height: `${1920 * (previewScale * manualZoom)}px`,
+                position: "relative",
               }}
               className="shrink-0"
             >
-               <StoryTemplateEditorial
-                book={bookState}
-                config={config}
-                capaDataUrl={capaDataUrl}
-                paginaAtiva={1}
-                isEditable={true}
-                onUpdateBook={(novos) => setBookState((prev) => ({ ...prev, ...novos }))}
-                onUpdateConfig={handleChangeConfig}
-                onCapaUpload={(dataUrl) => {
-                  setCapaDataUrl(dataUrl);
-                  setBookState((prev) => ({ ...prev, capa: dataUrl }));
+              <div
+                style={{
+                  width: "1080px",
+                  height: "1920px",
+                  transform: `scale(${previewScale * manualZoom})`,
+                  transformOrigin: "0 0",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
                 }}
-                onClickCapa={() => setModalCapaAberto(true)}
-                fundoDataUrl={fundoDataUrl}
-                onClickFundo={() => setModalFundoAberto(true)}
-              />
+              >
+                <StoryTemplateEditorial
+                  book={bookState}
+                  config={config}
+                  capaDataUrl={capaDataUrl}
+                  paginaAtiva={1}
+                  isEditable={true}
+                  onUpdateBook={(novos) => setBookState((prev) => ({ ...prev, ...novos }))}
+                  onUpdateConfig={handleChangeConfig}
+                  onCapaUpload={(dataUrl) => {
+                    setCapaDataUrl(dataUrl);
+                    setBookState((prev) => ({ ...prev, capa: dataUrl }));
+                  }}
+                  onClickCapa={() => setModalCapaAberto(true)}
+                  fundoDataUrl={fundoDataUrl}
+                  onClickFundo={() => setModalFundoAberto(true)}
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Controle de Zoom */}
+          <div className="mt-4 flex items-center justify-between gap-3 w-full max-w-[380px] bg-papel border border-papel-3 p-3 rounded-2xl text-xs text-tinta-2 shadow-xs">
+            <span className="flex items-center gap-1.5 font-semibold font-num">
+              🔍 Zoom: {Math.round(manualZoom * 100)}%
+            </span>
+            <input
+              type="range"
+              min="1.0"
+              max="2.5"
+              step="0.1"
+              value={manualZoom}
+              onChange={(e) => setManualZoom(parseFloat(e.target.value))}
+              className="flex-1 accent-amora cursor-pointer h-1.5 bg-papel-3 rounded-lg appearance-none"
+            />
+            {manualZoom > 1.0 && (
+              <button
+                type="button"
+                onClick={() => setManualZoom(1.0)}
+                className="text-amora font-bold hover:underline cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
           </div>
 
           {mensagemErro && (
