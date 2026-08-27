@@ -207,17 +207,24 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
     const results: Array<{
       usuario: string;
       nome: string;
-      statusCustom: string | null;
-      lidos: number;
-      lendoAgora: string | null;
-      temSessao: number;
+      statusCustom?: string | null;
+      statuscustom?: string | null;
+      lidos: number | string;
+      lendoAgora?: string | null;
+      lendoagora?: string | null;
+      temSessao?: number | boolean;
+      temsessao?: number | boolean;
     }> = Array.isArray(rawResults)
       ? rawResults
       : (rawResults?.results ?? []);
 
     return results.map((r): LeitorResumo => {
-      const estaOnline = Boolean(r.temSessao);
-      const customStatus = r.statusCustom as StatusPresenca | null;
+      const temSessaoVal = r.temSessao !== undefined ? r.temSessao : r.temsessao;
+      const statusCustomVal = r.statusCustom !== undefined ? r.statusCustom : r.statuscustom;
+      const lendoAgoraVal = r.lendoAgora !== undefined ? r.lendoAgora : r.lendoagora;
+
+      const estaOnline = Boolean(temSessaoVal);
+      const customStatus = statusCustomVal as StatusPresenca | null;
 
       let statusPresenca: StatusPresenca = "offline";
       if (customStatus === "invisivel") {
@@ -226,15 +233,15 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
         statusPresenca = customStatus;
       } else if (estaOnline) {
         statusPresenca = "online";
-      } else if (r.lendoAgora) {
+      } else if (lendoAgoraVal) {
         statusPresenca = "lendo";
       }
 
       return {
         usuario: r.usuario,
         nome: r.nome,
-        lidos: r.lidos,
-        lendoAgora: r.lendoAgora,
+        lidos: Number(r.lidos),
+        lendoAgora: lendoAgoraVal || null,
         statusPresenca,
       };
     });
