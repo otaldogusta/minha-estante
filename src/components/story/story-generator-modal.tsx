@@ -54,7 +54,15 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
   const exportPagina1Ref = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.32);
-  const [manualZoom, setManualZoom] = useState(1.0);
+  const [scale, setScale] = useState(1.0);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const initialDistanceRef = useRef(0);
+  const initialScaleRef = useRef(1.0);
+
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
   // Carrega a capa via proxy seguro de servidor
   useEffect(() => {
@@ -149,6 +157,62 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
     setConfig((prev) => ({ ...prev, ...novos }));
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      };
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      initialDistanceRef.current = Math.hypot(dx, dy);
+      initialScaleRef.current = scale;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      const x = e.touches[0].clientX - touchStartRef.current.x;
+      const y = e.touches[0].clientY - touchStartRef.current.y;
+      if (scale > 1.0) {
+        setPan({ x, y });
+      }
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.hypot(dx, dy);
+      const newScale = (distance / initialDistanceRef.current) * initialScaleRef.current;
+      setScale(Math.max(1.0, Math.min(3.5, newScale)));
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDraggingRef.current = true;
+    dragStartRef.current = {
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y,
+    };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    if (scale > 1.0) {
+      const x = e.clientX - dragStartRef.current.x;
+      const y = e.clientY - dragStartRef.current.y;
+      setPan({ x, y });
+    }
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleDoubleClick = () => {
+    setScale(1.0);
+    setPan({ x: 0, y: 0 });
+  };
+
   const [compartilhando, setCompartilhando] = useState(false);
 
   async function handleCompartilharStory() {
@@ -235,9 +299,23 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
                 type="button"
                 onClick={handleCompartilharStory}
                 disabled={gerando || compartilhando}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-papel-3 hover:bg-papel-3 text-tinta text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                title="Compartilhar"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-papel-3 bg-papel-2/60 text-tinta hover:bg-papel-3 hover:text-amora transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-xs"
               >
-                {compartilhando ? "Enviando..." : "Compartilhar"}
+                {compartilhando ? (
+                  <svg className="animate-spin h-4 w-4 text-tinta-2" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                )}
               </button>
             )}
 
@@ -245,32 +323,27 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
               type="button"
               onClick={handleGerarStory}
               disabled={gerando || compartilhando}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amora text-papel hover:bg-amora/90 text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              title="Baixar Story"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-amora text-papel hover:bg-amora/90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer active:scale-95"
             >
               {gerando ? (
-                <>
-                  <svg className="animate-spin h-3.5 w-3.5 text-papel" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>Gerando...</span>
-                </>
+                <svg className="animate-spin h-4 w-4 text-papel" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
               ) : (
-                <>
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth="2.5">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  <span>Baixar Story</span>
-                </>
+                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
               )}
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              disabled={gerando}
+              disabled={gerando || compartilhando}
               aria-label="Fechar"
               className="flex h-8 w-8 items-center justify-center rounded-full text-tinta-2 hover:bg-papel-3 hover:text-tinta transition-colors cursor-pointer font-bold text-sm"
             >
@@ -283,74 +356,49 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
         <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center bg-papel-2/20">
           <div
             ref={previewContainerRef}
-            className="relative w-full max-w-[380px] aspect-[9/16] max-h-[50vh] sm:max-h-[60vh] overflow-auto rounded-2xl shadow-2xl border border-white/10 bg-[#120e15] flex items-start justify-start select-none"
+            className="relative w-full max-w-[380px] aspect-[9/16] max-h-[52vh] sm:max-h-[60vh] overflow-hidden rounded-2xl shadow-2xl border border-white/10 bg-[#120e15] flex items-center justify-center select-none touch-none cursor-grab active:cursor-grabbing"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={handleMouseUpOrLeave}
+            onDoubleClick={handleDoubleClick}
           >
             <div
               style={{
-                width: `${1080 * (previewScale * manualZoom)}px`,
-                height: `${1920 * (previewScale * manualZoom)}px`,
-                position: "relative",
+                width: "1080px",
+                height: "1920px",
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${previewScale * scale})`,
+                transformOrigin: "center center",
               }}
-              className="shrink-0"
+              className="shrink-0 transition-transform duration-75"
             >
-              <div
-                style={{
-                  width: "1080px",
-                  height: "1920px",
-                  transform: `scale(${previewScale * manualZoom})`,
-                  transformOrigin: "0 0",
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
+              <StoryTemplateEditorial
+                book={bookState}
+                config={config}
+                capaDataUrl={capaDataUrl}
+                paginaAtiva={1}
+                isEditable={true}
+                onUpdateBook={(novos) => setBookState((prev) => ({ ...prev, ...novos }))}
+                onUpdateConfig={handleChangeConfig}
+                onCapaUpload={(dataUrl) => {
+                  setCapaDataUrl(dataUrl);
+                  setBookState((prev) => ({ ...prev, capa: dataUrl }));
                 }}
-              >
-                <StoryTemplateEditorial
-                  book={bookState}
-                  config={config}
-                  capaDataUrl={capaDataUrl}
-                  paginaAtiva={1}
-                  isEditable={true}
-                  onUpdateBook={(novos) => setBookState((prev) => ({ ...prev, ...novos }))}
-                  onUpdateConfig={handleChangeConfig}
-                  onCapaUpload={(dataUrl) => {
-                    setCapaDataUrl(dataUrl);
-                    setBookState((prev) => ({ ...prev, capa: dataUrl }));
-                  }}
-                  onClickCapa={() => setModalCapaAberto(true)}
-                  fundoDataUrl={fundoDataUrl}
-                  onClickFundo={() => setModalFundoAberto(true)}
-                />
-              </div>
+                onClickCapa={() => setModalCapaAberto(true)}
+                fundoDataUrl={fundoDataUrl}
+                onClickFundo={() => setModalFundoAberto(true)}
+              />
             </div>
           </div>
 
-          {/* Controle de Zoom */}
-          <div className="mt-4 flex items-center justify-between gap-3 w-full max-w-[380px] bg-papel border border-papel-3 p-3 rounded-2xl text-xs text-tinta-2 shadow-xs">
-            <span className="flex items-center gap-1.5 font-semibold font-num">
-              🔍 Zoom: {Math.round(manualZoom * 100)}%
-            </span>
-            <input
-              type="range"
-              min="1.0"
-              max="2.5"
-              step="0.1"
-              value={manualZoom}
-              onChange={(e) => setManualZoom(parseFloat(e.target.value))}
-              className="flex-1 accent-amora cursor-pointer h-1.5 bg-papel-3 rounded-lg appearance-none"
-            />
-            {manualZoom > 1.0 && (
-              <button
-                type="button"
-                onClick={() => setManualZoom(1.0)}
-                className="text-amora font-bold hover:underline cursor-pointer"
-              >
-                Reset
-              </button>
-            )}
-          </div>
+          <p className="mt-3 text-[10px] text-tinta-3 text-center select-none pointer-events-none">
+            💡 Dica: pinche com 2 dedos para dar zoom • Arraste para navegar • Toque 2x para resetar
+          </p>
 
           {mensagemErro && (
-            <p className="mt-4 text-xs text-red-500 font-medium text-center">{mensagemErro}</p>
+            <p className="mt-3 text-xs text-red-500 font-medium text-center">{mensagemErro}</p>
           )}
         </div>
       </div>
