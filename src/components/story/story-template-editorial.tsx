@@ -504,7 +504,7 @@ export const StoryPagina1Resumo = React.forwardRef<
         </button>
       )}
 
-      {/* Container Secundário (Datas e Duração) */}
+      {/* Container Secundário (Datas, Páginas e Duração) */}
       <div className="relative z-10 w-[780px] h-[180px] rounded-3xl border border-white/10 bg-black/25 backdrop-blur-md p-6 flex items-center justify-around shadow-xl mb-20">
         <div className="flex flex-col items-center flex-1">
           <span className="text-sm uppercase tracking-widest text-neutral-400 font-semibold mb-2">Início</span>
@@ -513,7 +513,7 @@ export const StoryPagina1Resumo = React.forwardRef<
               type="date"
               value={book.inicio || ""}
               onChange={(e) => onUpdateBook?.({ inicio: e.target.value || null })}
-              className="bg-transparent border-b border-dashed border-white/20 text-neutral-100 font-mono text-2xl text-center focus:outline-none focus:border-white w-full max-w-[240px] py-1 cursor-pointer"
+              className="bg-transparent border-b border-dashed border-white/20 text-neutral-100 font-mono text-2xl text-center focus:outline-none focus:border-white w-full max-w-[200px] py-1 cursor-pointer"
               style={{ colorScheme: "dark" }}
             />
           ) : (
@@ -528,11 +528,30 @@ export const StoryPagina1Resumo = React.forwardRef<
               type="date"
               value={book.fim || ""}
               onChange={(e) => onUpdateBook?.({ fim: e.target.value || null })}
-              className="bg-transparent border-b border-dashed border-white/20 text-neutral-100 font-mono text-2xl text-center focus:outline-none focus:border-white w-full max-w-[240px] py-1 cursor-pointer"
+              className="bg-transparent border-b border-dashed border-white/20 text-neutral-100 font-mono text-2xl text-center focus:outline-none focus:border-white w-full max-w-[200px] py-1 cursor-pointer"
               style={{ colorScheme: "dark" }}
             />
           ) : (
             <span className="font-mono text-2xl font-bold text-neutral-100">{dataFimFmt || "—"}</span>
+          )}
+        </div>
+        <div className="w-px h-12 bg-white/10" />
+        <div className="flex flex-col items-center flex-1">
+          <span className="text-sm uppercase tracking-widest text-neutral-400 font-semibold mb-2">Páginas</span>
+          {isEditable ? (
+            <input
+              type="text"
+              inputMode="numeric"
+              value={book.paginas?.toString() ?? ""}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                onUpdateBook?.({ paginas: isNaN(parsed) ? null : parsed });
+              }}
+              className="bg-transparent border-b border-dashed border-white/20 text-neutral-100 font-mono text-2xl text-center focus:outline-none focus:border-white w-full max-w-[120px] py-1 cursor-pointer"
+              placeholder="—"
+            />
+          ) : (
+            <span className="font-mono text-2xl font-bold text-neutral-100">{book.paginas || "—"}</span>
           )}
         </div>
         <div className="w-px h-12 bg-white/10" />
