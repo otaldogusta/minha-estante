@@ -458,8 +458,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
 
     const idxTitulo = getIndexLoose(["título", "titulo"], 0);
     const idxAutor = getIndexLoose(["autor"], 1);
-    const idxLocal = getIndexLoose(["local"], 2);
-    const idxPais = getIndexLoose(["país", "pais"], 3);
+    const idxPais = getIndexLoose(["local", "país", "pais"], 2);
     const idxGenero = getIndexLoose(["gênero", "genero"], 4);
     const idxEditora = getIndexLoose(["editora"], 5);
     const idxAno = getIndexLoose(["ano"], 6);
