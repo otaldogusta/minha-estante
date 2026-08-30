@@ -202,6 +202,31 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         if (["SCRIPT", "STYLE", "LINK", "META", "TITLE"].includes(tagName)) {
           return;
         }
+
+        if (tagName === "IMG") {
+          const src = node.getAttribute("src");
+          if (src) {
+            const base64 = await extrairImagemEpub(src, docDir, zip);
+            if (base64) {
+              blocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
+            }
+          }
+          return;
+        }
+
+        if (tagName === "SVG") {
+          const image = node.querySelector("image");
+          if (image) {
+            const href = image.getAttribute("href") || image.getAttribute("xlink:href");
+            if (href) {
+              const base64 = await extrairImagemEpub(href, docDir, zip);
+              if (base64) {
+                blocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
+              }
+            }
+          }
+          return;
+        }
         
         if (["H1", "H2", "H3", "H4", "H5", "H6"].includes(tagName)) {
           const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
