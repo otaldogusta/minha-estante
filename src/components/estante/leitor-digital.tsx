@@ -420,26 +420,14 @@ export function LeitorDigital({
       </main>
 
       {/* Barra Inferior com Fita de Progresso */}
-      <footer className="sticky bottom-0 border-t px-4 py-2.5 backdrop-blur-md flex items-center justify-between text-xs font-sans border-inherit bg-inherit/90">
-        <div className="flex items-center gap-2">
-          <span className="font-num">Página {paginaAtual} / {totalPaginas}</span>
-        </div>
-        <div className="flex-1 mx-4 max-w-xs">
+      <footer className="sticky bottom-0 border-t px-4 py-3 backdrop-blur-md flex items-center justify-center border-inherit bg-inherit/90">
+        <div className="w-full max-w-md px-4">
           <div className="h-1.5 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
             <div
               className="h-full rounded-full bg-[#7a3b52] transition-all duration-300"
               style={{ width: `${progresso}%` }}
             />
           </div>
-        </div>
-        <div className="hidden sm:flex items-center gap-1 text-[11px] opacity-70">
-          <svg viewBox="0 0 24 24" className="h-3 w-3 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span>Sincronização ativa</span>
-        </div>
-        <div className="flex sm:hidden items-center gap-1 text-[10px] opacity-60">
-          <span>👈 deslize para mudar 👉</span>
         </div>
       </footer>
     </div>
