@@ -51,15 +51,94 @@ async function lerEpub(file: File): Promise<string> {
 
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
+
+  // 1. Encontra o arquivo container.xml para saber onde está o conteúdo principal (.opf)
+  let opfPath = "";
+  const containerFile = zip.files["META-INF/container.xml"];
+  if (containerFile) {
+    const containerXml = await containerFile.async("text");
+    if (typeof DOMParser !== "undefined") {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(containerXml, "text/xml");
+      const rootfile = doc.querySelector("rootfile");
+      if (rootfile) {
+        opfPath = rootfile.getAttribute("full-path") || "";
+      }
+    }
+  }
+
+  // Fallback se não achou container.xml: busca qualquer arquivo .opf
+  if (!opfPath) {
+    const opfKey = Object.keys(zip.files).find((n) => n.endsWith(".opf"));
+    if (opfKey) {
+      opfPath = opfKey;
+    }
+  }
+
+  let arquivosEmOrdem: string[] = [];
+
+  if (opfPath && zip.files[opfPath]) {
+    const opfContent = await zip.files[opfPath].async("text");
+    const opfDir = opfPath.substring(0, opfPath.lastIndexOf("/") + 1);
+
+    if (typeof DOMParser !== "undefined") {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(opfContent, "text/xml");
+
+      // Mapeia o manifest: id -> href completo
+      const manifestItems = doc.querySelectorAll("manifest > item");
+      const manifestMap = new Map<string, string>();
+      manifestItems.forEach((item) => {
+        const id = item.getAttribute("id");
+        const href = item.getAttribute("href");
+        if (id && href) {
+          // Normaliza o caminho do arquivo relativo ao diretório do opf
+          let fullPath = opfDir + href;
+          if (href.startsWith("/")) {
+            fullPath = href.substring(1);
+          }
+          // Remove hashes ou parâmetros
+          fullPath = fullPath.split("#")[0];
+          manifestMap.set(id, decodeURIComponent(fullPath));
+        }
+      });
+
+      // Lê o spine para obter a ordem correta dos IDs
+      const spineItems = doc.querySelectorAll("spine > itemref");
+      spineItems.forEach((itemref) => {
+        const idref = itemref.getAttribute("idref");
+        if (idref) {
+          const filePath = manifestMap.get(idref);
+          if (filePath) {
+            arquivosEmOrdem.push(filePath);
+          }
+        }
+      });
+    }
+  }
+
+  // Fallback se falhar a leitura do OPF/Spine: usa ordenação por nome filtrada
+  if (arquivosEmOrdem.length === 0) {
+    const nomesArquivos = Object.keys(zip.files).sort();
+    arquivosEmOrdem = nomesArquivos.filter(
+      (n) => n.endsWith(".html") || n.endsWith(".xhtml") || n.endsWith(".xml")
+    );
+  }
+
   let textoCompleto = "";
 
-  const nomesArquivos = Object.keys(zip.files).sort();
-  const arquivosTexto = nomesArquivos.filter(
-    (n) => n.endsWith(".html") || n.endsWith(".xhtml") || n.endsWith(".xml")
-  );
+  // Lê os arquivos na ordem correta
+  for (const caminho of arquivosEmOrdem) {
+    let zipKey = Object.keys(zip.files).find(
+      (k) => k.toLowerCase() === caminho.toLowerCase() || k.toLowerCase().endsWith(caminho.toLowerCase())
+    );
+    if (!zipKey && zip.files[caminho]) {
+      zipKey = caminho;
+    }
 
-  for (const nome of arquivosTexto) {
-    const htmlContent = await zip.files[nome].async("text");
+    if (!zipKey) continue;
+
+    const htmlContent = await zip.files[zipKey].async("text");
     
     if (typeof DOMParser !== "undefined") {
       const parser = new DOMParser();
