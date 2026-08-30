@@ -8,14 +8,58 @@ import { extrairDadosDeArquivo } from "../../lib/file-parser";
 
 type TemaLeitor = "claro" | "sepia" | "noturno";
 
-function paginarTexto(texto: string, limite = 1200): string[] {
+function paginarTexto(texto: string, limite = 1200): { paginas: string[], mapeamento: { [path: string]: number } } {
+  const mapeamento: { [path: string]: number } = {};
   if (texto.startsWith("[") && texto.endsWith("]")) {
     try {
       const fileGroups = JSON.parse(texto);
       if (Array.isArray(fileGroups)) {
         const paginas: string[] = [];
-        const isGroupedByFile = Array.isArray(fileGroups[0]);
         
+        // Verifica se é o formato estruturado [{ path, blocks }]
+        const isNewFormat = typeof fileGroups[0] === "object" && fileGroups[0] !== null && "blocks" in fileGroups[0];
+        
+        if (isNewFormat) {
+          for (const groupObj of fileGroups) {
+            const path = groupObj.path || "";
+            const group = groupObj.blocks || [];
+            
+            // Registra o mapeamento para o arquivo atual
+            const fileKey = path.toLowerCase();
+            const fileNameOnly = path.split("/").pop()?.toLowerCase() || "";
+            
+            mapeamento[fileKey] = paginas.length;
+            mapeamento[fileNameOnly] = paginas.length;
+
+            let paginaAtual: string[] = [];
+            let lengthAtual = 0;
+            
+            for (const block of group) {
+              let peso = 0;
+              if (block.includes("<img")) {
+                peso = 400;
+              } else {
+                peso = block.replace(/<[^>]*>/g, "").length;
+              }
+              
+              if (paginaAtual.length > 0 && (lengthAtual + peso) > limite) {
+                paginas.push(paginaAtual.join("\n"));
+                paginaAtual = [block];
+                lengthAtual = peso;
+              } else {
+                paginaAtual.push(block);
+                lengthAtual += peso;
+              }
+            }
+            if (paginaAtual.length > 0) {
+              paginas.push(paginaAtual.join("\n"));
+            }
+          }
+          return { paginas: paginas.filter(Boolean), mapeamento };
+        }
+
+        // Formato legado: string[][] ou string[]
+        const isGroupedByFile = Array.isArray(fileGroups[0]);
         const groups = isGroupedByFile ? fileGroups : [fileGroups];
         
         for (const group of groups) {
@@ -45,17 +89,15 @@ function paginarTexto(texto: string, limite = 1200): string[] {
             paginas.push(paginaAtual.join("\n"));
           }
         }
-        return paginas.filter(Boolean);
+        return { paginas: paginas.filter(Boolean), mapeamento };
       }
     } catch (e) {
       console.error("Erro ao paginar blocos JSON:", e);
     }
   }
 
+  // Fallback para texto plano
   const paragrafos = texto.split("\n\n").filter(Boolean);
-  
-  // Agrupa títulos ou números curtos (ex: "10", "SAMANTHA") ao parágrafo seguinte
-  // para evitar que fiquem sozinhos em uma página.
   const paragrafosAgrupados: string[] = [];
   let acumulado = "";
 
@@ -88,7 +130,6 @@ function paginarTexto(texto: string, limite = 1200): string[] {
         paginas.push(paginaAtual);
         paginaAtual = para;
       } else {
-        // Se um único parágrafo for maior que o limite, divide por frases
         const frases = para.split(". ");
         let subPagina = "";
         for (const frase of frases) {
@@ -122,7 +163,7 @@ function paginarTexto(texto: string, limite = 1200): string[] {
     paginas.push(paginaAtual);
   }
   
-  return paginas.filter(Boolean);
+  return { paginas: paginas.filter(Boolean), mapeamento };
 }
 
 export function LeitorDigital({
@@ -195,7 +236,9 @@ export function LeitorDigital({
     `Sobre este Livro\n\n"${livro.titulo}" de ${livro.autor}.\n\nEste livro foi adicionado à sua estante pessoal no formato ${livro.formato || "Físico"}.\n\nVocê pode usar este leitor digital para acompanhar o número de páginas e sincronizar o marcador de leitura em tempo real com a sua estante. Para ler o texto completo diretamente na tela, adicione um dos clássicos abertos do Acervo ou faça o upload do seu arquivo EPUB/PDF.`;
 
   // Divide o texto em páginas perfeitamente calculadas por tamanho
-  const paginasTexto = useMemo(() => paginarTexto(textoBase, limiteCaracteres), [textoBase, limiteCaracteres]);
+  const paginationResult = useMemo(() => paginarTexto(textoBase, limiteCaracteres), [textoBase, limiteCaracteres]);
+  const paginasTexto = paginationResult.paginas;
+  const mapeamentoPaginas = paginationResult.mapeamento;
   const totalPaginasTexto = paginasTexto.length;
   
   const totalPaginas = totalPaginasTexto + (temCapa ? 1 : 0);
@@ -264,6 +307,71 @@ export function LeitorDigital({
       // Centro (56%): alterna menus
       setMostrarControles((prev) => !prev);
     }
+  }
+
+  // Intercepta e resolve links internos (ex: "#anchor" ou "caminho/arquivo.xhtml")
+  function handleInternalLink(href: string) {
+    const cleanHref = href.trim();
+    if (!cleanHref) return;
+
+    const [filePath, anchor] = cleanHref.split("#");
+    let targetPageIndex: number | undefined = undefined;
+
+    if (filePath) {
+      const fileKey = filePath.toLowerCase();
+      const fileNameOnly = filePath.split("/").pop()?.toLowerCase() || "";
+      
+      if (mapeamentoPaginas[fileKey] !== undefined) {
+        targetPageIndex = mapeamentoPaginas[fileKey];
+      } else if (mapeamentoPaginas[fileNameOnly] !== undefined) {
+        targetPageIndex = mapeamentoPaginas[fileNameOnly];
+      }
+    } else if (anchor) {
+      // Âncora local (ex: href="#capitulo-1")
+      const anchorRegex = new RegExp(`id=["']${anchor}["']|name=["']${anchor}["']`, "i");
+      const foundIndex = paginasTexto.findIndex(pagHtml => anchorRegex.test(pagHtml));
+      if (foundIndex !== -1) {
+        targetPageIndex = foundIndex;
+      }
+    }
+
+    if (targetPageIndex !== undefined) {
+      const targetPageNumber = targetPageIndex + 1 + (temCapa ? 1 : 0);
+      mudarPagina(targetPageNumber);
+      
+      // Caso haja âncora, rola até o elemento após renderização da página
+      if (anchor) {
+        setTimeout(() => {
+          const el = document.getElementById(anchor) || document.getElementsByName(anchor)[0];
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 150);
+      }
+    } else {
+      console.warn("Link interno não pôde ser mapeado para página:", href);
+      notificar("Seção do livro não encontrada ou indisponível", "erro");
+    }
+  }
+
+  // Interceptador de clique do container dangerouslySetInnerHTML
+  function handleContentClick(e: React.MouseEvent<HTMLDivElement>) {
+    const target = e.target as HTMLElement;
+    const anchor = target.closest("a");
+    if (!anchor) return;
+
+    const href = anchor.getAttribute("href");
+    if (!href) return;
+
+    // Links externos abrem normalmente em nova aba
+    if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+      return;
+    }
+
+    // Links internos são interceptados para navegação interna
+    e.preventDefault();
+    e.stopPropagation();
+    handleInternalLink(href);
   }
 
   // Sincroniza página atual com a estante via debounce
@@ -481,6 +589,7 @@ export function LeitorDigital({
             ) : (textoPaginaAtual || "").trim().startsWith("<") ? (
               <div 
                 dangerouslySetInnerHTML={{ __html: textoPaginaAtual }} 
+                onClick={handleContentClick}
                 className="w-full flex-1 flex flex-col justify-start"
               />
             ) : (
