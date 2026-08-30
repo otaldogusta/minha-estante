@@ -175,15 +175,24 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     }
   }
 
-  // Encontra classes centralizadas nos arquivos CSS do zip
+  // Encontra classes centralizadas e de tamanhos nos arquivos CSS do zip
   const classesCentralizadas = new Set<string>();
+  const classesTamanho = new Map<string, string>();
   for (const key of Object.keys(zip.files)) {
     if (key.endsWith(".css")) {
       try {
         const cssContent = await zip.files[key].async("text");
-        const matches = cssContent.matchAll(/\.([a-zA-Z0-9_-]+)\s*\{[^}]*text-align\s*:\s*center[^}]*\}/gi);
-        for (const match of matches) {
+        
+        // 1. Classes de alinhamento centralizado
+        const centerMatches = cssContent.matchAll(/\.([a-zA-Z0-9_-]+)\s*\{[^}]*text-align\s*:\s*center[^}]*\}/gi);
+        for (const match of centerMatches) {
           classesCentralizadas.add(match[1]);
+        }
+        
+        // 2. Classes com tamanho de fonte
+        const sizeMatches = cssContent.matchAll(/\.([a-zA-Z0-9_-]+)\s*\{[^}]*font-size\s*:\s*([^;}]+)[^}]*\}/gi);
+        for (const match of sizeMatches) {
+          classesTamanho.set(match[1], match[2].trim());
         }
       } catch (e) {
         console.error("Erro ao analisar CSS:", key, e);
@@ -247,7 +256,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         }
         
         if (["H1", "H2", "H3", "H4", "H5", "H6"].includes(tagName)) {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas, classesTamanho);
           if (cleanHtml.trim()) {
             fileBlocks.push(`<h3 class="font-display font-bold text-lg my-6 text-tinta text-center">${cleanHtml}</h3>`);
           }
@@ -255,7 +264,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         }
         
         if (tagName === "P") {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas, classesTamanho);
           if (cleanHtml.trim()) {
             const nodeClass = node.getAttribute("class") || "";
             const classesOriginais = nodeClass.split(/\s+/).filter(Boolean);
@@ -264,24 +273,45 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
                                    (node.getAttribute("style") || "").includes("text-align:center") ||
                                    node.getAttribute("align") === "center";
             
+            let customFontSize = "";
+            for (const cls of classesOriginais) {
+              if (classesTamanho.has(cls)) {
+                customFontSize = classesTamanho.get(cls) || "";
+                break;
+              }
+            }
+
+            let styleAttr = "";
+            if (customFontSize) {
+              const parsedSize = parseFloat(customFontSize);
+              const isLarge = !isNaN(parsedSize) && (
+                (customFontSize.includes("em") && parsedSize >= 1.25) || 
+                (customFontSize.includes("%") && parsedSize >= 120) ||
+                (customFontSize.includes("pt") && parsedSize >= 14) ||
+                (customFontSize.includes("px") && parsedSize >= 20)
+              ) || ["large", "x-large", "xx-large", "larger"].includes(customFontSize.toLowerCase());
+              
+              styleAttr = ` style="font-size: ${customFontSize}; font-weight: ${isLarge ? "bold" : "normal"}"`;
+            }
+            
             if (deveCentralizar) {
-              fileBlocks.push(`<p class="mb-4 text-center leading-relaxed w-full block">${cleanHtml}</p>`);
+              fileBlocks.push(`<p class="mb-4 text-center leading-relaxed w-full block"${styleAttr}>${cleanHtml}</p>`);
             } else {
-              fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+              fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed"${styleAttr}>${cleanHtml}</p>`);
             }
           }
           return;
         }
         
         if (tagName === "UL" || tagName === "OL") {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas, classesTamanho);
           const listClass = tagName === "UL" ? "list-disc pl-5 mb-4 space-y-2" : "list-decimal pl-5 mb-4 space-y-2";
           fileBlocks.push(`<${tagName.toLowerCase()} class="${listClass}">${cleanHtml}</${tagName.toLowerCase()}>`);
           return;
         }
         
         if (tagName === "TABLE") {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas, classesTamanho);
           fileBlocks.push(`<div class="overflow-x-auto my-4"><table class="min-w-full border border-current/15 text-sm">${cleanHtml}</table></div>`);
           return;
         }
@@ -295,7 +325,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
             await processarNo(child);
           }
         } else {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas, classesTamanho);
           if (cleanHtml.trim()) {
             const nodeClass = node.getAttribute("class") || "";
             const classesOriginais = nodeClass.split(/\s+/).filter(Boolean);
@@ -304,12 +334,33 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
                                    (node.getAttribute("style") || "").includes("text-align:center") ||
                                    node.getAttribute("align") === "center";
 
+            let customFontSize = "";
+            for (const cls of classesOriginais) {
+              if (classesTamanho.has(cls)) {
+                customFontSize = classesTamanho.get(cls) || "";
+                break;
+              }
+            }
+
+            let styleAttr = "";
+            if (customFontSize) {
+              const parsedSize = parseFloat(customFontSize);
+              const isLarge = !isNaN(parsedSize) && (
+                (customFontSize.includes("em") && parsedSize >= 1.25) || 
+                (customFontSize.includes("%") && parsedSize >= 120) ||
+                (customFontSize.includes("pt") && parsedSize >= 14) ||
+                (customFontSize.includes("px") && parsedSize >= 20)
+              ) || ["large", "x-large", "xx-large", "larger"].includes(customFontSize.toLowerCase());
+              
+              styleAttr = ` style="font-size: ${customFontSize}; font-weight: ${isLarge ? "bold" : "normal"}"`;
+            }
+
             if (cleanHtml.startsWith("<a") || cleanHtml.startsWith("<img") || cleanHtml.startsWith("<div")) {
               fileBlocks.push(cleanHtml);
             } else if (deveCentralizar) {
-              fileBlocks.push(`<p class="mb-4 text-center leading-relaxed w-full block">${cleanHtml}</p>`);
+              fileBlocks.push(`<p class="mb-4 text-center leading-relaxed w-full block"${styleAttr}>${cleanHtml}</p>`);
             } else {
-              fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+              fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed"${styleAttr}>${cleanHtml}</p>`);
             }
           }
         }
@@ -373,7 +424,8 @@ async function limparEExtrairHtmlInterno(
   html: string,
   docDir: string,
   zip: any,
-  classesCentralizadas: Set<string>
+  classesCentralizadas: Set<string>,
+  classesTamanho: Map<string, string>
 ): Promise<string> {
   if (typeof DOMParser === "undefined") return html;
   try {
@@ -418,9 +470,33 @@ async function limparEExtrairHtmlInterno(
                              (el.getAttribute("style") || "").includes("text-align: center") ||
                              (el.getAttribute("style") || "").includes("text-align:center");
 
+      // Recupera se o elemento original possuía custom font-size
+      let customFontSize = "";
+      for (const cls of classesOriginais) {
+        if (classesTamanho.has(cls)) {
+          customFontSize = classesTamanho.get(cls) || "";
+          break;
+        }
+      }
+
       el.removeAttribute("style");
       el.removeAttribute("class");
       el.removeAttribute("id");
+      
+      if (customFontSize) {
+        el.style.fontSize = customFontSize;
+        const parsedSize = parseFloat(customFontSize);
+        const isLarge = !isNaN(parsedSize) && (
+          (customFontSize.includes("em") && parsedSize >= 1.25) || 
+          (customFontSize.includes("%") && parsedSize >= 120) ||
+          (customFontSize.includes("pt") && parsedSize >= 14) ||
+          (customFontSize.includes("px") && parsedSize >= 20)
+        ) || ["large", "x-large", "xx-large", "larger"].includes(customFontSize.toLowerCase());
+        
+        if (isLarge) {
+          el.style.fontWeight = "bold";
+        }
+      }
       
       if (el.tagName.toUpperCase() === "A") {
         el.setAttribute("target", "_blank");
