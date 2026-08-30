@@ -295,16 +295,16 @@ export function LeitorDigital({
         <article
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className={`rounded-2xl border p-6 sm:p-12 transition-all leading-relaxed ${papelCard[tema]} cursor-default`}
+          className={`rounded-2xl border p-6 sm:p-12 transition-all leading-relaxed ${papelCard[tema]} cursor-default min-h-[460px] sm:min-h-[540px] md:min-h-[580px] flex flex-col`}
           style={{ fontSize: `${tamanhoFonte}px`, lineHeight: 1.8 }}
         >
           <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-8 font-sans">
             {exibindoCapa ? "Capa do Livro" : `Página ${paginaAtual} de ${totalPaginas}`}
           </div>
 
-          <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20">
+          <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20 flex-1 flex flex-col justify-start">
             {precisaCarregarArquivo ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-6 font-sans">
+              <div className="flex-1 flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-6 font-sans">
                 <div className="h-16 w-16 bg-amora/10 text-amora rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -335,7 +335,7 @@ export function LeitorDigital({
                 </label>
               </div>
             ) : exibindoCapa ? (
-              <div className="flex flex-col items-center justify-center py-4">
+              <div className="flex-1 flex flex-col items-center justify-center py-4 w-full">
                 <div className="w-48 sm:w-56 md:w-64 shadow-2xl rounded-2xl overflow-hidden border border-current/10 aspect-[2/3] bg-black/5 dark:bg-white/5 transition-transform duration-300 hover:scale-102">
                   <img
                     src={livro.capa!}
