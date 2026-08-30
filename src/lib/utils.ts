@@ -20,17 +20,35 @@ export async function copiarTexto(texto: string): Promise<boolean> {
   try {
     const textarea = document.createElement("textarea");
     textarea.value = texto;
-    textarea.style.position = "fixed";
+    textarea.setAttribute("readonly", ""); // Evita que o teclado virtual abra no iOS
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
     textarea.style.top = "0";
-    textarea.style.left = "0";
-    textarea.style.opacity = "0";
-    textarea.style.pointerEvents = "none";
+    textarea.style.fontSize = "12pt"; // Evita que a tela dê zoom automático no iOS
     
     document.body.appendChild(textarea);
-    textarea.focus();
+    
+    // Seleciona o conteúdo (método padrão)
     textarea.select();
     
+    // Seleciona o conteúdo (método específico para iOS Safari)
+    textarea.setSelectionRange(0, 999999);
+    
+    const range = document.createRange();
+    range.selectNodeContents(textarea);
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    
     const copiado = document.execCommand("copy");
+    
+    // Limpa a seleção
+    if (selection) {
+      selection.removeAllRanges();
+    }
+    
     document.body.removeChild(textarea);
     return copiado;
   } catch (err) {

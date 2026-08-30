@@ -47,7 +47,8 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
   const [gerando, setGerando] = useState(false);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
   const [modalCapaAberto, setModalCapaAberto] = useState(false);
-  const [fundoUrl, setFundoUrl] = useState<string>("https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=1080");
+  const [fundoPersonalizado, setFundoPersonalizado] = useState(false);
+  const [fundoUrl, setFundoUrl] = useState<string>("");
   const [fundoDataUrl, setFundoDataUrl] = useState<string | null>(null);
   const [modalFundoAberto, setModalFundoAberto] = useState(false);
 
@@ -90,9 +91,24 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
     };
   }, [aberto, bookState.capa]);
 
-  // Carrega o fundo via proxy seguro de servidor
+  // Sincroniza o fundo com a capa do livro caso o usuário não tenha personalizado o fundo
   useEffect(() => {
     if (!aberto) return;
+    if (!fundoPersonalizado) {
+      if (capaDataUrl) {
+        setFundoDataUrl(capaDataUrl);
+        setFundoUrl(bookState.capa || "");
+      } else {
+        const padrao = "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=1080";
+        setFundoDataUrl(padrao);
+        setFundoUrl(padrao);
+      }
+    }
+  }, [aberto, capaDataUrl, bookState.capa, fundoPersonalizado]);
+
+  // Carrega o fundo via proxy seguro de servidor se for personalizado e não for local data
+  useEffect(() => {
+    if (!aberto || !fundoPersonalizado) return;
 
     let ativo = true;
     if (fundoUrl) {
@@ -113,7 +129,7 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
     return () => {
       ativo = false;
     };
-  }, [aberto, fundoUrl]);
+  }, [aberto, fundoUrl, fundoPersonalizado]);
 
   // Bloqueio de scroll do body e evento de tecla ESC
   useEffect(() => {
@@ -437,9 +453,18 @@ export function StoryGeneratorModal({ livro, aberto, onClose }: StoryGeneratorMo
           aberto={modalFundoAberto}
           aoFechar={() => setModalFundoAberto(false)}
           aoAplicarFundo={(novoFundo) => {
-            setFundoUrl(novoFundo);
+            if (novoFundo === "capa") {
+              setFundoPersonalizado(false);
+              setFundoUrl(bookState.capa || "");
+              setFundoDataUrl(capaDataUrl || bookState.capa || null);
+            } else {
+              setFundoPersonalizado(true);
+              setFundoUrl(novoFundo);
+              setFundoDataUrl(novoFundo);
+            }
           }}
           fundoAtual={fundoUrl}
+          capaLivro={bookState.capa || null}
         />
       )}
     </div>,
@@ -452,11 +477,13 @@ function ModalGerenciadorFundo({
   aoFechar,
   aoAplicarFundo,
   fundoAtual,
+  capaLivro,
 }: {
   aberto: boolean;
   aoFechar: () => void;
   aoAplicarFundo: (url: string) => void;
   fundoAtual: string;
+  capaLivro: string | null;
 }) {
   const [aba, setAba] = useState<"upload" | "url">("upload");
   const [urlInput, setUrlInput] = useState(fundoAtual.startsWith("data:") ? "" : fundoAtual);
@@ -590,19 +617,33 @@ function ModalGerenciadorFundo({
         )}
 
         {/* Botões do Modal */}
-        <div className="flex items-center justify-between border-t border-papel-3/50 pt-4">
-          <button
-            type="button"
-            onClick={() => {
-              aoAplicarFundo(padraoUrl);
-              aoFechar();
-            }}
-            className="text-xs text-tinta-3 hover:text-amora transition-colors flex items-center gap-1 cursor-pointer font-medium"
-          >
-            Usar fundo padrão
-          </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 justify-between border-t border-papel-3/50 pt-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            {capaLivro && (
+              <button
+                type="button"
+                onClick={() => {
+                  aoAplicarFundo("capa");
+                  aoFechar();
+                }}
+                className="text-xs text-amora hover:text-amora-escura transition-colors flex items-center gap-1 cursor-pointer font-semibold"
+              >
+                Usar capa do livro
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                aoAplicarFundo(padraoUrl);
+                aoFechar();
+              }}
+              className="text-xs text-tinta-3 hover:text-amora transition-colors flex items-center gap-1 cursor-pointer font-medium"
+            >
+              Usar fundo padrão
+            </button>
+          </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-end sm:self-auto">
             <button
               type="button"
               onClick={aoFechar}
