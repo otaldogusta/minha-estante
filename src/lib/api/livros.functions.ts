@@ -277,8 +277,8 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
       // Fallback se colunas/tabelas ainda não existirem
     }
 
-    const customStatus = presencaRow?.statusCustom as StatusPresenca | null;
-    const estaOnline = Boolean(presencaRow?.temSessao);
+    const customStatus = (presencaRow?.statusCustom ?? (presencaRow as any)?.statuscustom) as StatusPresenca | null;
+    const estaOnline = Boolean(presencaRow?.temSessao ?? (presencaRow as any)?.temsessao);
 
     let statusPresenca: StatusPresenca = "offline";
     if (customStatus === "invisivel") {
