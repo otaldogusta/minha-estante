@@ -406,6 +406,30 @@ export function LeitorDigital({
           className={`rounded-2xl border p-6 sm:p-10 transition-all duration-300 leading-relaxed ${papelCard[tema]} cursor-default flex-1 min-h-0 flex flex-col overflow-hidden select-none active:scale-[0.99]`}
           style={{ fontSize: `${tamanhoFonte}px`, lineHeight: 1.8 }}
         >
+          <style>{`
+            .leitor-img {
+              max-width: 100%;
+              max-height: 320px;
+              object-fit: contain;
+              margin: 8px auto;
+              display: block;
+              border-radius: 8px;
+            }
+            ${tema === "noturno" ? `
+              .leitor-img {
+                mix-blend-mode: normal !important;
+              }
+              img {
+                filter: brightness(0.78) contrast(1.12) !important;
+                transition: filter 0.3s ease;
+              }
+            ` : `
+              .leitor-img {
+                mix-blend-mode: multiply !important;
+              }
+            `}
+          `}</style>
+
           {!exibindoCapa && (
             <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-6 font-sans">
               Página {paginaAtual} de {totalPaginas}

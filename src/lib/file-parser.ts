@@ -226,7 +226,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
           if (src) {
             const base64 = await extrairImagemEpub(src, docDir, zip);
             if (base64) {
-              fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="max-w-full max-h-[320px] object-contain my-2 mx-auto block mix-blend-multiply dark:mix-blend-normal" /></div>`);
+              fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="leitor-img" /></div>`);
             }
           }
           return;
@@ -239,7 +239,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
             if (href) {
               const base64 = await extrairImagemEpub(href, docDir, zip);
               if (base64) {
-                fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="max-w-full max-h-[320px] object-contain my-2 mx-auto block mix-blend-multiply dark:mix-blend-normal" /></div>`);
+                fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="leitor-img" /></div>`);
               }
             }
           }
@@ -439,7 +439,7 @@ async function limparEExtrairHtmlInterno(
       }
       
       if (el.tagName.toUpperCase() === "IMG") {
-        el.setAttribute("class", "max-w-full max-h-[320px] object-contain my-2 mx-auto block mix-blend-multiply dark:mix-blend-normal");
+        el.setAttribute("class", "leitor-img");
       }
     });
     
