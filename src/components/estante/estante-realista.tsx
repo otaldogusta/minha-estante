@@ -62,8 +62,8 @@ const CAPAS_REAIS_PRESETS: Record<string, string> = {
 };
 
 export function obterCapaReal(livro: Livro): string | null {
-  if (livro.capa && livro.capa.trim().startsWith("http")) return livro.capa;
-  if ((livro as any).capaUrl && (livro as any).capaUrl.trim().startsWith("http")) return (livro as any).capaUrl;
+  if (livro.capa && (livro.capa.trim().startsWith("http") || livro.capa.trim().startsWith("data:"))) return livro.capa;
+  if ((livro as any).capaUrl && ((livro as any).capaUrl.trim().startsWith("http") || (livro as any).capaUrl.trim().startsWith("data:"))) return (livro as any).capaUrl;
 
   const tNorm = livro.titulo.toLowerCase().trim();
   for (const [key, url] of Object.entries(CAPAS_REAIS_PRESETS)) {
@@ -72,8 +72,7 @@ export function obterCapaReal(livro: Livro): string | null {
     }
   }
 
-  const query = encodeURIComponent(livro.titulo);
-  return `https://covers.openlibrary.org/b/isbn/${query}-L.jpg`;
+  return null;
 }
 
 // Preset de paletas elegantes e ricas para lombadas derivadas da capa
@@ -336,10 +335,10 @@ function LivroDeitadoItem({
       style={{ width: `${larguraPx}px`, height: `${espessuraPx}px`, marginLeft: `${deslocamento}px` }}
       className={`relative rounded-[2px] border-b border-r ${paleta.border} shadow-[0_3px_8px_rgba(0,0,0,0.55)] cursor-pointer transition-transform duration-200 hover:-translate-y-1 overflow-hidden`}
     >
-      {/* Gradiente da paleta (fallback) */}
+      {/* Gradiente da paleta */}
       <div className={`absolute inset-0 bg-gradient-to-b ${paleta.bg}`} />
 
-      {/* Capa rotacionada -90° */}
+      {/* Capa rotacionada -90° ou Título na lombada deitada */}
       {temCapa ? (
         <img
           src={capaImg!}
@@ -355,7 +354,15 @@ function LivroDeitadoItem({
             objectFit: "cover",
           }}
         />
-      ) : null}
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-between px-3 select-none pointer-events-none">
+          <div className="h-full w-[1px] bg-amber-400/40" />
+          <span className="font-serif text-[10px] font-bold text-amber-100/90 truncate max-w-[85%] drop-shadow-sm uppercase tracking-wider">
+            {livro.titulo}
+          </span>
+          <div className="h-full w-[1px] bg-amber-400/40" />
+        </div>
+      )}
 
       {/* Sombra nas extremidades para efeito 3D */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/25 pointer-events-none" />
@@ -407,7 +414,35 @@ function LombadaVertical({ livro, idxLivro, inclinada = false, onMouseEnter, onM
           onError={() => setImgError(true)}
           className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover/spine:opacity-100 transition-opacity duration-300"
         />
-      ) : null}
+      ) : (
+        /* Lombada elegante em couro/tecido com título estampado na vertical */
+        <div className="absolute inset-0 flex flex-col justify-between items-center py-3 px-1 select-none pointer-events-none">
+          {/* Detalhe dourado no topo da lombada */}
+          <div className="w-3/4 h-[1px] bg-amber-400/40 shadow-xs" />
+          
+          {/* Título do livro na vertical */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden my-1">
+            <span
+              className={`font-serif text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-amber-100/90 whitespace-nowrap drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}
+              style={{
+                writingMode: "vertical-rl",
+                transform: "rotate(180deg)",
+                maxHeight: `${alturaPx - 40}px`,
+              }}
+            >
+              {livro.titulo}
+            </span>
+          </div>
+
+          {/* Autor ou detalhe na base da lombada */}
+          <div className="w-3/4 flex flex-col items-center gap-1">
+            <div className="w-full h-[1px] bg-amber-400/40 shadow-xs" />
+            <span className="text-[7px] text-white/50 truncate max-w-full font-sans">
+              {livro.autor ? livro.autor.split(" ").pop() : ""}
+            </span>
+          </div>
+        </div>
+      )}
       <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/55 to-transparent pointer-events-none z-10" />
       <div className="absolute inset-y-0 right-0 w-2 bg-gradient-to-l from-black/45 to-transparent pointer-events-none z-10" />
       <div className="absolute inset-y-0 left-0 w-[2px] bg-white/20 pointer-events-none z-10" />
