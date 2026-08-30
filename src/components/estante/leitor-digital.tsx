@@ -43,8 +43,14 @@ export function LeitorDigital({
   }, [livro.id]);
 
   // Calcula total de páginas estimadas ou usa o do livro
-  const totalPaginas = Math.max(livro.paginas || 50, 1);
+  const temCapa = Boolean(livro.capa);
+  const totalPaginasTexto = Math.max(livro.paginas || 50, 1);
+  const totalPaginas = totalPaginasTexto + (temCapa ? 1 : 0);
   const progresso = Math.min(100, Math.round((paginaAtual / totalPaginas) * 100));
+
+  // Se tem capa, a página 1 exibe a capa. As páginas de texto começam na página 2.
+  const exibindoCapa = temCapa && paginaAtual === 1;
+  const paginaTextoEfetiva = temCapa ? paginaAtual - 1 : paginaAtual;
 
   // Texto do livro (prioriza texto local/IndexedDB, depois carregado online/gutenberg, depois sinopse/conteudo salvo)
   const temTextoReal = Boolean(textoLocal || conteudoTexto || (livro.sinopse && livro.sinopse.length > 50));
@@ -57,9 +63,32 @@ export function LeitorDigital({
 
   // Divide o texto em blocos de parágrafos para simular páginas
   const paragrafos = textoBase.split("\n\n").filter(Boolean);
-  const paragrafosPorPagina = Math.max(1, Math.ceil(paragrafos.length / totalPaginas));
-  const inicioIdx = ((paginaAtual - 1) * paragrafosPorPagina) % paragrafos.length;
-  const textoPaginaAtual = paragrafos.slice(inicioIdx, inicioIdx + 3).join("\n\n") || paragrafos[0];
+  const paragrafosPorPagina = Math.max(1, Math.ceil(paragrafos.length / totalPaginasTexto));
+  const inicioIdx = ((paginaTextoEfetiva - 1) * paragrafosPorPagina) % paragrafos.length;
+  const textoPaginaAtual = exibindoCapa
+    ? ""
+    : (paragrafos.slice(inicioIdx, inicioIdx + 3).join("\n\n") || paragrafos[0]);
+
+  // Gestos de deslizar (swipe) para mudar de página em dispositivos móveis
+  const touchStartX = useRef<number | null>(null);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const diffX = touchStartX.current - e.changedTouches[0].clientX;
+    touchStartX.current = null;
+
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        mudarPagina(paginaAtual + 1);
+      } else {
+        mudarPagina(paginaAtual - 1);
+      }
+    }
+  }
 
   // Sincroniza página atual com a estante via debounce
   function mudarPagina(novaPag: number) {
@@ -193,15 +222,31 @@ export function LeitorDigital({
       {/* Área Principal de Leitura */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col justify-between">
         <article
-          className={`rounded-2xl border p-6 sm:p-12 transition-all leading-relaxed ${papelCard[tema]}`}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className={`rounded-2xl border p-6 sm:p-12 transition-all leading-relaxed ${papelCard[tema]} cursor-default`}
           style={{ fontSize: `${tamanhoFonte}px`, lineHeight: 1.8 }}
         >
           <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-8 font-sans">
-            Página {paginaAtual} de {totalPaginas}
+            {exibindoCapa ? "Capa do Livro" : `Página ${paginaAtual} de ${totalPaginas}`}
           </div>
 
           <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20">
-            {textoPaginaAtual}
+            {exibindoCapa ? (
+              <div className="flex flex-col items-center justify-center py-4">
+                <div className="w-48 sm:w-56 md:w-64 shadow-2xl rounded-2xl overflow-hidden border border-current/10 aspect-[2/3] bg-black/5 dark:bg-white/5 transition-transform duration-300 hover:scale-102">
+                  <img
+                    src={livro.capa!}
+                    alt={`Capa de ${livro.titulo}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h2 className="font-display text-xl font-bold mt-6 text-center text-tinta">{livro.titulo}</h2>
+                <p className="text-sm opacity-70 mt-1 text-center font-sans">{livro.autor}</p>
+              </div>
+            ) : (
+              textoPaginaAtual
+            )}
           </div>
         </article>
 
@@ -259,11 +304,14 @@ export function LeitorDigital({
             />
           </div>
         </div>
-        <div className="flex items-center gap-1 text-[11px] opacity-70">
+        <div className="hidden sm:flex items-center gap-1 text-[11px] opacity-70">
           <svg viewBox="0 0 24 24" className="h-3 w-3 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <span>Sincronização ativa</span>
+        </div>
+        <div className="flex sm:hidden items-center gap-1 text-[10px] opacity-60">
+          <span>👈 deslize para mudar 👉</span>
         </div>
       </footer>
     </div>
