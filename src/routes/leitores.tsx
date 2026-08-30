@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 import { listarLeitores, type StatusPresenca } from "../lib/api/livros.functions";
-import { listarConvites, criarConvite, revogarConvite, sessaoAtual } from "../lib/api/auth.functions";
+import { listarConvites, criarConvite, revogarConvite, sessaoAtual, removerLeitor } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { AvatarLeitor } from "../components/estante/avatar";
 import { exigirLogin } from "../lib/exigir-login";
@@ -70,8 +71,28 @@ function PontoPresenca({ status, eVoce }: { status: StatusPresenca; eVoce: boole
 
 function PaginaLeitores() {
   const { leitores, convites, sessao } = Route.useLoaderData();
+  const router = useRouter();
   const [modalAberto, setModalAberto] = useState(false);
   const usuarioLogado = sessao?.autenticado ? sessao.usuario : null;
+
+  const [confirmarExclusao, setConfirmarExclusao] = useState<{ usuario: string; nome: string } | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function executarRemocao() {
+    if (!confirmarExclusao || excluindo) return;
+    setExcluindo(true);
+    try {
+      await removerLeitor({ data: { usuario: confirmarExclusao.usuario } });
+      setConfirmarExclusao(null);
+      await router.invalidate();
+      notificar(`Leitor ${confirmarExclusao.nome} removido da casa com sucesso!`, "sucesso");
+    } catch (e: any) {
+      console.error(e);
+      notificar(e.message || "Erro ao remover leitor.", "erro");
+    } finally {
+      setExcluindo(false);
+    }
+  }
 
   return (
     <div className="min-h-dvh pb-24">
@@ -103,7 +124,6 @@ function PaginaLeitores() {
               })
               .map((l) => {
                 const nome = l.nome || l.usuario || "Leitor";
-                const inicial = nome.charAt(0).toUpperCase();
                 const eVoce = Boolean(usuarioLogado && l.usuario === usuarioLogado);
 
                 return (
@@ -128,6 +148,28 @@ function PaginaLeitores() {
                         {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
                       </p>
                     </div>
+
+                    {/* Botão de Excluir Leitor: Visível apenas para a moderadora judaviluis (id === 1) e não para ela mesma */}
+                    {sessao?.autenticado && sessao.id === 1 && !eVoce && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setConfirmarExclusao({ usuario: l.usuario, nome });
+                        }}
+                        className="z-10 shrink-0 p-2.5 rounded-xl border border-amora/20 hover:border-amora bg-amora-clara/20 hover:bg-amora hover:text-papel text-amora transition-all cursor-pointer active:scale-95 flex items-center justify-center"
+                        title={`Remover ${nome} da casa`}
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 fill-none stroke-current" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </button>
+                    )}
+
                     <span aria-hidden className="text-tinta-3 transition-transform duration-300 motion-safe:group-hover:translate-x-1">
                       →
                     </span>
@@ -143,6 +185,53 @@ function PaginaLeitores() {
         fechar={() => setModalAberto(false)}
         convites={convites}
       />
+
+      {/* Modal de Confirmação para Remover Leitor */}
+      {confirmarExclusao && typeof document !== "undefined" && createPortal(
+        <div
+          className="modal-backdrop z-[70]"
+          onClick={() => !excluindo && setConfirmarExclusao(null)}
+        >
+          <div
+            className="relative w-full max-w-md my-auto rounded-3xl border border-papel-3 bg-papel p-6 shadow-2xl surgir space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-amora">
+              <div className="rounded-xl bg-amora-clara p-2.5">
+                <svg viewBox="0 0 24 24" className="h-6 w-6 text-amora" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-tinta">Remover leitor da casa?</h3>
+            </div>
+
+            <p className="text-sm text-tinta-2 leading-relaxed">
+              Tem certeza de que deseja remover <strong>{confirmarExclusao.nome}</strong> (@{confirmarExclusao.usuario})?
+            </p>
+            <p className="text-xs text-amora font-medium leading-relaxed bg-amora-clara/40 border border-amora/20 p-3 rounded-2xl">
+              ⚠️ Esta ação é irreversível. Todos os livros da estante, progresso de leitura, opiniões e histórico de conquistas deste leitor serão excluídos permanentemente.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setConfirmarExclusao(null)}
+                disabled={excluindo}
+                className="rounded-xl border border-papel-3 px-4 py-2.5 text-sm text-tinta-2 transition-colors hover:border-amora hover:text-amora cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executarRemocao}
+                disabled={excluindo}
+                className="rounded-xl bg-amora px-5 py-2.5 text-sm font-medium text-papel transition-colors hover:bg-amora-escura active:translate-y-[1px] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {excluindo ? "Removendo..." : "Confirmar Remoção"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

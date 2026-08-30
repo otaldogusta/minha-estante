@@ -410,3 +410,17 @@ export const atualizarStatusPresenca = createServerFn({ method: "POST" })
     }
     return { ok: true as const, status: data.status };
   });
+
+export const removerLeitor = createServerFn({ method: "POST" })
+  .validator(z.object({ usuario: z.string() }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    if (u.id !== 1) {
+      throw new Error("Apenas o moderador da casa pode remover leitores.");
+    }
+    if (u.usuario === data.usuario) {
+      throw new Error("Você não pode remover a si mesma.");
+    }
+    await db().prepare("DELETE FROM usuarios WHERE usuario = ?").bind(data.usuario).run();
+    return { ok: true };
+  });
