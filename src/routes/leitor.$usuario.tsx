@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 
 import { obterPerfilPublico } from "../lib/api/livros.functions";
 import { diasDeLeitura, notaFmt } from "../lib/livros";
@@ -17,6 +17,18 @@ export const Route = createFileRoute("/leitor/$usuario")({
 
 function PaginaPerfil() {
   const perfil = Route.useLoaderData();
+  const router = useRouter();
+
+  // Polling para sincronizar o perfil e status de presença em tempo real
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        router.invalidate();
+      }
+    }, 10000); // 10 segundos
+    return () => clearInterval(interval);
+  }, [router]);
+
   const { livros } = perfil;
 
   const lendo = livros.filter((l) => l.status === "lendo");
