@@ -428,7 +428,7 @@ async function limparEExtrairHtmlInterno(
         if (isButton) {
           el.setAttribute("class", "inline-flex items-center justify-center rounded-xl bg-[#7a3b52] hover:bg-[#5e2c3f] text-white font-semibold text-xs px-5 py-3 shadow-md transition-colors my-4 cursor-pointer no-underline");
         } else {
-          el.setAttribute("class", "text-amora hover:underline font-semibold" + (deveCentralizar ? " text-center block w-full" : ""));
+          el.setAttribute("class", "text-amora hover:underline font-semibold");
         }
       }
       
