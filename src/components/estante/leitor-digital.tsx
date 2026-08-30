@@ -187,6 +187,42 @@ export function LeitorDigital({
     }
   }
 
+  const [mostrarControles, setMostrarControles] = useState<boolean>(true);
+
+  // Exibe onboarding sobre toque/arraste uma única vez por sessão
+  useEffect(() => {
+    const dicaMostrada = sessionStorage.getItem("dica-leitor-readera");
+    if (!dicaMostrada) {
+      const timer = setTimeout(() => {
+        notificar("💡 Toque nas laterais para mudar de página e no centro para ocultar os menus!", "info");
+        sessionStorage.setItem("dica-leitor-readera", "true");
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Toque nas laterais muda página, no centro oculta menus (estilo Kindle/ReadEra)
+  function handleCardClick(e: React.MouseEvent<HTMLElement>) {
+    const selecao = window.getSelection();
+    if (selecao && selecao.toString().trim() !== "") return;
+    if ((e.target as HTMLElement).closest("button, a, input, label")) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const largura = rect.width;
+
+    if (x < largura * 0.22) {
+      // Margem esquerda (22%): página anterior
+      mudarPagina(paginaAtual - 1);
+    } else if (x > largura * 0.78) {
+      // Margem direita (22%): próxima página
+      mudarPagina(paginaAtual + 1);
+    } else {
+      // Centro (56%): alterna menus
+      setMostrarControles((prev) => !prev);
+    }
+  }
+
   // Sincroniza página atual com a estante via debounce
   function mudarPagina(novaPag: number) {
     if (novaPag < 1 || novaPag > totalPaginas) return;
@@ -250,7 +286,9 @@ export function LeitorDigital({
   return (
     <div className={`h-dvh transition-colors duration-300 ${temaStyles[tema]} flex flex-col font-serif overflow-hidden`}>
       {/* Top Header do Leitor */}
-      <header className="sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-md flex items-center justify-between gap-4 border-inherit bg-inherit/90">
+      <header className={`sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-md flex items-center justify-between gap-4 border-inherit bg-inherit/90 transition-all duration-300 ${
+        mostrarControles ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
+      }`}>
         <div className="flex items-center gap-3">
           <Link
             to="/livro/$livroId"
@@ -319,9 +357,10 @@ export function LeitorDigital({
       {/* Área Principal de Leitura */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden">
         <article
+          onClick={handleCardClick}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className={`rounded-2xl border p-6 sm:p-10 transition-all leading-relaxed ${papelCard[tema]} cursor-default flex-1 min-h-0 flex flex-col overflow-hidden`}
+          className={`rounded-2xl border p-6 sm:p-10 transition-all duration-300 leading-relaxed ${papelCard[tema]} cursor-default flex-1 min-h-0 flex flex-col overflow-hidden select-none active:scale-[0.99]`}
           style={{ fontSize: `${tamanhoFonte}px`, lineHeight: 1.8 }}
         >
           <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-6 font-sans">
@@ -379,7 +418,9 @@ export function LeitorDigital({
         </article>
 
         {/* Botões de navegação e ação */}
-        <div className="mt-4 sm:mt-6 flex-shrink-0 flex flex-col gap-4 font-sans">
+        <div className={`mt-4 sm:mt-6 flex-shrink-0 flex flex-col gap-4 font-sans transition-all duration-300 ${
+          mostrarControles ? "opacity-100 max-h-40 translate-y-0" : "opacity-0 max-h-0 translate-y-4 overflow-hidden pointer-events-none mt-0"
+        }`}>
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => mudarPagina(paginaAtual - 1)}
@@ -420,7 +461,9 @@ export function LeitorDigital({
       </main>
 
       {/* Barra Inferior com Fita de Progresso */}
-      <footer className="sticky bottom-0 border-t px-4 py-3 backdrop-blur-md flex items-center justify-center border-inherit bg-inherit/90">
+      <footer className={`sticky bottom-0 border-t px-4 py-3 backdrop-blur-md flex items-center justify-center border-inherit bg-inherit/90 transition-all duration-300 ${
+        mostrarControles ? "translate-y-0 opacity-100" : "translate-y-1 opacity-80 border-t-transparent bg-transparent"
+      }`}>
         <div className="w-full max-w-md px-4">
           <div className="h-1.5 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
             <div
