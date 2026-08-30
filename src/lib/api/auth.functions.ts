@@ -188,10 +188,10 @@ export const validarConvite = createServerFn({ method: "GET" })
          WHERE c.codigo = ?`
       )
       .bind(data.codigo)
-      .first<{ usado_por: number | null; convidou: string; expirado: number }>();
+      .first<{ usado_por: number | null; convidou: string; expirado: number | boolean }>();
     if (!row) return { valido: false as const };
     if (row.usado_por) return { valido: false as const, usado: true };
-    if (row.expirado === 1) return { valido: false as const, expirado: true };
+    if (Boolean(row.expirado)) return { valido: false as const, expirado: true };
     return { valido: true as const, convidou: row.convidou };
   });
 
@@ -212,8 +212,8 @@ export const cadastrarComConvite = createServerFn({ method: "POST" })
          FROM convites WHERE codigo = ?`
       )
       .bind(data.codigo)
-      .first<{ usado_por: number | null; expirado: number }>();
-    if (!convite || convite.usado_por || convite.expirado === 1) {
+      .first<{ usado_por: number | null; expirado: number | boolean }>();
+    if (!convite || convite.usado_por || Boolean(convite.expirado)) {
       return { ok: false as const, erro: "Convite inválido, expirado ou já usado." };
     }
 

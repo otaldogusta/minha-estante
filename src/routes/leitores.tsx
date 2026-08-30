@@ -275,6 +275,9 @@ function ModalConvites({
       await criarConvite();
       await router.invalidate();
       notificar("Convite de leitor gerado!");
+    } catch (e: any) {
+      console.error("Erro ao gerar convite:", e);
+      notificar(e.message || "Erro ao gerar convite.", "erro");
     } finally {
       setGerando(false);
     }
@@ -286,6 +289,9 @@ function ModalConvites({
       await revogarConvite({ data: { codigo } });
       await router.invalidate();
       notificar("Convite revogado.");
+    } catch (e: any) {
+      console.error("Erro ao revogar convite:", e);
+      notificar(e.message || "Erro ao revogar convite.", "erro");
     } finally {
       setRevogando(null);
     }
@@ -300,8 +306,8 @@ function ModalConvites({
     }
   }
 
-  const pendentesAtivos = convites.filter((c) => !c.usado_em && c.expirado === 0);
-  const pendentesExpirados = convites.filter((c) => !c.usado_em && c.expirado === 1);
+  const pendentesAtivos = convites.filter((c) => !c.usado_em && !c.expirado);
+  const pendentesExpirados = convites.filter((c) => !c.usado_em && !!c.expirado);
   const usados = convites.filter((c) => c.usado_em);
   const limiteAtingido = pendentesAtivos.length >= 3;
 
