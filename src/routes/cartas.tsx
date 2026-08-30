@@ -265,6 +265,16 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
 function PaginaCartas() {
   const { recebidas, enviadas, destinatarios, livros } = Route.useLoaderData();
   const router = useRouter();
+
+  // Polling para sincronizar cartas em tempo real
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        router.invalidate();
+      }
+    }, 10000); // 10 segundos
+    return () => clearInterval(interval);
+  }, [router]);
   const [aba, setAba] = useState<"recebidas" | "enviadas" | "escrever">("recebidas");
   const [para, setPara] = useState<number[]>([]);
   const [busca, setBusca] = useState("");
