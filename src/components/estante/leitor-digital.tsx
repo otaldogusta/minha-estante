@@ -11,31 +11,39 @@ type TemaLeitor = "claro" | "sepia" | "noturno";
 function paginarTexto(texto: string, limite = 1200): string[] {
   if (texto.startsWith("[") && texto.endsWith("]")) {
     try {
-      const blocks = JSON.parse(texto);
-      if (Array.isArray(blocks)) {
+      const fileGroups = JSON.parse(texto);
+      if (Array.isArray(fileGroups)) {
         const paginas: string[] = [];
-        let paginaAtual: string[] = [];
-        let lengthAtual = 0;
+        const isGroupedByFile = Array.isArray(fileGroups[0]);
         
-        for (const block of blocks) {
-          let peso = 0;
-          if (block.includes("<img")) {
-            peso = 400;
-          } else {
-            peso = block.replace(/<[^>]*>/g, "").length;
-          }
+        const groups = isGroupedByFile ? fileGroups : [fileGroups];
+        
+        for (const group of groups) {
+          if (!Array.isArray(group)) continue;
           
-          if (paginaAtual.length > 0 && (lengthAtual + peso) > limite) {
-            paginas.push(paginaAtual.join("\n"));
-            paginaAtual = [block];
-            lengthAtual = peso;
-          } else {
-            paginaAtual.push(block);
-            lengthAtual += peso;
+          let paginaAtual: string[] = [];
+          let lengthAtual = 0;
+          
+          for (const block of group) {
+            let peso = 0;
+            if (block.includes("<img")) {
+              peso = 400;
+            } else {
+              peso = block.replace(/<[^>]*>/g, "").length;
+            }
+            
+            if (paginaAtual.length > 0 && (lengthAtual + peso) > limite) {
+              paginas.push(paginaAtual.join("\n"));
+              paginaAtual = [block];
+              lengthAtual = peso;
+            } else {
+              paginaAtual.push(block);
+              lengthAtual += peso;
+            }
           }
-        }
-        if (paginaAtual.length > 0) {
-          paginas.push(paginaAtual.join("\n"));
+          if (paginaAtual.length > 0) {
+            paginas.push(paginaAtual.join("\n"));
+          }
         }
         return paginas.filter(Boolean);
       }

@@ -175,7 +175,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     }
   }
 
-  const blocks: string[] = [];
+  const blocks: string[][] = [];
 
   for (const caminho of arquivosEmOrdem) {
     let zipKey = Object.keys(zip.files).find(
@@ -189,6 +189,8 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     const htmlContent = await zip.files[zipKey].async("text");
     const docDir = zipKey.substring(0, zipKey.lastIndexOf("/") + 1);
     
+    const fileBlocks: string[] = [];
+
     if (typeof DOMParser !== "undefined") {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, "text/html");
@@ -208,7 +210,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
           if (src) {
             const base64 = await extrairImagemEpub(src, docDir, zip);
             if (base64) {
-              blocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
+              fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
             }
           }
           return;
@@ -221,7 +223,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
             if (href) {
               const base64 = await extrairImagemEpub(href, docDir, zip);
               if (base64) {
-                blocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
+                fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
               }
             }
           }
@@ -231,7 +233,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         if (["H1", "H2", "H3", "H4", "H5", "H6"].includes(tagName)) {
           const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
           if (cleanHtml.trim()) {
-            blocks.push(`<h3 class="font-display font-bold text-lg my-6 text-tinta text-center">${cleanHtml}</h3>`);
+            fileBlocks.push(`<h3 class="font-display font-bold text-lg my-6 text-tinta text-center">${cleanHtml}</h3>`);
           }
           return;
         }
@@ -239,7 +241,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         if (tagName === "P") {
           const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
           if (cleanHtml.trim()) {
-            blocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+            fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
           }
           return;
         }
@@ -247,13 +249,13 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         if (tagName === "UL" || tagName === "OL") {
           const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
           const listClass = tagName === "UL" ? "list-disc pl-5 mb-4 space-y-2" : "list-decimal pl-5 mb-4 space-y-2";
-          blocks.push(`<${tagName.toLowerCase()} class="${listClass}">${cleanHtml}</${tagName.toLowerCase()}>`);
+          fileBlocks.push(`<${tagName.toLowerCase()} class="${listClass}">${cleanHtml}</${tagName.toLowerCase()}>`);
           return;
         }
         
         if (tagName === "TABLE") {
           const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
-          blocks.push(`<div class="overflow-x-auto my-4"><table class="min-w-full border border-current/15 text-sm">${cleanHtml}</table></div>`);
+          fileBlocks.push(`<div class="overflow-x-auto my-4"><table class="min-w-full border border-current/15 text-sm">${cleanHtml}</table></div>`);
           return;
         }
         
@@ -269,9 +271,9 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
           const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
           if (cleanHtml.trim()) {
             if (cleanHtml.startsWith("<a") || cleanHtml.startsWith("<img") || cleanHtml.startsWith("<div")) {
-              blocks.push(cleanHtml);
+              fileBlocks.push(cleanHtml);
             } else {
-              blocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+              fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
             }
           }
         }
@@ -283,8 +285,12 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     } else {
       const cleanText = htmlContent.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
       if (cleanText) {
-        blocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanText}</p>`);
+        fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanText}</p>`);
       }
+    }
+
+    if (fileBlocks.length > 0) {
+      blocks.push(fileBlocks);
     }
   }
 
@@ -393,17 +399,23 @@ async function limparEExtrairHtmlInterno(html: string, docDir: string, zip: any)
 export function obterTamanhoTextoReal(texto: string): number {
   if (texto.startsWith("[") && texto.endsWith("]")) {
     try {
-      const blocks: string[] = JSON.parse(texto);
-      let total = 0;
-      for (const block of blocks) {
-        if (block.includes("<img")) {
-          total += 500;
-        } else {
-          const textOnly = block.replace(/<[^>]*>/g, "");
-          total += textOnly.length;
+      const parsed = JSON.parse(texto);
+      if (Array.isArray(parsed)) {
+        const isNested = Array.isArray(parsed[0]);
+        const blocks = isNested ? parsed.flat() : parsed;
+        
+        let total = 0;
+        for (const block of blocks) {
+          if (typeof block !== "string") continue;
+          if (block.includes("<img")) {
+            total += 500;
+          } else {
+            const textOnly = block.replace(/<[^>]*>/g, "");
+            total += textOnly.length;
+          }
         }
+        return total;
       }
-      return total;
     } catch {
       // Fallback
     }
