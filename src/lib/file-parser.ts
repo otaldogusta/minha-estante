@@ -203,6 +203,35 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
           return;
         }
         
+        if (tagName === "A") {
+          const img = node.querySelector("img");
+          if (img) {
+            const src = img.getAttribute("src");
+            if (src) {
+              const base64 = await extrairImagemEpub(src, docDir, zip);
+              if (base64) {
+                const href = node.getAttribute("href") || "";
+                blocks.push(`<div class="flex justify-center my-6"><a href="${href}" target="_blank" rel="noopener noreferrer"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain cursor-pointer transition-transform hover:scale-102" /></a></div>`);
+                return;
+              }
+            }
+          }
+          
+          const cleanHtml = limparHtmlInterno(node.innerHTML);
+          if (cleanHtml.trim()) {
+            const href = node.getAttribute("href") || "";
+            const origClass = node.getAttribute("class") || "";
+            const isButton = origClass.includes("btn") || origClass.includes("button") || origClass.includes("cta") || node.getAttribute("role") === "button";
+            
+            if (isButton) {
+              blocks.push(`<div class="flex justify-center my-4"><a href="${href}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-xl bg-[#7a3b52] hover:bg-[#5e2c3f] text-white font-semibold text-xs px-5 py-3 shadow-md transition-colors no-underline">${cleanHtml}</a></div>`);
+            } else {
+              blocks.push(`<p class="mb-4 text-justify leading-relaxed"><a href="${href}" target="_blank" rel="noopener noreferrer" class="text-amora hover:underline font-semibold">${cleanHtml}</a></p>`);
+            }
+          }
+          return;
+        }
+        
         if (["H1", "H2", "H3", "H4", "H5", "H6"].includes(tagName)) {
           const cleanHtml = limparHtmlInterno(node.innerHTML);
           if (cleanHtml.trim()) {
@@ -333,6 +362,10 @@ function limparHtmlInterno(html: string): string {
     
     const todosElementos = container.querySelectorAll("*");
     todosElementos.forEach((el) => {
+      const origClass = el.getAttribute("class") || "";
+      const origRole = el.getAttribute("role") || "";
+      const isButton = origClass.includes("btn") || origClass.includes("button") || origClass.includes("cta") || origRole === "button";
+      
       el.removeAttribute("style");
       el.removeAttribute("class");
       el.removeAttribute("id");
@@ -340,7 +373,11 @@ function limparHtmlInterno(html: string): string {
       if (el.tagName.toUpperCase() === "A") {
         el.setAttribute("target", "_blank");
         el.setAttribute("rel", "noopener noreferrer");
-        el.setAttribute("class", "text-amora hover:underline font-semibold");
+        if (isButton) {
+          el.setAttribute("class", "inline-flex items-center justify-center rounded-xl bg-[#7a3b52] hover:bg-[#5e2c3f] text-white font-semibold text-xs px-5 py-3 shadow-md transition-colors my-4 cursor-pointer no-underline");
+        } else {
+          el.setAttribute("class", "text-amora hover:underline font-semibold");
+        }
       }
     });
     
