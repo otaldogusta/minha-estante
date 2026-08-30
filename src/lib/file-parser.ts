@@ -203,6 +203,21 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
   const blocks: string[][] = [];
 
   for (const caminho of arquivosEmOrdem) {
+    // Evita duplicar a capa se o primeiro arquivo da espinha for a página da capa
+    const isFirstFile = caminho === arquivosEmOrdem[0];
+    const isCoverFile = 
+      caminho.toLowerCase().includes("cover") || 
+      caminho.toLowerCase().includes("titlepage") || 
+      caminho.toLowerCase().includes("capa") ||
+      (coverImageHref && (
+        caminho.toLowerCase() === coverImageHref.toLowerCase() ||
+        caminho.toLowerCase().endsWith(coverImageHref.toLowerCase())
+      ));
+      
+    if (isFirstFile && isCoverFile && (capaBase64 || coverImageHref)) {
+      continue;
+    }
+
     let zipKey = Object.keys(zip.files).find(
       (k) => k.toLowerCase() === caminho.toLowerCase() || k.toLowerCase().endsWith(caminho.toLowerCase())
     );
