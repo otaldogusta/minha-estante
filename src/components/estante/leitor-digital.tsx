@@ -242,7 +242,9 @@ export function LeitorDigital({
   const totalPaginasTexto = paginasTexto.length;
   
   const totalPaginas = totalPaginasTexto + (temCapa ? 1 : 0);
-  const progresso = Math.min(100, Math.round((paginaAtual / totalPaginas) * 100));
+  const progresso = totalPaginas > 0 && !isNaN(totalPaginas)
+    ? Math.min(100, Math.round((paginaAtual / totalPaginas) * 100))
+    : 0;
 
   // Se tem capa, a página 1 exibe a capa. As páginas de texto começam na página 2.
   const exibindoCapa = temCapa && paginaAtual === 1;
@@ -363,8 +365,16 @@ export function LeitorDigital({
     const href = anchor.getAttribute("href");
     if (!href) return;
 
-    // Links externos abrem normalmente em nova aba
+    // Links externos exibem um aviso confirmando a saída do aplicativo
     if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+      e.preventDefault();
+      e.stopPropagation();
+      const confirmado = window.confirm(
+        `Você está saindo do aplicativo Minha Estante para acessar o link:\n\n${href}\n\nDeseja continuar?`
+      );
+      if (confirmado) {
+        window.open(href, "_blank", "noopener,noreferrer");
+      }
       return;
     }
 
