@@ -10,10 +10,36 @@ type TemaLeitor = "claro" | "sepia" | "noturno";
 
 function paginarTexto(texto: string, limite = 1200): string[] {
   const paragrafos = texto.split("\n\n").filter(Boolean);
+  
+  // Agrupa títulos ou números curtos (ex: "10", "SAMANTHA") ao parágrafo seguinte
+  // para evitar que fiquem sozinhos em uma página.
+  const paragrafosAgrupados: string[] = [];
+  let acumulado = "";
+
+  for (const para of paragrafos) {
+    const p = para.trim();
+    if (!p) continue;
+    
+    if (acumulado) {
+      acumulado += "\n\n" + p;
+      if (acumulado.length > 150) {
+        paragrafosAgrupados.push(acumulado);
+        acumulado = "";
+      }
+    } else if (p.length < 80) {
+      acumulado = p;
+    } else {
+      paragrafosAgrupados.push(p);
+    }
+  }
+  if (acumulado) {
+    paragrafosAgrupados.push(acumulado);
+  }
+
   const paginas: string[] = [];
   let paginaAtual = "";
   
-  for (const para of paragrafos) {
+  for (const para of paragrafosAgrupados) {
     if ((paginaAtual + "\n\n" + para).length > limite) {
       if (paginaAtual) {
         paginas.push(paginaAtual);
