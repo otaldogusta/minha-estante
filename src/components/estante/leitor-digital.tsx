@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { atualizarProgresso } from "../../lib/api/livros.functions";
 import { notificar } from "../../lib/toast";
 import type { Livro } from "../../lib/livros";
+import { obterConteudoLocal } from "../../lib/db-local";
 
 type TemaLeitor = "claro" | "sepia" | "noturno";
 
@@ -21,14 +22,35 @@ export function LeitorDigital({
   const [sincronizado, setSincronizado] = useState<boolean>(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [textoLocal, setTextoLocal] = useState<string | null>(null);
+  const [carregandoLocal, setCarregandoLocal] = useState<boolean>(true);
+
+  // Carrega o conteúdo textual do IndexedDB se existir
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const txt = await obterConteudoLocal(livro.id);
+        if (txt) {
+          setTextoLocal(txt);
+        }
+      } catch (e) {
+        console.error("Erro ao carregar texto local:", e);
+      } finally {
+        setCarregandoLocal(false);
+      }
+    }
+    carregar();
+  }, [livro.id]);
+
   // Calcula total de páginas estimadas ou usa o do livro
   const totalPaginas = Math.max(livro.paginas || 50, 1);
   const progresso = Math.min(100, Math.round((paginaAtual / totalPaginas) * 100));
 
-  // Texto do livro (prioriza texto carregado online/gutenberg, depois sinopse/conteudo salvo)
-  const temTextoReal = Boolean(conteudoTexto || (livro.sinopse && livro.sinopse.length > 50));
+  // Texto do livro (prioriza texto local/IndexedDB, depois carregado online/gutenberg, depois sinopse/conteudo salvo)
+  const temTextoReal = Boolean(textoLocal || conteudoTexto || (livro.sinopse && livro.sinopse.length > 50));
   
   const textoBase =
+    textoLocal ||
     conteudoTexto ||
     livro.sinopse ||
     `Sobre este Livro\n\n"${livro.titulo}" de ${livro.autor}.\n\nEste livro foi adicionado à sua estante pessoal no formato ${livro.formato || "Físico"}.\n\nVocê pode usar este leitor digital para acompanhar o número de páginas e sincronizar o marcador de leitura em tempo real com a sua estante. Para ler o texto completo diretamente na tela, adicione um dos clássicos abertos do Acervo ou faça o upload do seu arquivo EPUB/PDF.`;
@@ -87,6 +109,17 @@ export function LeitorDigital({
     sepia: "bg-[#fbf7ee]/95 shadow-md border-[#e5d8c0]",
     noturno: "bg-[#1e1924] shadow-md border-[#32293d]",
   };
+
+  if (carregandoLocal) {
+    return (
+      <div className={`min-h-dvh flex items-center justify-center transition-colors duration-300 ${temaStyles[tema]} font-sans`}>
+        <div className="text-center space-y-4">
+          <div className="h-8 w-8 border-3 border-amora border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm font-medium opacity-80">Carregando conteúdo do livro...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-dvh transition-colors duration-300 ${temaStyles[tema]} flex flex-col font-serif`}>
