@@ -212,7 +212,7 @@ export function LeitorDigital({
 
   if (carregandoLocal) {
     return (
-      <div className={`min-h-dvh flex items-center justify-center transition-colors duration-300 ${temaStyles[tema]} font-sans`}>
+      <div className={`h-dvh flex items-center justify-center transition-colors duration-300 ${temaStyles[tema]} font-sans overflow-hidden`}>
         <div className="text-center space-y-4">
           <div className="h-8 w-8 border-3 border-amora border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm font-medium opacity-80">Carregando conteúdo do livro...</p>
@@ -222,7 +222,7 @@ export function LeitorDigital({
   }
 
   return (
-    <div className={`min-h-dvh transition-colors duration-300 ${temaStyles[tema]} flex flex-col font-serif`}>
+    <div className={`h-dvh transition-colors duration-300 ${temaStyles[tema]} flex flex-col font-serif overflow-hidden`}>
       {/* Top Header do Leitor */}
       <header className="sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-md flex items-center justify-between gap-4 border-inherit bg-inherit/90">
         <div className="flex items-center gap-3">
@@ -291,18 +291,18 @@ export function LeitorDigital({
       </header>
 
       {/* Área Principal de Leitura */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col justify-between">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden">
         <article
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className={`rounded-2xl border p-6 sm:p-12 transition-all leading-relaxed ${papelCard[tema]} cursor-default min-h-[460px] sm:min-h-[540px] md:min-h-[580px] flex flex-col`}
+          className={`rounded-2xl border p-6 sm:p-10 transition-all leading-relaxed ${papelCard[tema]} cursor-default flex-1 min-h-0 flex flex-col overflow-hidden`}
           style={{ fontSize: `${tamanhoFonte}px`, lineHeight: 1.8 }}
         >
-          <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-8 font-sans">
+          <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-6 font-sans">
             {exibindoCapa ? "Capa do Livro" : `Página ${paginaAtual} de ${totalPaginas}`}
           </div>
 
-          <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20 flex-1 flex flex-col justify-start">
+          <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20 flex-1 overflow-y-auto pr-1 min-h-0 flex flex-col justify-start">
             {precisaCarregarArquivo ? (
               <div className="flex-1 flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-6 font-sans">
                 <div className="h-16 w-16 bg-amora/10 text-amora rounded-full flex items-center justify-center">
@@ -353,7 +353,7 @@ export function LeitorDigital({
         </article>
 
         {/* Botões de navegação e ação */}
-        <div className="mt-8 flex flex-col gap-4 font-sans">
+        <div className="mt-4 sm:mt-6 flex-shrink-0 flex flex-col gap-4 font-sans">
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => mudarPagina(paginaAtual - 1)}
