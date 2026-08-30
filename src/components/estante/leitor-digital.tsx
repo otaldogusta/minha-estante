@@ -432,8 +432,6 @@ export function LeitorDigital({
 
             <div className="text-center font-num text-xs opacity-75">
               <span>{progresso}% lido</span>
-              {salvando && <span className="ml-2 text-xs animate-pulse">• salvando...</span>}
-              {sincronizado && <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">✓ Sincronizado</span>}
             </div>
 
             {paginaAtual < totalPaginas ? (
