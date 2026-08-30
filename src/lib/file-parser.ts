@@ -175,6 +175,22 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     }
   }
 
+  // Encontra classes centralizadas nos arquivos CSS do zip
+  const classesCentralizadas = new Set<string>();
+  for (const key of Object.keys(zip.files)) {
+    if (key.endsWith(".css")) {
+      try {
+        const cssContent = await zip.files[key].async("text");
+        const matches = cssContent.matchAll(/\.([a-zA-Z0-9_-]+)\s*\{[^}]*text-align\s*:\s*center[^}]*\}/gi);
+        for (const match of matches) {
+          classesCentralizadas.add(match[1]);
+        }
+      } catch (e) {
+        console.error("Erro ao analisar CSS:", key, e);
+      }
+    }
+  }
+
   const blocks: string[][] = [];
 
   for (const caminho of arquivosEmOrdem) {
@@ -210,7 +226,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
           if (src) {
             const base64 = await extrairImagemEpub(src, docDir, zip);
             if (base64) {
-              fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
+              fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="max-w-full max-h-[320px] object-contain my-2 mx-auto block mix-blend-multiply dark:mix-blend-normal" /></div>`);
             }
           }
           return;
@@ -223,7 +239,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
             if (href) {
               const base64 = await extrairImagemEpub(href, docDir, zip);
               if (base64) {
-                fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block" /></div>`);
+                fileBlocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="max-w-full max-h-[320px] object-contain my-2 mx-auto block mix-blend-multiply dark:mix-blend-normal" /></div>`);
               }
             }
           }
@@ -231,7 +247,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         }
         
         if (["H1", "H2", "H3", "H4", "H5", "H6"].includes(tagName)) {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
           if (cleanHtml.trim()) {
             fileBlocks.push(`<h3 class="font-display font-bold text-lg my-6 text-tinta text-center">${cleanHtml}</h3>`);
           }
@@ -239,22 +255,33 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
         }
         
         if (tagName === "P") {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
           if (cleanHtml.trim()) {
-            fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+            const nodeClass = node.getAttribute("class") || "";
+            const classesOriginais = nodeClass.split(/\s+/).filter(Boolean);
+            const deveCentralizar = classesOriginais.some(cls => classesCentralizadas.has(cls)) || 
+                                   (node.getAttribute("style") || "").includes("text-align: center") ||
+                                   (node.getAttribute("style") || "").includes("text-align:center") ||
+                                   node.getAttribute("align") === "center";
+            
+            if (deveCentralizar) {
+              fileBlocks.push(`<p class="mb-4 text-center leading-relaxed w-full block">${cleanHtml}</p>`);
+            } else {
+              fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+            }
           }
           return;
         }
         
         if (tagName === "UL" || tagName === "OL") {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
           const listClass = tagName === "UL" ? "list-disc pl-5 mb-4 space-y-2" : "list-decimal pl-5 mb-4 space-y-2";
           fileBlocks.push(`<${tagName.toLowerCase()} class="${listClass}">${cleanHtml}</${tagName.toLowerCase()}>`);
           return;
         }
         
         if (tagName === "TABLE") {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
           fileBlocks.push(`<div class="overflow-x-auto my-4"><table class="min-w-full border border-current/15 text-sm">${cleanHtml}</table></div>`);
           return;
         }
@@ -268,10 +295,19 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
             await processarNo(child);
           }
         } else {
-          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip);
+          const cleanHtml = await limparEExtrairHtmlInterno(node.innerHTML, docDir, zip, classesCentralizadas);
           if (cleanHtml.trim()) {
+            const nodeClass = node.getAttribute("class") || "";
+            const classesOriginais = nodeClass.split(/\s+/).filter(Boolean);
+            const deveCentralizar = classesOriginais.some(cls => classesCentralizadas.has(cls)) || 
+                                   (node.getAttribute("style") || "").includes("text-align: center") ||
+                                   (node.getAttribute("style") || "").includes("text-align:center") ||
+                                   node.getAttribute("align") === "center";
+
             if (cleanHtml.startsWith("<a") || cleanHtml.startsWith("<img") || cleanHtml.startsWith("<div")) {
               fileBlocks.push(cleanHtml);
+            } else if (deveCentralizar) {
+              fileBlocks.push(`<p class="mb-4 text-center leading-relaxed w-full block">${cleanHtml}</p>`);
             } else {
               fileBlocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
             }
@@ -333,7 +369,12 @@ async function extrairImagemEpub(href: string, baseDir: string, zip: any): Promi
   return null;
 }
 
-async function limparEExtrairHtmlInterno(html: string, docDir: string, zip: any): Promise<string> {
+async function limparEExtrairHtmlInterno(
+  html: string,
+  docDir: string,
+  zip: any,
+  classesCentralizadas: Set<string>
+): Promise<string> {
   if (typeof DOMParser === "undefined") return html;
   try {
     const parser = new DOMParser();
@@ -371,6 +412,12 @@ async function limparEExtrairHtmlInterno(html: string, docDir: string, zip: any)
       const origRole = el.getAttribute("role") || "";
       const isButton = origClass.includes("btn") || origClass.includes("button") || origClass.includes("cta") || origRole === "button";
       
+      const classesOriginais = origClass.split(/\s+/).filter(Boolean);
+      const deveCentralizar = classesOriginais.some(cls => classesCentralizadas.has(cls)) || 
+                             el.getAttribute("align") === "center" || 
+                             (el.getAttribute("style") || "").includes("text-align: center") ||
+                             (el.getAttribute("style") || "").includes("text-align:center");
+
       el.removeAttribute("style");
       el.removeAttribute("class");
       el.removeAttribute("id");
@@ -381,12 +428,18 @@ async function limparEExtrairHtmlInterno(html: string, docDir: string, zip: any)
         if (isButton) {
           el.setAttribute("class", "inline-flex items-center justify-center rounded-xl bg-[#7a3b52] hover:bg-[#5e2c3f] text-white font-semibold text-xs px-5 py-3 shadow-md transition-colors my-4 cursor-pointer no-underline");
         } else {
-          el.setAttribute("class", "text-amora hover:underline font-semibold");
+          el.setAttribute("class", "text-amora hover:underline font-semibold" + (deveCentralizar ? " text-center block w-full" : ""));
+        }
+      }
+      
+      if (el.tagName.toUpperCase() === "P" || el.tagName.toUpperCase() === "DIV") {
+        if (deveCentralizar) {
+          el.setAttribute("class", "text-center w-full block");
         }
       }
       
       if (el.tagName.toUpperCase() === "IMG") {
-        el.setAttribute("class", "rounded-xl shadow-md max-w-full max-h-[320px] object-contain my-2 mx-auto block");
+        el.setAttribute("class", "max-w-full max-h-[320px] object-contain my-2 mx-auto block mix-blend-multiply dark:mix-blend-normal");
       }
     });
     
