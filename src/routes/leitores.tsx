@@ -75,6 +75,16 @@ function PaginaLeitores() {
   const [modalAberto, setModalAberto] = useState(false);
   const usuarioLogado = sessao?.autenticado ? sessao.usuario : null;
 
+  // Polling para sincronizar status de presença e leitores em tempo real
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        router.invalidate();
+      }
+    }, 10000); // 10 segundos
+    return () => clearInterval(interval);
+  }, [router]);
+
   const [confirmarExclusao, setConfirmarExclusao] = useState<{ usuario: string; nome: string } | null>(null);
   const [excluindo, setExcluindo] = useState(false);
 
@@ -252,9 +262,15 @@ function ModalConvites({
   }>;
 }) {
   const router = useRouter();
+  const [localConvites, setLocalConvites] = useState(convites);
   const [gerando, setGerando] = useState(false);
   const [copiado, setCopiado] = useState<string | null>(null);
   const [revogando, setRevogando] = useState<string | null>(null);
+
+  // Keep local list in sync with server updates
+  useEffect(() => {
+    setLocalConvites(convites);
+  }, [convites]);
 
   useEffect(() => {
     if (!aberto) return;
@@ -269,34 +285,6 @@ function ModalConvites({
   const linkDe = (codigo: string) =>
     (typeof window !== "undefined" ? window.location.origin : "") + `/convite/${codigo}`;
 
-  async function gerar() {
-    setGerando(true);
-    try {
-      await criarConvite();
-      await router.invalidate();
-      notificar("Convite de leitor gerado!");
-    } catch (e: any) {
-      console.error("Erro ao gerar convite:", e);
-      notificar(e.message || "Erro ao gerar convite.", "erro");
-    } finally {
-      setGerando(false);
-    }
-  }
-
-  async function revogar(codigo: string) {
-    setRevogando(codigo);
-    try {
-      await revogarConvite({ data: { codigo } });
-      await router.invalidate();
-      notificar("Convite revogado.");
-    } catch (e: any) {
-      console.error("Erro ao revogar convite:", e);
-      notificar(e.message || "Erro ao revogar convite.", "erro");
-    } finally {
-      setRevogando(null);
-    }
-  }
-
   async function copiar(codigo: string) {
     const ok = await copiarTexto(linkDe(codigo));
     if (ok) {
@@ -306,10 +294,56 @@ function ModalConvites({
     }
   }
 
-  const pendentesAtivos = convites.filter((c) => !c.usado_em && !c.expirado);
-  const pendentesExpirados = convites.filter((c) => !c.usado_em && !!c.expirado);
-  const usados = convites.filter((c) => c.usado_em);
+  const pendentesAtivos = localConvites.filter((c) => !c.usado_em && !c.expirado);
+  const pendentesExpirados = localConvites.filter((c) => !c.usado_em && !!c.expirado);
+  const usados = localConvites.filter((c) => c.usado_em);
   const limiteAtingido = pendentesAtivos.length >= 3;
+
+  async function gerar() {
+    if (gerando || limiteAtingido) return;
+    setGerando(true);
+    try {
+      const res = await criarConvite();
+      if (res && res.codigo) {
+        // Copia automaticamente o link gerado!
+        await copiar(res.codigo);
+        // Adiciona otimisticamente na lista local imediatamente!
+        const novoConvite = {
+          codigo: res.codigo,
+          criado_em: new Date().toISOString(),
+          usado_em: null,
+          usado_por_nome: null,
+          expirado: 0,
+        };
+        setLocalConvites((prev) => [novoConvite, ...prev]);
+      }
+      await router.invalidate();
+    } catch (e: any) {
+      console.error("Erro ao gerar convite:", e);
+      notificar(e.message || "Erro ao gerar convite.", "erro");
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  async function revogar(codigo: string) {
+    if (revogando) return;
+    setRevogando(codigo);
+    // Remove otimisticamente da lista local imediatamente!
+    setLocalConvites((prev) => prev.filter((c) => c.codigo !== codigo));
+    try {
+      await revogarConvite({ data: { codigo } });
+      await router.invalidate();
+      notificar("Convite revogado.");
+    } catch (e: any) {
+      console.error("Erro ao revogar convite:", e);
+      notificar(e.message || "Erro ao revogar convite.", "erro");
+      // Se falhar, restaura
+      setLocalConvites(convites);
+    } finally {
+      setRevogando(null);
+    }
+  }
 
   return (
     <div 
