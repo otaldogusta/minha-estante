@@ -406,9 +406,11 @@ export function LeitorDigital({
           className={`rounded-2xl border p-6 sm:p-10 transition-all duration-300 leading-relaxed ${papelCard[tema]} cursor-default flex-1 min-h-0 flex flex-col overflow-hidden select-none active:scale-[0.99]`}
           style={{ fontSize: `${tamanhoFonte}px`, lineHeight: 1.8 }}
         >
-          <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-6 font-sans">
-            {exibindoCapa ? "Capa do Livro" : `Página ${paginaAtual} de ${totalPaginas}`}
-          </div>
+          {!exibindoCapa && (
+            <div className="font-display text-center text-sm uppercase tracking-widest opacity-60 mb-6 font-sans">
+              Página {paginaAtual} de {totalPaginas}
+            </div>
+          )}
 
           <div className={`text-justify selection:bg-[#7a3b52]/20 flex-1 overflow-y-auto pr-1 min-h-0 flex flex-col justify-start ${
             !exibindoCapa && !precisaCarregarArquivo && (textoPaginaAtual || "").trim().startsWith("<") ? "" : "whitespace-pre-line"
@@ -445,16 +447,12 @@ export function LeitorDigital({
                 </label>
               </div>
             ) : exibindoCapa ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-4 w-full">
-                <div className="w-48 sm:w-56 md:w-64 shadow-2xl rounded-2xl overflow-hidden border border-current/10 aspect-[2/3] bg-black/5 dark:bg-white/5 transition-transform duration-300 hover:scale-102">
-                  <img
-                    src={livro.capa!}
-                    alt={`Capa de ${livro.titulo}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h2 className="font-display text-xl font-bold mt-6 text-center text-tinta">{livro.titulo}</h2>
-                <p className="text-sm opacity-70 mt-1 text-center font-sans">{livro.autor}</p>
+              <div className="flex-1 flex items-center justify-center w-full h-full min-h-0 py-2">
+                <img
+                  src={livro.capa!}
+                  alt={`Capa de ${livro.titulo}`}
+                  className="w-full h-full max-h-full object-contain transition-transform duration-300 hover:scale-[1.01]"
+                />
               </div>
             ) : (textoPaginaAtual || "").trim().startsWith("<") ? (
               <div 
