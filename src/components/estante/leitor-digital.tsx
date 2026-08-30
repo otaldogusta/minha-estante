@@ -9,6 +9,41 @@ import { extrairDadosDeArquivo } from "../../lib/file-parser";
 type TemaLeitor = "claro" | "sepia" | "noturno";
 
 function paginarTexto(texto: string, limite = 1200): string[] {
+  if (texto.startsWith("[") && texto.endsWith("]")) {
+    try {
+      const blocks = JSON.parse(texto);
+      if (Array.isArray(blocks)) {
+        const paginas: string[] = [];
+        let paginaAtual: string[] = [];
+        let lengthAtual = 0;
+        
+        for (const block of blocks) {
+          let peso = 0;
+          if (block.includes("<img")) {
+            peso = 400;
+          } else {
+            peso = block.replace(/<[^>]*>/g, "").length;
+          }
+          
+          if (paginaAtual.length > 0 && (lengthAtual + peso) > limite) {
+            paginas.push(paginaAtual.join("\n"));
+            paginaAtual = [block];
+            lengthAtual = peso;
+          } else {
+            paginaAtual.push(block);
+            lengthAtual += peso;
+          }
+        }
+        if (paginaAtual.length > 0) {
+          paginas.push(paginaAtual.join("\n"));
+        }
+        return paginas.filter(Boolean);
+      }
+    } catch (e) {
+      console.error("Erro ao paginar blocos JSON:", e);
+    }
+  }
+
   const paragrafos = texto.split("\n\n").filter(Boolean);
   
   // Agrupa títulos ou números curtos (ex: "10", "SAMANTHA") ao parágrafo seguinte
@@ -367,7 +402,9 @@ export function LeitorDigital({
             {exibindoCapa ? "Capa do Livro" : `Página ${paginaAtual} de ${totalPaginas}`}
           </div>
 
-          <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20 flex-1 overflow-y-auto pr-1 min-h-0 flex flex-col justify-start">
+          <div className={`text-justify selection:bg-[#7a3b52]/20 flex-1 overflow-y-auto pr-1 min-h-0 flex flex-col justify-start ${
+            !exibindoCapa && !precisaCarregarArquivo && (textoPaginaAtual || "").trim().startsWith("<") ? "" : "whitespace-pre-line"
+          }`}>
             {precisaCarregarArquivo ? (
               <div className="flex-1 flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-6 font-sans">
                 <div className="h-16 w-16 bg-amora/10 text-amora rounded-full flex items-center justify-center">
@@ -411,6 +448,11 @@ export function LeitorDigital({
                 <h2 className="font-display text-xl font-bold mt-6 text-center text-tinta">{livro.titulo}</h2>
                 <p className="text-sm opacity-70 mt-1 text-center font-sans">{livro.autor}</p>
               </div>
+            ) : (textoPaginaAtual || "").trim().startsWith("<") ? (
+              <div 
+                dangerouslySetInnerHTML={{ __html: textoPaginaAtual }} 
+                className="w-full flex-1 flex flex-col justify-start"
+              />
             ) : (
               textoPaginaAtual
             )}

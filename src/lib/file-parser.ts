@@ -175,7 +175,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     }
   }
 
-  let textoCompleto = "";
+  const blocks: string[] = [];
 
   for (const caminho of arquivosEmOrdem) {
     let zipKey = Object.keys(zip.files).find(
@@ -187,24 +187,188 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     if (!zipKey) continue;
 
     const htmlContent = await zip.files[zipKey].async("text");
+    const docDir = zipKey.substring(0, zipKey.lastIndexOf("/") + 1);
     
     if (typeof DOMParser !== "undefined") {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, "text/html");
-      doc.querySelectorAll("script, style").forEach((el) => el.remove());
-      const textoLimpo = doc.body.textContent || doc.documentElement.textContent || "";
-      if (textoLimpo.trim()) {
-        textoCompleto += textoLimpo.trim() + "\n\n";
+      doc.querySelectorAll("script, style, link").forEach((el) => el.remove());
+      
+      const body = doc.body || doc.documentElement;
+      
+      const processarNo = async (node: Element) => {
+        const tagName = node.tagName.toUpperCase();
+        
+        if (["SCRIPT", "STYLE", "LINK", "META", "TITLE"].includes(tagName)) {
+          return;
+        }
+        
+        if (["H1", "H2", "H3", "H4", "H5", "H6"].includes(tagName)) {
+          const cleanHtml = limparHtmlInterno(node.innerHTML);
+          if (cleanHtml.trim()) {
+            blocks.push(`<h3 class="font-display font-bold text-lg my-6 text-tinta text-center">${cleanHtml}</h3>`);
+          }
+          return;
+        }
+        
+        if (tagName === "IMG") {
+          const src = node.getAttribute("src");
+          if (src) {
+            const base64 = await extrairImagemEpub(src, docDir, zip);
+            if (base64) {
+              blocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain" /></div>`);
+            }
+          }
+          return;
+        }
+
+        if (tagName === "SVG") {
+          const image = node.querySelector("image");
+          if (image) {
+            const href = image.getAttribute("href") || image.getAttribute("xlink:href");
+            if (href) {
+              const base64 = await extrairImagemEpub(href, docDir, zip);
+              if (base64) {
+                blocks.push(`<div class="flex justify-center my-6"><img src="${base64}" class="rounded-xl shadow-md max-w-full max-h-[320px] object-contain" /></div>`);
+              }
+            }
+          }
+          return;
+        }
+        
+        if (tagName === "P") {
+          const cleanHtml = limparHtmlInterno(node.innerHTML);
+          if (cleanHtml.trim()) {
+            blocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+          }
+          return;
+        }
+        
+        if (tagName === "UL" || tagName === "OL") {
+          const cleanHtml = limparHtmlInterno(node.innerHTML);
+          const listClass = tagName === "UL" ? "list-disc pl-5 mb-4 space-y-2" : "list-decimal pl-5 mb-4 space-y-2";
+          blocks.push(`<${tagName.toLowerCase()} class="${listClass}">${cleanHtml}</${tagName.toLowerCase()}>`);
+          return;
+        }
+        
+        if (tagName === "TABLE") {
+          const cleanHtml = limparHtmlInterno(node.innerHTML);
+          blocks.push(`<div class="overflow-x-auto my-4"><table class="min-w-full border border-current/15 text-sm">${cleanHtml}</table></div>`);
+          return;
+        }
+        
+        const hasBlockChildren = Array.from(node.children).some(child => 
+          ["P", "DIV", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "TABLE", "IMG", "SVG", "SECTION", "BLOCKQUOTE"].includes(child.tagName.toUpperCase())
+        );
+        
+        if (hasBlockChildren) {
+          for (const child of Array.from(node.children)) {
+            await processarNo(child);
+          }
+        } else {
+          const cleanHtml = limparHtmlInterno(node.innerHTML);
+          if (cleanHtml.trim()) {
+            blocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanHtml}</p>`);
+          }
+        }
+      };
+
+      for (const child of Array.from(body.children)) {
+        await processarNo(child);
       }
     } else {
-      const textoLimpo = htmlContent.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-      if (textoLimpo) {
-        textoCompleto += textoLimpo + "\n\n";
+      const cleanText = htmlContent.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      if (cleanText) {
+        blocks.push(`<p class="mb-4 text-justify leading-relaxed">${cleanText}</p>`);
       }
     }
   }
 
-  return { texto: textoCompleto, capa: capaBase64 };
+  return { texto: JSON.stringify(blocks), capa: capaBase64 };
+}
+
+function resolverCaminho(href: string, baseDir: string): string {
+  const parts = (baseDir + href).split("/");
+  const stack: string[] = [];
+  for (const part of parts) {
+    if (part === "." || part === "") continue;
+    if (part === "..") {
+      stack.pop();
+    } else {
+      stack.push(part);
+    }
+  }
+  return stack.join("/");
+}
+
+async function extrairImagemEpub(href: string, baseDir: string, zip: any): Promise<string | null> {
+  const caminhoResolvido = resolverCaminho(href, baseDir);
+  const decodedPath = decodeURIComponent(caminhoResolvido);
+  let zipKey = Object.keys(zip.files).find(
+    (k) => k.toLowerCase() === decodedPath.toLowerCase() || k.toLowerCase().endsWith(decodedPath.toLowerCase())
+  );
+  if (!zipKey && zip.files[decodedPath]) {
+    zipKey = decodedPath;
+  }
+  if (zipKey) {
+    try {
+      const base64Content = await zip.files[zipKey].async("base64");
+      const ext = zipKey.split(".").pop()?.toLowerCase();
+      const mimeType = ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : ext === "svg" ? "image/svg+xml" : "image/jpeg";
+      return `data:${mimeType};base64,${base64Content}`;
+    } catch (e) {
+      console.error("Erro ao ler imagem do zip:", decodedPath, e);
+    }
+  }
+  return null;
+}
+
+function limparHtmlInterno(html: string): string {
+  if (typeof DOMParser === "undefined") return html;
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${html}</div>`, "text/html");
+    const container = doc.body.firstChild as HTMLElement;
+    if (!container) return html;
+    
+    const todosElementos = container.querySelectorAll("*");
+    todosElementos.forEach((el) => {
+      el.removeAttribute("style");
+      el.removeAttribute("class");
+      el.removeAttribute("id");
+      
+      if (el.tagName.toUpperCase() === "A") {
+        el.setAttribute("target", "_blank");
+        el.setAttribute("rel", "noopener noreferrer");
+        el.setAttribute("class", "text-amora hover:underline font-semibold");
+      }
+    });
+    
+    return container.innerHTML;
+  } catch (e) {
+    return html;
+  }
+}
+
+export function obterTamanhoTextoReal(texto: string): number {
+  if (texto.startsWith("[") && texto.endsWith("]")) {
+    try {
+      const blocks: string[] = JSON.parse(texto);
+      let total = 0;
+      for (const block of blocks) {
+        if (block.includes("<img")) {
+          total += 500;
+        } else {
+          const textOnly = block.replace(/<[^>]*>/g, "");
+          total += textOnly.length;
+        }
+      }
+      return total;
+    } catch {
+      // Fallback
+    }
+  }
+  return texto.length;
 }
 
 export async function extrairDadosDeArquivo(file: File): Promise<{ texto: string; capa: string | null }> {

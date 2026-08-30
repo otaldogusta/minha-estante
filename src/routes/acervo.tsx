@@ -11,7 +11,7 @@ import { salvarLivro } from "../lib/api/livros.functions";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
 import { matchSearch } from "../lib/utils";
-import { extrairDadosDeArquivo } from "../lib/file-parser";
+import { extrairDadosDeArquivo, obterTamanhoTextoReal } from "../lib/file-parser";
 import { salvarConteudoLocal } from "../lib/db-local";
 
 export const Route = createFileRoute("/acervo")({
@@ -172,7 +172,7 @@ function PaginaAcervo() {
       
       const nomeSemExt = file.name.replace(/\.[^/.]+$/, "");
       const ext = file.name.split(".").pop()?.toUpperCase() || "PDF";
-      const paginasEstimadas = Math.max(1, Math.ceil(texto.length / 1500));
+      const paginasEstimadas = Math.max(1, Math.ceil(obterTamanhoTextoReal(texto) / 1000));
 
       const res = await salvarLivro({
         data: {
