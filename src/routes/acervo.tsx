@@ -11,7 +11,7 @@ import { salvarLivro } from "../lib/api/livros.functions";
 import { exigirLogin } from "../lib/exigir-login";
 import { notificar } from "../lib/toast";
 import { matchSearch } from "../lib/utils";
-import { extrairTextoDeArquivo } from "../lib/file-parser";
+import { extrairDadosDeArquivo } from "../lib/file-parser";
 import { salvarConteudoLocal } from "../lib/db-local";
 
 export const Route = createFileRoute("/acervo")({
@@ -167,12 +167,12 @@ function PaginaAcervo() {
     if (!file) return;
     setUploadando(true);
     try {
-      notificar("Lendo e extraindo texto do arquivo...", "info");
-      const textoExtraido = await extrairTextoDeArquivo(file);
+      notificar("Lendo e extraindo conteúdo do arquivo...", "info");
+      const { texto, capa } = await extrairDadosDeArquivo(file);
       
       const nomeSemExt = file.name.replace(/\.[^/.]+$/, "");
       const ext = file.name.split(".").pop()?.toUpperCase() || "PDF";
-      const paginasEstimadas = Math.max(1, Math.ceil(textoExtraido.length / 1500));
+      const paginasEstimadas = Math.max(1, Math.ceil(texto.length / 1500));
 
       const res = await salvarLivro({
         data: {
@@ -183,12 +183,13 @@ function PaginaAcervo() {
           inicio: new Date().toISOString().split("T")[0],
           paginas: paginasEstimadas,
           genero: "Ficção",
+          capa: capa || undefined,
           sinopse: `Arquivo importado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
         },
       });
 
       // Salva o texto integral no IndexedDB local associado ao id do livro
-      await salvarConteudoLocal(res.id, textoExtraido);
+      await salvarConteudoLocal(res.id, texto);
 
       notificar(`Arquivo "${file.name}" importado com sucesso!`, "sucesso");
       navigate({ to: "/ler/$livroId", params: { livroId: String(res.id) } });

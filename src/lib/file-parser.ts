@@ -17,16 +17,16 @@ function carregarScript(url: string): Promise<void> {
   });
 }
 
-function lerTxt(file: File): Promise<string> {
+function lerTxt(file: File): Promise<{ texto: string; capa: string | null }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
+    reader.onload = () => resolve({ texto: reader.result as string, capa: null });
     reader.onerror = () => reject(reader.error);
     reader.readAsText(file);
   });
 }
 
-async function lerPdf(file: File): Promise<string> {
+async function lerPdf(file: File): Promise<{ texto: string; capa: string | null }> {
   await carregarScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
   const pdfjsLib = (window as any)["pdfjs-dist/build/pdf"];
   pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -42,17 +42,33 @@ async function lerPdf(file: File): Promise<string> {
     textoCompleto += textoPagina + "\n\n";
   }
 
-  return textoCompleto;
+  // Extrai a primeira página como imagem de capa usando um canvas oculto
+  let capaBase64: string | null = null;
+  try {
+    const firstPage = await pdf.getPage(1);
+    const viewport = firstPage.getViewport({ scale: 0.6 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const context = canvas.getContext("2d");
+    if (context) {
+      await firstPage.render({ canvasContext: context, viewport }).promise;
+      capaBase64 = canvas.toDataURL("image/jpeg", 0.75);
+    }
+  } catch (e) {
+    console.error("Erro ao extrair capa do PDF:", e);
+  }
+
+  return { texto: textoCompleto, capa: capaBase64 };
 }
 
-async function lerEpub(file: File): Promise<string> {
+async function lerEpub(file: File): Promise<{ texto: string; capa: string | null }> {
   await carregarScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
   const JSZip = (window as any).JSZip;
 
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
 
-  // 1. Encontra o arquivo container.xml para saber onde está o conteúdo principal (.opf)
   let opfPath = "";
   const containerFile = zip.files["META-INF/container.xml"];
   if (containerFile) {
@@ -67,7 +83,6 @@ async function lerEpub(file: File): Promise<string> {
     }
   }
 
-  // Fallback se não achou container.xml: busca qualquer arquivo .opf
   if (!opfPath) {
     const opfKey = Object.keys(zip.files).find((n) => n.endsWith(".opf"));
     if (opfKey) {
@@ -76,34 +91,49 @@ async function lerEpub(file: File): Promise<string> {
   }
 
   let arquivosEmOrdem: string[] = [];
+  let coverImageHref: string | null = null;
+  let opfDir = "";
 
   if (opfPath && zip.files[opfPath]) {
     const opfContent = await zip.files[opfPath].async("text");
-    const opfDir = opfPath.substring(0, opfPath.lastIndexOf("/") + 1);
+    opfDir = opfPath.substring(0, opfPath.lastIndexOf("/") + 1);
 
     if (typeof DOMParser !== "undefined") {
       const parser = new DOMParser();
       const doc = parser.parseFromString(opfContent, "text/xml");
 
-      // Mapeia o manifest: id -> href completo
       const manifestItems = doc.querySelectorAll("manifest > item");
       const manifestMap = new Map<string, string>();
+      let coverItemId: string | null = null;
+
+      const coverMeta = doc.querySelector("meta[name='cover']");
+      if (coverMeta) {
+        coverItemId = coverMeta.getAttribute("content");
+      }
+
       manifestItems.forEach((item) => {
         const id = item.getAttribute("id");
         const href = item.getAttribute("href");
+        const properties = item.getAttribute("properties");
         if (id && href) {
-          // Normaliza o caminho do arquivo relativo ao diretório do opf
           let fullPath = opfDir + href;
           if (href.startsWith("/")) {
             fullPath = href.substring(1);
           }
-          // Remove hashes ou parâmetros
           fullPath = fullPath.split("#")[0];
-          manifestMap.set(id, decodeURIComponent(fullPath));
+          const resolvedPath = decodeURIComponent(fullPath);
+          manifestMap.set(id, resolvedPath);
+
+          if (properties === "cover-image" || id === "cover-image" || id === "cover") {
+            coverImageHref = resolvedPath;
+          }
         }
       });
 
-      // Lê o spine para obter a ordem correta dos IDs
+      if (coverItemId && manifestMap.has(coverItemId)) {
+        coverImageHref = manifestMap.get(coverItemId) || null;
+      }
+
       const spineItems = doc.querySelectorAll("spine > itemref");
       spineItems.forEach((itemref) => {
         const idref = itemref.getAttribute("idref");
@@ -117,7 +147,6 @@ async function lerEpub(file: File): Promise<string> {
     }
   }
 
-  // Fallback se falhar a leitura do OPF/Spine: usa ordenação por nome filtrada
   if (arquivosEmOrdem.length === 0) {
     const nomesArquivos = Object.keys(zip.files).sort();
     arquivosEmOrdem = nomesArquivos.filter(
@@ -125,9 +154,29 @@ async function lerEpub(file: File): Promise<string> {
     );
   }
 
+  // Tenta extrair a imagem da capa em base64 se a referência foi encontrada
+  let capaBase64: string | null = null;
+  if (coverImageHref) {
+    let zipKey = Object.keys(zip.files).find(
+      (k) => k.toLowerCase() === coverImageHref!.toLowerCase() || k.toLowerCase().endsWith(coverImageHref!.toLowerCase())
+    );
+    if (!zipKey && zip.files[coverImageHref]) {
+      zipKey = coverImageHref;
+    }
+    if (zipKey) {
+      try {
+        const base64Content = await zip.files[zipKey].async("base64");
+        const ext = zipKey.split(".").pop()?.toLowerCase();
+        const mimeType = ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : "image/jpeg";
+        capaBase64 = `data:${mimeType};base64,${base64Content}`;
+      } catch (e) {
+        console.error("Erro ao ler arquivo de capa no EPUB:", e);
+      }
+    }
+  }
+
   let textoCompleto = "";
 
-  // Lê os arquivos na ordem correta
   for (const caminho of arquivosEmOrdem) {
     let zipKey = Object.keys(zip.files).find(
       (k) => k.toLowerCase() === caminho.toLowerCase() || k.toLowerCase().endsWith(caminho.toLowerCase())
@@ -135,7 +184,6 @@ async function lerEpub(file: File): Promise<string> {
     if (!zipKey && zip.files[caminho]) {
       zipKey = caminho;
     }
-
     if (!zipKey) continue;
 
     const htmlContent = await zip.files[zipKey].async("text");
@@ -156,10 +204,10 @@ async function lerEpub(file: File): Promise<string> {
     }
   }
 
-  return textoCompleto;
+  return { texto: textoCompleto, capa: capaBase64 };
 }
 
-export async function extrairTextoDeArquivo(file: File): Promise<string> {
+export async function extrairDadosDeArquivo(file: File): Promise<{ texto: string; capa: string | null }> {
   const ext = file.name.split(".").pop()?.toLowerCase();
   if (ext === "txt") {
     return lerTxt(file);
