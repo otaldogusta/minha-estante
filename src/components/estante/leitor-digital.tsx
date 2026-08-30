@@ -1,11 +1,60 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { atualizarProgresso } from "../../lib/api/livros.functions";
 import { notificar } from "../../lib/toast";
 import type { Livro } from "../../lib/livros";
-import { obterConteudoLocal } from "../../lib/db-local";
+import { obterConteudoLocal, salvarConteudoLocal } from "../../lib/db-local";
+import { extrairDadosDeArquivo } from "../../lib/file-parser";
 
 type TemaLeitor = "claro" | "sepia" | "noturno";
+
+function paginarTexto(texto: string, limite = 1200): string[] {
+  const paragrafos = texto.split("\n\n").filter(Boolean);
+  const paginas: string[] = [];
+  let paginaAtual = "";
+  
+  for (const para of paragrafos) {
+    if ((paginaAtual + "\n\n" + para).length > limite) {
+      if (paginaAtual) {
+        paginas.push(paginaAtual);
+        paginaAtual = para;
+      } else {
+        // Se um único parágrafo for maior que o limite, divide por frases
+        const frases = para.split(". ");
+        let subPagina = "";
+        for (const frase of frases) {
+          const fraseFormatada = frase.trim() + (frase.endsWith(".") ? "" : ".");
+          if ((subPagina + " " + fraseFormatada).length > limite) {
+            if (subPagina) {
+              paginas.push(subPagina.trim());
+              subPagina = fraseFormatada;
+            } else {
+              paginas.push(fraseFormatada);
+              subPagina = "";
+            }
+          } else {
+            subPagina = subPagina ? subPagina + " " + fraseFormatada : fraseFormatada;
+          }
+        }
+        if (subPagina) {
+          paginaAtual = subPagina;
+        }
+      }
+    } else {
+      if (paginaAtual) {
+        paginaAtual += "\n\n" + para;
+      } else {
+        paginaAtual = para;
+      }
+    }
+  }
+  
+  if (paginaAtual) {
+    paginas.push(paginaAtual);
+  }
+  
+  return paginas.filter(Boolean);
+}
 
 export function LeitorDigital({
   livro,
@@ -42,9 +91,44 @@ export function LeitorDigital({
     carregar();
   }, [livro.id]);
 
-  // Calcula total de páginas estimadas ou usa o do livro
+  const [processandoArquivoLocal, setProcessandoArquivoLocal] = useState<boolean>(false);
+
+  // Manipulador para carregar o arquivo localmente caso o leitor mude de dispositivo
+  async function handleFileSelectLocal(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || !e.target.files[0]) return;
+    setProcessandoArquivoLocal(true);
+    try {
+      notificar("Lendo e extraindo conteúdo do arquivo...", "info");
+      const { texto } = await extrairDadosDeArquivo(e.target.files[0]);
+      await salvarConteudoLocal(livro.id, texto);
+      setTextoLocal(texto);
+      notificar("Conteúdo do livro importado com sucesso neste dispositivo!", "sucesso");
+    } catch (err: any) {
+      console.error(err);
+      notificar(err.message || "Erro ao processar o arquivo", "erro");
+    } finally {
+      setProcessandoArquivoLocal(false);
+    }
+  }
+
+  // Limite dinâmico de caracteres por página com base no tamanho da fonte selecionada
+  // Isso garante que o texto de cada página caiba perfeitamente no celular sem rolar verticalmente!
+  const limiteCaracteres = useMemo(() => Math.max(300, 1600 - tamanhoFonte * 35), [tamanhoFonte]);
+
   const temCapa = Boolean(livro.capa);
-  const totalPaginasTexto = Math.max(livro.paginas || 50, 1);
+  const eLivroImportado = ["PDF", "EPUB", "TXT"].includes(livro.formato?.toUpperCase() || "");
+  const precisaCarregarArquivo = eLivroImportado && !textoLocal && !carregandoLocal;
+
+  const textoBase =
+    textoLocal ||
+    conteudoTexto ||
+    livro.sinopse ||
+    `Sobre este Livro\n\n"${livro.titulo}" de ${livro.autor}.\n\nEste livro foi adicionado à sua estante pessoal no formato ${livro.formato || "Físico"}.\n\nVocê pode usar este leitor digital para acompanhar o número de páginas e sincronizar o marcador de leitura em tempo real com a sua estante. Para ler o texto completo diretamente na tela, adicione um dos clássicos abertos do Acervo ou faça o upload do seu arquivo EPUB/PDF.`;
+
+  // Divide o texto em páginas perfeitamente calculadas por tamanho
+  const paginasTexto = useMemo(() => paginarTexto(textoBase, limiteCaracteres), [textoBase, limiteCaracteres]);
+  const totalPaginasTexto = paginasTexto.length;
+  
   const totalPaginas = totalPaginasTexto + (temCapa ? 1 : 0);
   const progresso = Math.min(100, Math.round((paginaAtual / totalPaginas) * 100));
 
@@ -52,22 +136,9 @@ export function LeitorDigital({
   const exibindoCapa = temCapa && paginaAtual === 1;
   const paginaTextoEfetiva = temCapa ? paginaAtual - 1 : paginaAtual;
 
-  // Texto do livro (prioriza texto local/IndexedDB, depois carregado online/gutenberg, depois sinopse/conteudo salvo)
-  const temTextoReal = Boolean(textoLocal || conteudoTexto || (livro.sinopse && livro.sinopse.length > 50));
-  
-  const textoBase =
-    textoLocal ||
-    conteudoTexto ||
-    livro.sinopse ||
-    `Sobre este Livro\n\n"${livro.titulo}" de ${livro.autor}.\n\nEste livro foi adicionado à sua estante pessoal no formato ${livro.formato || "Físico"}.\n\nVocê pode usar este leitor digital para acompanhar o número de páginas e sincronizar o marcador de leitura em tempo real com a sua estante. Para ler o texto completo diretamente na tela, adicione um dos clássicos abertos do Acervo ou faça o upload do seu arquivo EPUB/PDF.`;
-
-  // Divide o texto em blocos de parágrafos para simular páginas
-  const paragrafos = textoBase.split("\n\n").filter(Boolean);
-  const paragrafosPorPagina = Math.max(1, Math.ceil(paragrafos.length / totalPaginasTexto));
-  const inicioIdx = ((paginaTextoEfetiva - 1) * paragrafosPorPagina) % paragrafos.length;
   const textoPaginaAtual = exibindoCapa
     ? ""
-    : (paragrafos.slice(inicioIdx, inicioIdx + 3).join("\n\n") || paragrafos[0]);
+    : (paginasTexto[paginaTextoEfetiva - 1] || paginasTexto[0] || "");
 
   // Gestos de deslizar (swipe) para mudar de página em dispositivos móveis
   const touchStartX = useRef<number | null>(null);
@@ -232,7 +303,38 @@ export function LeitorDigital({
           </div>
 
           <div className="whitespace-pre-line text-justify selection:bg-[#7a3b52]/20">
-            {exibindoCapa ? (
+            {precisaCarregarArquivo ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-6 font-sans">
+                <div className="h-16 w-16 bg-amora/10 text-amora rounded-full flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-tinta">Texto não carregado neste dispositivo</h3>
+                  <p className="text-xs text-tinta-2 leading-relaxed">
+                    Você adicionou este livro a partir de outro dispositivo. Como os seus livros são processados e armazenados localmente no navegador por velocidade e privacidade, você precisa selecionar o arquivo do livro (<strong>EPUB, PDF ou TXT</strong>) uma única vez neste celular ou computador para começar a ler aqui.
+                  </p>
+                </div>
+                
+                <label className="inline-flex items-center gap-2 rounded-xl bg-[#7a3b52] hover:bg-[#5e2c3f] text-white font-semibold text-xs px-5 py-3 shadow-md cursor-pointer transition-colors active:scale-98">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                  <span>{processandoArquivoLocal ? "Lendo arquivo..." : "Selecionar Arquivo do Livro"}</span>
+                  <input
+                    type="file"
+                    accept=".epub,.pdf,.txt"
+                    onChange={handleFileSelectLocal}
+                    disabled={processandoArquivoLocal}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : exibindoCapa ? (
               <div className="flex flex-col items-center justify-center py-4">
                 <div className="w-48 sm:w-56 md:w-64 shadow-2xl rounded-2xl overflow-hidden border border-current/10 aspect-[2/3] bg-black/5 dark:bg-white/5 transition-transform duration-300 hover:scale-102">
                   <img

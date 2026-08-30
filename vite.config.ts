@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
 import path from "node:path";
 
 export default defineConfig({
