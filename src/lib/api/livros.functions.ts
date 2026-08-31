@@ -174,17 +174,34 @@ function parseUtcDate(val: any): Date | null {
   if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
   if (typeof val === "number") return new Date(val);
   if (typeof val === "string") {
-    let s = val.trim();
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) {
-      s = s.replace(" ", "T") + "Z";
-    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
-      s = s + "Z";
-    }
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
+    const s = val.trim();
+    if (!s) return null;
+
+    // 1. Tenta parse direto (lida com ISO e strings Postgres com offset '+00' ou '-03')
+    let d = new Date(s);
+    if (!isNaN(d.getTime())) return d;
+
+    // 2. Se for formato SQLite "YYYY-MM-DD HH:MM:SS" (sem fuso e com espaço)
+    const sqlFormat = s.replace(" ", "T");
+    d = new Date(sqlFormat.includes("+") || sqlFormat.includes("Z") ? sqlFormat : sqlFormat + "Z");
+    if (!isNaN(d.getTime())) return d;
+
+    return null;
   }
   return null;
 }
+
+export const registrarPresencaAtiva = createServerFn({ method: "POST" }).handler(async () => {
+  const u = await usuarioDaSessao();
+  if (!u) return { ok: false };
+  try {
+    await db()
+      .prepare("UPDATE usuarios SET ultimo_acesso = datetime('now') WHERE id = ?")
+      .bind(u.id)
+      .run();
+  } catch {}
+  return { ok: true };
+});
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
   try {

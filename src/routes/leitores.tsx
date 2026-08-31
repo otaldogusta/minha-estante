@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-import { listarLeitores, type StatusPresenca } from "../lib/api/livros.functions";
+import { listarLeitores, registrarPresencaAtiva, type StatusPresenca } from "../lib/api/livros.functions";
 import { listarConvites, criarConvite, revogarConvite, sessaoAtual, removerLeitor } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { AvatarLeitor } from "../components/estante/avatar";
@@ -31,14 +31,19 @@ function parseDataUtc(valor: any): Date | null {
   if (valor instanceof Date) return isNaN(valor.getTime()) ? null : valor;
   if (typeof valor === "number") return new Date(valor);
   if (typeof valor === "string") {
-    let s = valor.trim();
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) {
-      s = s.replace(" ", "T") + "Z";
-    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
-      s = s + "Z";
-    }
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
+    const s = valor.trim();
+    if (!s) return null;
+
+    // 1. Tenta parse direto (lida com ISO e strings Postgres com offset '+00' ou '-03')
+    let d = new Date(s);
+    if (!isNaN(d.getTime())) return d;
+
+    // 2. Se for formato SQLite "YYYY-MM-DD HH:MM:SS" (sem fuso e com espaço)
+    const sqlFormat = s.replace(" ", "T");
+    d = new Date(sqlFormat.includes("+") || sqlFormat.includes("Z") ? sqlFormat : sqlFormat + "Z");
+    if (!isNaN(d.getTime())) return d;
+
+    return null;
   }
   return null;
 }
@@ -117,13 +122,17 @@ function PaginaLeitores() {
   const [modalAberto, setModalAberto] = useState(false);
   const usuarioLogado = sessao?.autenticado ? sessao.usuario : null;
 
-  // Polling para sincronizar status de presença e leitores em tempo real
+  // Heartbeat e polling para sincronizar status de presença em tempo real
   useEffect(() => {
-    const interval = setInterval(() => {
+    // Registra presença ativa ao abrir a página
+    registrarPresencaAtiva().catch(() => {});
+
+    const interval = setInterval(async () => {
       if (document.visibilityState === "visible") {
+        await registrarPresencaAtiva().catch(() => {});
         router.invalidate();
       }
-    }, 10000); // 10 segundos
+    }, 10000); // a cada 10 segundos
     return () => clearInterval(interval);
   }, [router]);
 
