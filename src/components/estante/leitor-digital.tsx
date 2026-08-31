@@ -281,13 +281,16 @@ export function LeitorDigital({
 
         setDadosSala(res);
 
+        const pagAtual = Number(res.paginaAtual) || 1;
+        const minhaPagAtual = Number(paginaAtual) || 1;
+
         // Se NÃO for o host, segue a página oficial da sala definida pelo host
-        if (!res.souHost && res.paginaAtual !== paginaAtual) {
-          setPaginaAtual(res.paginaAtual);
+        if (!res.souHost && pagAtual !== minhaPagAtual) {
+          setPaginaAtual(pagAtual);
         }
 
         // Verifica novas reações ao vivo dos outros participantes e emite para o Canvas
-        for (const p of res.participantes) {
+        for (const p of (res.participantes || [])) {
           if (p.reacao && p.reacaoEm) {
             const reacaoKey = `${p.usuarioId}-${p.reacao}-${p.reacaoEm}`;
             if (ultimaReacaoProcessadaRef.current !== reacaoKey) {
@@ -296,7 +299,9 @@ export function LeitorDigital({
             }
           }
         }
-      } catch {}
+      } catch (e) {
+        console.error("Erro ao sincronizar sala:", e);
+      }
     }
 
     sincronizar();

@@ -53,6 +53,9 @@ function sanitizeRow<T>(row: T): T {
     "count",
     "numParticipantes",
     "hostUsuarioId",
+    "paginaAtual",
+    "totalPaginas",
+    "gutenberg_id"
   ];
   for (const key of Object.keys(newRow)) {
     const val = newRow[key];
