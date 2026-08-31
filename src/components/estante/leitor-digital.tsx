@@ -18,7 +18,7 @@ import {
   type SalaLeituraDetalhes,
 } from "../../lib/api/sala-leitura.functions";
 import { SalaLeituraBar } from "./sala-leitura-bar";
-import { ReacoesFlutuantesContainer } from "./reacoes-flutuantes";
+import { ReacoesFlutuantesContainer, dispararEfeitoReacao } from "./reacoes-flutuantes";
 
 type TemaLeitor = "claro" | "sepia" | "noturno";
 
@@ -221,7 +221,6 @@ export function LeitorDigital({
   const [modalSalaAberto, setModalSalaAberto] = useState(false);
   const [criandoSala, setCriandoSala] = useState(false);
   const [salaAtivaDoLivro, setSalaAtivaDoLivro] = useState<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null>(null);
-  const [ultimaReacao, setUltimaReacao] = useState<{ emoji: string; autorNome: string; timestamp: number } | null>(null);
   const ultimaReacaoProcessadaRef = useRef<string | null>(null);
 
   // Verifica se há alguma sala ativa para este livro
@@ -270,17 +269,13 @@ export function LeitorDigital({
           setPaginaAtual(res.paginaAtual);
         }
 
-        // Verifica novas reações ao vivo dos outros participantes
+        // Verifica novas reações ao vivo dos outros participantes e emite para o Canvas
         for (const p of res.participantes) {
           if (p.reacao && p.reacaoEm) {
             const reacaoKey = `${p.usuarioId}-${p.reacao}-${p.reacaoEm}`;
             if (ultimaReacaoProcessadaRef.current !== reacaoKey) {
               ultimaReacaoProcessadaRef.current = reacaoKey;
-              setUltimaReacao({
-                emoji: p.reacao,
-                autorNome: p.nome,
-                timestamp: Date.now(),
-              });
+              dispararEfeitoReacao(p.reacao, p.nome);
             }
           }
         }
@@ -357,12 +352,8 @@ export function LeitorDigital({
 
   async function handleReagir(emoji: string) {
     if (!codigoSala) return;
-    // Anima localmente
-    setUltimaReacao({
-      emoji,
-      autorNome: "Você",
-      timestamp: Date.now(),
-    });
+    // Anima localmente no canvas de 60fps sem travar o leitor
+    dispararEfeitoReacao(emoji, "Você");
     try {
       await enviarReacao({ data: { codigo: codigoSala, reacao: emoji } });
     } catch {}
@@ -746,8 +737,8 @@ export function LeitorDigital({
         />
       )}
 
-      {/* Camada de Reações Flutuantes ao Vivo */}
-      <ReacoesFlutuantesContainer novaReacao={ultimaReacao} />
+      {/* Camada de Reações Flutuantes ao Vivo (Canvas 60fps) */}
+      <ReacoesFlutuantesContainer />
 
       {/* Área Principal de Leitura */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden relative">
