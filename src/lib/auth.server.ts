@@ -83,7 +83,7 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
   const cached = sessionCache.get(token);
 
   if (cached && cached.expires > now && cached.user) {
-    // Atualiza o último acesso em background mesmo com cache em memória
+    // Atualiza o último acesso em background (não-bloqueante)
     db()
       .prepare("UPDATE usuarios SET ultimo_acesso = datetime('now') WHERE id = ?")
       .bind(cached.user.id)
@@ -92,33 +92,38 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
     return cached.user;
   }
 
-  try {
-    await db()
-      .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
-      .bind(token)
-      .run();
-  } catch {}
-
-  const row = await db()
-    .prepare(
-      `SELECT u.id, u.nome, u.usuario FROM sessoes s
-       JOIN usuarios u ON u.id = s.usuario_id
-       WHERE s.token = ? AND s.expira_em > datetime('now')`
-    )
+  // Atualiza último acesso da sessão em background (não-bloqueante)
+  db()
+    .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
     .bind(token)
-    .first<Usuario>();
+    .run()
+    .catch(() => {});
 
-  const user = row ?? null;
-  if (user) {
-    try {
-      await db()
+  try {
+    const row = await db()
+      .prepare(
+        `SELECT u.id, u.nome, u.usuario FROM sessoes s
+         JOIN usuarios u ON u.id = s.usuario_id
+         WHERE s.token = ? AND s.expira_em > datetime('now')`
+      )
+      .bind(token)
+      .first<Usuario>();
+
+    const user = row ?? null;
+    if (user) {
+      // Atualiza último acesso do usuário em background (não-bloqueante)
+      db()
         .prepare("UPDATE usuarios SET ultimo_acesso = datetime('now') WHERE id = ?")
         .bind(user.id)
-        .run();
-    } catch {}
+        .run()
+        .catch(() => {});
+    }
+    sessionCache.set(token, { user, expires: now + 30_000 });
+    return user;
+  } catch (e) {
+    console.error("Erro ao obter usuário da sessão:", e);
+    return null;
   }
-  sessionCache.set(token, { user, expires: now + 30_000 });
-  return user;
 }
 
 export async function exigirUsuario(): Promise<Usuario> {

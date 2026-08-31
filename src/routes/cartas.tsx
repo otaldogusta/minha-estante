@@ -315,13 +315,13 @@ function PaginaCartas() {
   const { recebidas, enviadas, destinatarios, livros } = Route.useLoaderData();
   const router = useRouter();
 
-  // Polling para sincronizar cartas em tempo real
+  // Polling para sincronizar cartas em tempo real a cada 30 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
         router.invalidate();
       }
-    }, 10000); // 10 segundos
+    }, 30000); // 30 segundos
     return () => clearInterval(interval);
   }, [router]);
   const [aba, setAba] = useState<"recebidas" | "enviadas" | "escrever">("recebidas");

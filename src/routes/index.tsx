@@ -1352,13 +1352,13 @@ function PaginaEstante() {
   const livros = Route.useLoaderData();
   const router = useRouter();
 
-  // Polling para sincronizar livros e progresso em tempo real
+  // Polling para sincronizar livros e progresso em tempo real a cada 45 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
         router.invalidate();
       }
-    }, 10000); // 10 segundos
+    }, 45000); // 45 segundos
     return () => clearInterval(interval);
   }, [router]);
 

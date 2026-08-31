@@ -132,7 +132,7 @@ function PaginaLeitores() {
         await registrarPresencaAtiva().catch(() => {});
         router.invalidate();
       }
-    }, 10000); // a cada 10 segundos
+    }, 25000); // a cada 25 segundos
     return () => clearInterval(interval);
   }, [router]);
 
