@@ -147,27 +147,37 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-papel px-4">
-      <div className="max-w-md text-center">
-        <h1 className="font-display text-2xl text-tinta">Algo deu errado</h1>
-        <p className="mt-2 text-tinta-2">A página não carregou. Tente novamente ou volte para a estante.</p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <main className="mx-auto max-w-md px-4 py-20 text-center">
+        <h1 className="mt-6 font-display text-2xl font-semibold text-tinta">Algo deu errado</h1>
+        <p className="mt-2 text-sm text-tinta-2 leading-relaxed">
+          A página não carregou. Tente novamente ou volte para a estante.
+        </p>
+
+        {/* DEBUG INFO VISIBLE TO USER */}
+        <div className="mt-6 p-4 bg-red-50 text-red-900 border border-red-200 rounded-md text-left overflow-auto max-h-48 text-xs font-mono whitespace-pre-wrap shadow-inner">
+          <strong>{error.name}:</strong> {error.message}
+          {error.stack && (
+            <div className="mt-2 opacity-80 border-t border-red-200 pt-2">
+              {error.stack}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <button
-            onClick={() => {
-              sessionStorage.clear();
-              window.location.reload();
-            }}
-            className="rounded-full bg-amora px-6 py-2.5 text-papel transition-colors hover:bg-amora-escura active:scale-[0.98]"
+            onClick={reset}
+            className="inline-flex items-center justify-center rounded-full bg-amora px-6 py-2.5 text-sm font-medium text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs"
           >
             Tentar de novo
           </button>
-          <a
-            href="/"
-            className="rounded-full border border-tinta-3 px-6 py-2.5 text-tinta transition-colors hover:bg-papel-2 active:scale-[0.98]"
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-full border border-tinta-3 px-6 py-2.5 text-sm font-medium text-tinta hover:border-amora hover:text-amora transition-all cursor-pointer"
           >
             Voltar para a estante
-          </a>
+          </Link>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
