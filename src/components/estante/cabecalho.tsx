@@ -32,6 +32,7 @@ export function Cabecalho({
   const trackRef = useRef<HTMLDivElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
 
+  // Recarrega o badge de cartas novas sempre que a página ativa muda
   useEffect(() => {
     let ativo = true;
     contarCartasNovas()
@@ -47,7 +48,7 @@ export function Cabecalho({
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [paginaAtiva]);
 
   // Recalcular posição do pill ativo de fundo com animação suave deslizando
   useLayoutEffect(() => {

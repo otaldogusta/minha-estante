@@ -217,8 +217,8 @@ export const contarCartasNovas = createServerFn({ method: "GET" }).handler(async
        WHERE c.para_usuario_id = ? AND c.lida = 0 AND ${SQL_DESBLOQUEADA}`
     )
     .bind(u.id)
-    .first<{ n: number }>();
-  return { novas: row?.n ?? 0 };
+    .first<{ n: number | string }>();
+  return { novas: Number(row?.n ?? 0) };
 });
 
 // Usado na celebração: cartas que acabaram de destravar com este livro.

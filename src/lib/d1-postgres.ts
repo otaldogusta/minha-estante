@@ -33,6 +33,10 @@ function sanitizeRow<T>(row: T): T {
   const numericColumns = [
     "id",
     "usuario_id",
+    "de_usuario_id",
+    "para_usuario_id",
+    "livro_condicao_id",
+    "livro_id",
     "ano",
     "paginas",
     "ano_leitura",
@@ -42,7 +46,13 @@ function sanitizeRow<T>(row: T): T {
     "adaptacao",
     "vi_adaptacao",
     "valor",
-    "carta_vista"
+    "carta_vista",
+    "lida",
+    "desbloqueada",
+    "n",
+    "count",
+    "numParticipantes",
+    "hostUsuarioId",
   ];
   for (const key of Object.keys(newRow)) {
     const val = newRow[key];
