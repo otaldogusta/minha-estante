@@ -124,8 +124,25 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+
   useEffect(() => {
     reportHiggsfieldError(error, { boundary: "tanstack_root_error_component" });
+
+    // Se o erro for de chunk/versão desatualizada após deploy (Failed to fetch dynamically imported module),
+    // recarrega a página automaticamente para obter os novos scripts do build atualizado.
+    const msg = error?.message || "";
+    if (
+      msg.includes("dynamically imported module") ||
+      msg.includes("Loading chunk") ||
+      msg.includes("Failed to fetch") ||
+      error?.name === "ChunkLoadError"
+    ) {
+      const chaveRetry = "chunk_reload_" + window.location.pathname;
+      if (!sessionStorage.getItem(chaveRetry)) {
+        sessionStorage.setItem(chaveRetry, "1");
+        window.location.reload();
+      }
+    }
   }, [error]);
 
   return (
@@ -136,8 +153,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
             onClick={() => {
-              router.invalidate();
-              reset();
+              sessionStorage.clear();
+              window.location.reload();
             }}
             className="rounded-full bg-amora px-6 py-2.5 text-papel transition-colors hover:bg-amora-escura active:scale-[0.98]"
           >
