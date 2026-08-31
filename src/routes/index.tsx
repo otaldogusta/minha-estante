@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-rout
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { listarLivros, atualizarProgresso, excluirLivro, alterarStatusLivro } from "../lib/api/livros.functions";
+import { listarLivros, atualizarProgresso, excluirLivro, alterarStatusLivro, buscarLivroExterno, salvarLivro, type ResultadoBusca } from "../lib/api/livros.functions";
 import { matchSearch } from "../lib/utils";
 import { cartaStatus } from "../lib/api/auth.functions";
 import {
@@ -520,7 +520,12 @@ function ModalPlanejamentoMes({
   onAlternarPlanejado: (livroId: number, mesIdx: number) => void;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [selecionandoLivro, setSelecionandoLivro] = useState(false);
+  const [termoBusca, setTermoBusca] = useState("");
+  const [buscandoExterno, setBuscandoExterno] = useState(false);
+  const [resultadosExternos, setResultadosExternos] = useState<ResultadoBusca[] | null>(null);
+  const [adicionandoId, setAdicionandoId] = useState<string | null>(null);
   const anoAtual = new Date().getFullYear();
 
   // Livros concluídos/iniciados neste mês no banco
@@ -543,12 +548,72 @@ function ModalPlanejamentoMes({
     return livros.filter((l) => idsPlanejadosDoMes.includes(l.id));
   }, [livros, idsPlanejadosDoMes]);
 
-  // Livros disponíveis para adicionar ao mês
+  // Livros disponíveis para adicionar ao mês (estante)
   const livrosDisponiveis = useMemo(() => {
     return livros.filter(
       (l) => !idsPlanejadosDoMes.includes(l.id) && !livrosDoMes.some((lm) => lm.id === l.id)
     );
   }, [livros, idsPlanejadosDoMes, livrosDoMes]);
+
+  // Filtro de livros da estante pelo termo de busca
+  const livrosEstanteFiltrados = useMemo(() => {
+    const t = termoBusca.trim().toLowerCase();
+    if (!t) return livrosDisponiveis;
+    return livrosDisponiveis.filter(
+      (l) => l.titulo.toLowerCase().includes(t) || (l.autor && l.autor.toLowerCase().includes(t))
+    );
+  }, [livrosDisponiveis, termoBusca]);
+
+  // Busca de livros novos na Web (Google Livros / OpenLibrary)
+  async function buscarWeb() {
+    const q = termoBusca.trim();
+    if (q.length < 2) return;
+    setBuscandoExterno(true);
+    try {
+      const res = await buscarLivroExterno({ data: { q } });
+      setResultadosExternos(res || []);
+    } catch {
+      setResultadosExternos([]);
+    } finally {
+      setBuscandoExterno(false);
+    }
+  }
+
+  // Adiciona um livro novo encontrado na web diretamente como "Quero Ler" e planeja para o mês
+  async function planejarLivroExterno(r: ResultadoBusca) {
+    setAdicionandoId(r.titulo);
+    try {
+      const novoLivro = await salvarLivro({
+        data: {
+          titulo: r.titulo,
+          autor: r.autor,
+          capa: r.capa,
+          editora: r.editora,
+          ano: r.ano,
+          paginas: r.paginas,
+          sinopse: r.sinopse,
+          status: "quero_ler",
+          adaptacao: false,
+          vi_adaptacao: false,
+          privado: false,
+        },
+      });
+
+      if (novoLivro?.id) {
+        onAlternarPlanejado(novoLivro.id, mesIndex);
+        await router.invalidate();
+        notificar(`"${r.titulo}" adicionado à sua estante e planejado para ${nomeMes}!`, "sucesso");
+        setSelecionandoLivro(false);
+        setTermoBusca("");
+        setResultadosExternos(null);
+      }
+    } catch (err: any) {
+      console.error(err);
+      notificar(err.message || "Erro ao adicionar livro externo", "erro");
+    } finally {
+      setAdicionandoId(null);
+    }
+  }
 
   // Bloqueio do scroll da página de trás & suporte à tecla ESC
   useEffect(() => {
@@ -570,14 +635,14 @@ function ModalPlanejamentoMes({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-papel-3/80 bg-papel-2/95 backdrop-blur-2xl p-5 sm:p-6 shadow-2xl texture-papel cursor-default"
+        className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-papel-3/80 bg-papel-2/95 backdrop-blur-2xl p-5 sm:p-6 shadow-2xl texture-papel cursor-default flex flex-col max-h-[88vh]"
       >
         {/* Ambient Glow Top */}
         <div className="pointer-events-none absolute -inset-x-20 -top-20 h-40 bg-gradient-to-r from-amora/15 via-emerald-500/10 to-amora/15 blur-3xl" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent" />
 
         {/* Header */}
-        <div className="relative z-10 flex items-center justify-between border-b border-papel-3/60 pb-4">
+        <div className="relative z-10 flex items-center justify-between border-b border-papel-3/60 pb-4 shrink-0">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-amora">Meta {anoAtual}</span>
             <h2 className="font-display text-xl sm:text-2xl font-bold text-tinta">
@@ -597,7 +662,7 @@ function ModalPlanejamentoMes({
         </div>
 
         {/* Content */}
-        <div className="relative z-10 mt-4 max-h-[60vh] overflow-y-auto pr-1 space-y-6">
+        <div className="relative z-10 mt-4 overflow-y-auto pr-1 space-y-6 flex-1 min-h-0">
           {/* Seção 1: Livros lidos/em leitura no mês */}
           <div>
             <h3 className="text-xs font-semibold text-tinta-2 uppercase tracking-wide mb-3 flex items-center gap-1.5">
@@ -647,35 +712,124 @@ function ModalPlanejamentoMes({
               </h3>
               <button
                 type="button"
-                onClick={() => setSelecionandoLivro(!selecionandoLivro)}
+                onClick={() => {
+                  setSelecionandoLivro(!selecionandoLivro);
+                  setTermoBusca("");
+                  setResultadosExternos(null);
+                }}
                 className="text-xs font-medium text-amora hover:underline cursor-pointer flex items-center gap-1"
               >
-                <span>+ Planejar Livro</span>
+                <span>{selecionandoLivro ? "Fechar busca" : "+ Planejar Livro"}</span>
               </button>
             </div>
 
-            {/* Menu de Seleção de Livro para Planejar */}
+            {/* Menu de Busca e Seleção de Livro para Planejar */}
             {selecionandoLivro && (
-              <div className="mb-3 p-3 rounded-2xl border border-amora/30 bg-amora/5 space-y-2 surgir">
-                <p className="text-xs font-medium text-tinta">Selecione um livro da sua estante para ler em {nomeMes}:</p>
-                {livrosDisponiveis.length === 0 ? (
-                  <p className="text-xs text-tinta-3 italic">Todos os seus livros já estão alocados!</p>
-                ) : (
-                  <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
-                    {livrosDisponiveis.map((ld) => (
-                      <button
-                        key={ld.id}
-                        type="button"
-                        onClick={() => {
-                          onAlternarPlanejado(ld.id, mesIndex);
-                          setSelecionandoLivro(false);
-                        }}
-                        className="w-full text-left flex items-center justify-between p-2 rounded-xl hover:bg-papel-2 transition-colors cursor-pointer text-xs"
-                      >
-                        <span className="font-medium text-tinta truncate">{ld.titulo} <span className="text-tinta-3 text-[11px]">({ld.autor})</span></span>
-                        <span className="text-amora text-xs font-semibold hover:underline">+ Adicionar</span>
-                      </button>
-                    ))}
+              <div className="mb-4 p-3.5 rounded-2xl border border-amora/30 bg-amora/5 space-y-3 surgir">
+                <div>
+                  <label className="text-xs font-semibold text-tinta block mb-1.5">
+                    Buscar livro na estante ou pesquisar novo na web:
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={termoBusca}
+                      onChange={(e) => setTermoBusca(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && buscarWeb()}
+                      placeholder="Ex.: Nome do livro ou autor..."
+                      autoFocus
+                      className="flex-1 rounded-xl border border-papel-3 bg-papel px-3 py-2 text-xs text-tinta placeholder:text-tinta-3 focus:border-amora focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={buscarWeb}
+                      disabled={buscandoExterno || termoBusca.trim().length < 2}
+                      className="rounded-xl bg-amora px-3.5 py-2 text-xs font-medium text-papel hover:bg-amora-escura transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      {buscandoExterno ? "Buscando..." : "Buscar na Web"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Resultados da Web */}
+                {buscandoExterno && (
+                  <div className="py-4 text-center text-xs text-tinta-2 font-medium animate-pulse">
+                    Buscando livros no catálogo do Google Livros e Open Library...
+                  </div>
+                )}
+
+                {resultadosExternos && !buscandoExterno && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold text-amora uppercase tracking-wider">
+                      Resultados na Web ({resultadosExternos.length}):
+                    </p>
+                    {resultadosExternos.length === 0 ? (
+                      <p className="text-xs text-tinta-3 italic">Nenhum livro encontrado na web com este nome.</p>
+                    ) : (
+                      <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                        {resultadosExternos.map((r, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-2 rounded-xl bg-papel border border-papel-3/60 hover:border-amora/40 transition-all gap-2"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              {r.capa ? (
+                                <img src={r.capa} alt={r.titulo} className="w-7 h-10 object-cover rounded-sm shadow-2xs shrink-0" />
+                              ) : (
+                                <div className="w-7 h-10 bg-papel-3 rounded-sm shrink-0 flex items-center justify-center text-[8px] text-tinta-3">
+                                  Sem capa
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-xs text-tinta truncate">{r.titulo}</p>
+                                <p className="text-[11px] text-tinta-3 truncate">{r.autor} {r.ano ? `• ${r.ano}` : ""}</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => planejarLivroExterno(r)}
+                              disabled={adicionandoId === r.titulo}
+                              className="rounded-lg bg-amora/10 text-amora hover:bg-amora hover:text-white px-2.5 py-1.5 text-[11px] font-semibold transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                            >
+                              {adicionandoId === r.titulo ? "Adicionando..." : "+ Planejar"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Livros da Estante Pessoal */}
+                {(!resultadosExternos || resultadosExternos.length === 0) && (
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-tinta-2 uppercase tracking-wider">
+                      Livros da sua Estante ({livrosEstanteFiltrados.length}):
+                    </p>
+                    {livrosEstanteFiltrados.length === 0 ? (
+                      <p className="text-xs text-tinta-3 italic">
+                        {termoBusca ? "Nenhum livro da sua estante coincide com a busca." : "Todos os seus livros já foram alocados!"}
+                      </p>
+                    ) : (
+                      <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                        {livrosEstanteFiltrados.map((ld) => (
+                          <button
+                            key={ld.id}
+                            type="button"
+                            onClick={() => {
+                              onAlternarPlanejado(ld.id, mesIndex);
+                              setSelecionandoLivro(false);
+                            }}
+                            className="w-full text-left flex items-center justify-between p-2 rounded-xl bg-papel/60 hover:bg-papel transition-colors cursor-pointer text-xs"
+                          >
+                            <span className="font-medium text-tinta truncate">
+                              {ld.titulo} <span className="text-tinta-3 text-[11px]">({ld.autor})</span>
+                            </span>
+                            <span className="text-amora text-xs font-semibold hover:underline shrink-0 ml-2">+ Adicionar</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -683,7 +837,7 @@ function ModalPlanejamentoMes({
 
             {livrosPlanejados.length === 0 ? (
               <p className="text-xs text-tinta-3 italic bg-papel-3/30 rounded-xl p-3 text-center border border-papel-3/40">
-                Nenhum livro planejado para {nomeMes} ainda. Clique no botão acima para escolher o que você quer ler neste mês!
+                Nenhum livro planejado para {nomeMes} ainda. Clique no botão acima para escolher ou buscar o que você quer ler neste mês!
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -721,11 +875,11 @@ function ModalPlanejamentoMes({
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 mt-6 pt-4 border-t border-papel-3/60 flex justify-end">
+        <div className="relative z-10 mt-5 pt-3.5 border-t border-papel-3/60 flex justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-amora px-4 py-2 text-xs font-semibold text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs"
+            className="rounded-xl bg-amora px-5 py-2 text-xs font-semibold text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs active:scale-98"
           >
             Concluído
           </button>
