@@ -7,6 +7,8 @@ import {
   enviarCarta,
   editarCarta,
   excluirCarta,
+  excluirCartaRecebida,
+  marcarTodasComoLidas,
   lerCarta,
   type CartaRecebida,
   type CartaEnviada,
@@ -64,6 +66,8 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
   // Já lidas começam recolhidas; novas começam abertas
   const [expandida, setExpandida] = useState(!jaLida);
   const [marcando, setMarcando] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
 
   // Detecta se a carta é um convite de leitura coletiva
   let livroIdSala: number | null = null;
@@ -83,6 +87,17 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
       setMarcando(true);
       await lerCarta({ data: { id: carta.id } });
       router.invalidate();
+    }
+  }
+
+  async function excluirRecebida() {
+    setExcluindo(true);
+    try {
+      await excluirCartaRecebida({ data: { id: carta.id } });
+      router.invalidate();
+    } finally {
+      setExcluindo(false);
+      setConfirmandoExclusao(false);
     }
   }
 
@@ -188,6 +203,39 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
               )}
             </div>
           )}
+
+          {/* Ações da carta recebida */}
+          <div className="mt-4 pt-3 border-t border-[#d9c9a8]/60 flex items-center gap-3 text-xs">
+            {!confirmandoExclusao ? (
+              <button
+                onClick={() => setConfirmandoExclusao(true)}
+                className="text-[#9a8c78] hover:text-red-600 transition-colors cursor-pointer"
+                title="Excluir carta"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4 inline mr-1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                Excluir
+              </button>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <button
+                  onClick={excluirRecebida}
+                  disabled={excluindo}
+                  className="rounded bg-red-600 px-2.5 py-1 text-papel font-medium hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-60"
+                >
+                  {excluindo ? "Excluindo..." : "Confirmar exclusão"}
+                </button>
+                <button
+                  onClick={() => setConfirmandoExclusao(false)}
+                  className="text-[#9a8c78] underline underline-offset-2 cursor-pointer"
+                >
+                  cancelar
+                </button>
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -411,6 +459,23 @@ function PaginaCartas() {
 
         {aba === "recebidas" && (
           <div className="mt-6 space-y-4">
+            {/* Barra de ações em massa */}
+            {recebidas.length > 0 && novas > 0 && (
+              <div className="flex items-center justify-between rounded-xl bg-papel-2/80 border border-papel-3 px-4 py-2.5">
+                <span className="text-xs text-tinta-2">
+                  {novas} carta{novas > 1 ? "s" : ""} não lida{novas > 1 ? "s" : ""}
+                </span>
+                <button
+                  onClick={async () => {
+                    await marcarTodasComoLidas();
+                    router.invalidate();
+                  }}
+                  className="text-xs font-medium text-amora hover:text-amora-escura transition-colors cursor-pointer"
+                >
+                  ✓ Marcar todas como lidas
+                </button>
+              </div>
+            )}
             {recebidas.length === 0 && (
               <div className="rounded-2xl border border-dashed border-tinta-3 p-8 text-center text-tinta-2">
                 Nenhuma carta ainda. Elas aparecem aqui quando alguém escrever pra você.

@@ -159,12 +159,39 @@ export const excluirCarta = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
+    // Remetente pode excluir se ainda não lida
     const res = await db()
       .prepare("DELETE FROM cartas WHERE id = ? AND de_usuario_id = ? AND lida = 0")
       .bind(data.id, u.id)
       .run();
     return { ok: res.meta.changes > 0 };
   });
+
+// Destinatário pode excluir carta recebida (já lida ou não)
+export const excluirCartaRecebida = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number().int() }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    const res = await db()
+      .prepare("DELETE FROM cartas WHERE id = ? AND para_usuario_id = ?")
+      .bind(data.id, u.id)
+      .run();
+    return { ok: res.meta.changes > 0 };
+  });
+
+// Marcar todas as cartas recebidas (desbloqueadas e não lidas) como lidas de uma vez
+export const marcarTodasComoLidas = createServerFn({ method: "POST" }).handler(async () => {
+  const u = await exigirUsuario();
+  await db()
+    .prepare(
+      `UPDATE cartas SET lida = 1, lida_em = datetime('now')
+       WHERE para_usuario_id = ? AND lida = 0 AND ` +
+        SQL_DESBLOQUEADA.replaceAll("c.", "cartas.")
+    )
+    .bind(u.id)
+    .run();
+  return { ok: true };
+});
 
 export const lerCarta = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int() }))
