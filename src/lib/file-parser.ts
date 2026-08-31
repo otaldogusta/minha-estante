@@ -17,7 +17,35 @@ function carregarScript(url: string): Promise<void> {
   });
 }
 
-function lerTxt(file: File): Promise<{ texto: string; capa: string | null }> {
+export interface DadosArquivoExtraidos {
+  texto: string;
+  capa: string | null;
+  titulo?: string;
+  autor?: string;
+  editora?: string;
+  sinopse?: string;
+  genero?: string;
+  ano?: number;
+}
+
+export function extrairTituloEAutorDeNomeDeArquivo(nomeArquivo: string): { titulo: string; autor?: string } {
+  const semExt = nomeArquivo.replace(/\.[^/.]+$/, "").trim();
+  const separadores = [" - ", " – ", " — "];
+  for (const sep of separadores) {
+    if (semExt.includes(sep)) {
+      const partes = semExt.split(sep).map((p) => p.trim()).filter(Boolean);
+      if (partes.length >= 2) {
+        return {
+          titulo: partes[0],
+          autor: partes.slice(1).join(" - "),
+        };
+      }
+    }
+  }
+  return { titulo: semExt };
+}
+
+function lerTxt(file: File): Promise<DadosArquivoExtraidos> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve({ texto: reader.result as string, capa: null });
@@ -26,7 +54,7 @@ function lerTxt(file: File): Promise<{ texto: string; capa: string | null }> {
   });
 }
 
-async function lerPdf(file: File): Promise<{ texto: string; capa: string | null }> {
+async function lerPdf(file: File): Promise<DadosArquivoExtraidos> {
   await carregarScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
   const pdfjsLib = (window as any)["pdfjs-dist/build/pdf"];
   pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -41,6 +69,15 @@ async function lerPdf(file: File): Promise<{ texto: string; capa: string | null 
     const textoPagina = content.items.map((item: any) => item.str).join(" ");
     textoCompleto += textoPagina + "\n\n";
   }
+
+  // Extrai metadados do PDF
+  let tituloPdf: string | undefined;
+  let autorPdf: string | undefined;
+  try {
+    const meta = await pdf.getMetadata();
+    if (meta?.info?.Title?.trim()) tituloPdf = meta.info.Title.trim();
+    if (meta?.info?.Author?.trim()) autorPdf = meta.info.Author.trim();
+  } catch (e) {}
 
   // Extrai a primeira página como imagem de capa usando um canvas oculto
   let capaBase64: string | null = null;
@@ -59,10 +96,15 @@ async function lerPdf(file: File): Promise<{ texto: string; capa: string | null 
     console.error("Erro ao extrair capa do PDF:", e);
   }
 
-  return { texto: textoCompleto, capa: capaBase64 };
+  return {
+    texto: textoCompleto,
+    capa: capaBase64,
+    titulo: tituloPdf,
+    autor: autorPdf,
+  };
 }
 
-async function lerEpub(file: File): Promise<{ texto: string; capa: string | null }> {
+async function lerEpub(file: File): Promise<DadosArquivoExtraidos> {
   await carregarScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
   const JSZip = (window as any).JSZip;
 
@@ -93,6 +135,12 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
   let arquivosEmOrdem: string[] = [];
   let coverImageHref: string | null = null;
   let opfDir = "";
+  let tituloExtraido: string | null = null;
+  let autorExtraido: string | null = null;
+  let editoraExtraida: string | null = null;
+  let sinopseExtraida: string | null = null;
+  let generoExtraido: string | null = null;
+  let anoExtraido: number | null = null;
 
   if (opfPath && zip.files[opfPath]) {
     const opfContent = await zip.files[opfPath].async("text");
@@ -101,6 +149,40 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     if (typeof DOMParser !== "undefined") {
       const parser = new DOMParser();
       const doc = parser.parseFromString(opfContent, "text/xml");
+
+      // Metadados Dublin Core do EPUB
+      const titleEl = doc.querySelector("metadata > title, metadata > dc\\:title, dc\\:title, title");
+      if (titleEl?.textContent?.trim()) {
+        tituloExtraido = titleEl.textContent.trim();
+      }
+
+      const creatorEl = doc.querySelector("metadata > creator, metadata > dc\\:creator, dc\\:creator, creator");
+      if (creatorEl?.textContent?.trim()) {
+        autorExtraido = creatorEl.textContent.trim();
+      }
+
+      const publisherEl = doc.querySelector("metadata > publisher, metadata > dc\\:publisher, dc\\:publisher, publisher");
+      if (publisherEl?.textContent?.trim()) {
+        editoraExtraida = publisherEl.textContent.trim();
+      }
+
+      const descEl = doc.querySelector("metadata > description, metadata > dc\\:description, dc\\:description, description");
+      if (descEl?.textContent?.trim()) {
+        sinopseExtraida = descEl.textContent.trim().replace(/<[^>]*>/g, "").slice(0, 1500);
+      }
+
+      const subjectEl = doc.querySelector("metadata > subject, metadata > dc\\:subject, dc\\:subject, subject");
+      if (subjectEl?.textContent?.trim()) {
+        generoExtraido = subjectEl.textContent.trim();
+      }
+
+      const dateEl = doc.querySelector("metadata > date, metadata > dc\\:date, dc\\:date, date");
+      if (dateEl?.textContent?.trim()) {
+        const matchAno = dateEl.textContent.match(/\b(19\d\d|20\d\d)\b/);
+        if (matchAno) {
+          anoExtraido = parseInt(matchAno[1], 10);
+        }
+      }
 
       const manifestItems = doc.querySelectorAll("manifest > item");
       const manifestMap = new Map<string, string>();
@@ -200,7 +282,7 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     }
   }
 
-  const blocks: string[][] = [];
+  const blocks: { path: string, blocks: string[] }[] = [];
 
   for (const caminho of arquivosEmOrdem) {
     // Evita duplicar a capa se o primeiro arquivo da espinha for a página da capa
@@ -392,11 +474,20 @@ async function lerEpub(file: File): Promise<{ texto: string; capa: string | null
     }
 
     if (fileBlocks.length > 0) {
-      blocks.push(fileBlocks);
+      blocks.push({ path: caminho, blocks: fileBlocks });
     }
   }
 
-  return { texto: JSON.stringify(blocks), capa: capaBase64 };
+  return {
+    texto: JSON.stringify(blocks),
+    capa: capaBase64,
+    titulo: tituloExtraido || undefined,
+    autor: autorExtraido || undefined,
+    editora: editoraExtraida || undefined,
+    sinopse: sinopseExtraida || undefined,
+    genero: generoExtraido || undefined,
+    ano: anoExtraido || undefined,
+  };
 }
 
 function resolverCaminho(href: string, baseDir: string): string {
@@ -545,8 +636,16 @@ export function obterTamanhoTextoReal(texto: string): number {
     try {
       const parsed = JSON.parse(texto);
       if (Array.isArray(parsed)) {
-        const isNested = Array.isArray(parsed[0]);
-        const blocks = isNested ? parsed.flat() : parsed;
+        // Suporta formato estruturado [{ path, blocks }]
+        const isNewFormat = typeof parsed[0] === "object" && parsed[0] !== null && "blocks" in parsed[0];
+        let blocks: any[] = [];
+        
+        if (isNewFormat) {
+          blocks = parsed.flatMap(item => item.blocks || []);
+        } else {
+          const isNested = Array.isArray(parsed[0]);
+          blocks = isNested ? parsed.flat() : parsed;
+        }
         
         let total = 0;
         for (const block of blocks) {
@@ -567,15 +666,28 @@ export function obterTamanhoTextoReal(texto: string): number {
   return texto.length;
 }
 
-export async function extrairDadosDeArquivo(file: File): Promise<{ texto: string; capa: string | null }> {
+export async function extrairDadosDeArquivo(file: File): Promise<DadosArquivoExtraidos> {
   const ext = file.name.split(".").pop()?.toLowerCase();
+  let dados: DadosArquivoExtraidos;
+
   if (ext === "txt") {
-    return lerTxt(file);
+    dados = await lerTxt(file);
   } else if (ext === "pdf") {
-    return lerPdf(file);
+    dados = await lerPdf(file);
   } else if (ext === "epub") {
-    return lerEpub(file);
+    dados = await lerEpub(file);
   } else {
     throw new Error("Formato não suportado para extração de texto.");
   }
+
+  // Se o título ou autor não vieram nos metadados internos, extrai inteligentemente do nome do arquivo
+  const extraidoNome = extrairTituloEAutorDeNomeDeArquivo(file.name);
+  if (!dados.titulo || dados.titulo.trim() === "" || dados.titulo.toLowerCase() === "untitled") {
+    dados.titulo = extraidoNome.titulo;
+  }
+  if (!dados.autor || dados.autor.trim() === "" || dados.autor.toLowerCase() === "unknown" || dados.autor.toLowerCase() === "autor do arquivo") {
+    dados.autor = extraidoNome.autor;
+  }
+
+  return dados;
 }

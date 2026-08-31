@@ -161,37 +161,39 @@ function PaginaAcervo() {
     }
   }
 
-  // Upload e processamento real de EPUB / PDF pessoal
+  // Upload e processamento real de EPUB / PDF pessoal com metadados inteligentes
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadando(true);
     try {
       notificar("Lendo e extraindo conteúdo do arquivo...", "info");
-      const { texto, capa } = await extrairDadosDeArquivo(file);
+      const dadosExtraidos = await extrairDadosDeArquivo(file);
+      const { texto, capa, titulo, autor, editora, sinopse, genero, ano } = dadosExtraidos;
       
-      const nomeSemExt = file.name.replace(/\.[^/.]+$/, "");
-      const ext = file.name.split(".").pop()?.toUpperCase() || "PDF";
+      const ext = file.name.split(".").pop()?.toUpperCase() || "EPUB";
       const paginasEstimadas = Math.max(1, Math.ceil(obterTamanhoTextoReal(texto) / 1000));
 
       const res = await salvarLivro({
         data: {
-          titulo: nomeSemExt,
-          autor: "Autor do Arquivo",
+          titulo: titulo || file.name.replace(/\.[^/.]+$/, ""),
+          autor: autor || "Autor Desconhecido",
           formato: ext,
           status: "lendo",
           inicio: new Date().toISOString().split("T")[0],
           paginas: paginasEstimadas,
-          genero: "Ficção",
+          genero: genero || "Ficção",
+          editora: editora || undefined,
+          ano: ano || undefined,
           capa: capa || undefined,
-          sinopse: `Arquivo importado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
+          sinopse: sinopse || `Arquivo importado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
         },
       });
 
       // Salva o texto integral no IndexedDB local associado ao id do livro
       await salvarConteudoLocal(res.id, texto);
 
-      notificar(`Arquivo "${file.name}" importado com sucesso!`, "sucesso");
+      notificar(`"${res.titulo}" de ${res.autor} importado com sucesso!`, "sucesso");
       navigate({ to: "/ler/$livroId", params: { livroId: String(res.id) } });
     } catch (err: any) {
       console.error(err);
