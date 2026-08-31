@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 
 import {
@@ -18,40 +18,54 @@ import { matchSearch } from "../lib/utils";
 export const Route = createFileRoute("/cartas")({
   beforeLoad: () => exigirLogin(),
   loader: async () => {
-    const [cartas, dados] = await Promise.all([listarCartas(), dadosParaEscrever()]);
-    return { ...cartas, ...dados };
+    const [cartas, escrever] = await Promise.all([listarCartas(), dadosParaEscrever()]);
+    return {
+      recebidas: cartas.recebidas,
+      enviadas: cartas.enviadas,
+      destinatarios: escrever.destinatarios,
+      livros: escrever.livros,
+    };
   },
   component: PaginaCartas,
 });
 
-function dataLonga(iso: string | Date | null | undefined): string {
-  if (!iso) return "—";
-  const d = typeof iso === "string" ? new Date(iso.replace(" ", "T") + "Z") : new Date(iso);
-  return d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+function dataLonga(iso: string) {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-function Lacre({ tamanho = 12 }: { tamanho?: number }) {
+function Lacre() {
   return (
-    <span
-      aria-hidden
-      className="inline-flex items-center justify-center rounded-full bg-amora"
-      style={{ width: tamanho * 3, height: tamanho * 3 }}
-    >
-      <span className="inline-flex gap-[2px]">
-        <span className="inline-block rounded-sm bg-papel/90" style={{ width: 3, height: tamanho }} />
-        <span className="inline-block translate-y-0.5 rounded-sm bg-papel/60" style={{ width: 3, height: tamanho * 0.8 }} />
-        <span className="inline-block rounded-sm bg-papel/90" style={{ width: 3, height: tamanho }} />
-      </span>
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amora text-papel shadow-sm">
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <polyline points="3 7 12 13 21 7" />
+      </svg>
     </span>
   );
 }
 
-function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
+function CartaRecebidaItem({ carta }: { carta: CartaRecebida }) {
   const router = useRouter();
   const jaLida = carta.lida === 1;
   // Já lidas começam recolhidas; novas começam abertas
   const [expandida, setExpandida] = useState(!jaLida);
   const [marcando, setMarcando] = useState(false);
+
+  // Detecta se a carta é um convite de leitura coletiva
+  let livroIdSala: number | null = null;
+  const matchTag = carta.corpo?.match(/\[SALA_LEITURA:(\d+)\]/);
+  if (matchTag) {
+    livroIdSala = Number(matchTag[1]);
+  } else if (carta.livro_id) {
+    livroIdSala = carta.livro_id;
+  }
+
+  const corpoVisual = carta.corpo ? carta.corpo.replace(/\[SALA_LEITURA:\d+\]/g, "").trim() : "";
+  const ehConviteCineminha = Boolean(livroIdSala) || (corpoVisual.includes("Sessão Coletiva") || corpoVisual.includes("Modo Cineminha"));
 
   async function abrirELer() {
     setExpandida(true);
@@ -84,12 +98,14 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
     return (
       <button
         onClick={abrirELer}
-        className="group w-full rounded-2xl border border-amora/40 bg-amora-clara p-5 text-left transition-all hover:border-amora hover:shadow-md"
+        className="group w-full rounded-2xl border border-amora/40 bg-amora-clara p-5 text-left transition-all hover:border-amora hover:shadow-md cursor-pointer"
       >
         <div className="flex items-center gap-4">
           <Lacre />
           <div className="min-w-0 flex-1">
-            <p className="font-display text-lg italic text-amora-escura">Carta nova de {carta.remetente}</p>
+            <p className="font-display text-lg italic text-amora-escura">
+              {ehConviteCineminha ? `🛋️ Convite de Cineminha de ${carta.remetente}` : `Carta nova de ${carta.remetente}`}
+            </p>
             <p className="mt-0.5 text-sm text-amora-escura/70">
               {carta.livro_titulo ? `Desbloqueada por "${carta.livro_titulo}". ` : ""}Toque para abrir
             </p>
@@ -104,19 +120,19 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
 
   // Carta aberta (lida ou acabou de abrir)
   return (
-    <div className="rounded-2xl border border-[#d9c9a8] bg-[#fdfaf1] overflow-hidden transition-all">
+    <div className="rounded-2xl border border-[#d9c9a8] bg-[#fdfaf1] overflow-hidden transition-all shadow-xs">
       {/* Cabeçalho clicável para recolher/expandir */}
       <button
         onClick={() => setExpandida((v) => !v)}
-        className="w-full flex items-center justify-between gap-3 px-6 pt-5 pb-3 text-left group"
+        className="w-full flex items-center justify-between gap-3 px-6 pt-5 pb-3 text-left group cursor-pointer"
       >
         <div className="flex items-baseline gap-3 min-w-0">
           <p className="font-display italic text-amora shrink-0">
             {carta.remetente ? `De ${carta.remetente}` : "De Carteiro"}
           </p>
-          {!expandida && carta.corpo && (
+          {!expandida && corpoVisual && (
             <p className="text-sm text-[#9a8c78] truncate min-w-0">
-              — {carta.corpo.slice(0, 60)}{carta.corpo.length > 60 ? "…" : ""}
+              — {corpoVisual.slice(0, 60)}{corpoVisual.length > 60 ? "…" : ""}
             </p>
           )}
         </div>
@@ -138,7 +154,30 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
           {carta.livro_titulo && (
             <p className="mb-3 text-xs text-[#9a8c78]">Desbloqueada ao terminar "{carta.livro_titulo}"</p>
           )}
-          <p className="whitespace-pre-wrap font-display leading-relaxed text-[#2d2520]">{carta.corpo}</p>
+          <p className="whitespace-pre-wrap font-display leading-relaxed text-[#2d2520]">{corpoVisual}</p>
+
+          {ehConviteCineminha && (
+            <div className="mt-4 pt-3 border-t border-amora/20">
+              {livroIdSala ? (
+                <Link
+                  to="/ler/$livroId"
+                  params={{ livroId: String(livroIdSala) }}
+                  className="spring-bounce inline-flex items-center gap-2 rounded-xl bg-amora px-5 py-2.5 text-xs font-semibold text-papel hover:bg-amora-escura shadow-md transition-all active:scale-98 cursor-pointer"
+                >
+                  <span>🛋️</span>
+                  <span>Aceitar Convite e Entrar no Cineminha →</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/"
+                  className="spring-bounce inline-flex items-center gap-2 rounded-xl bg-amora px-5 py-2.5 text-xs font-semibold text-papel hover:bg-amora-escura shadow-md transition-all active:scale-98 cursor-pointer"
+                >
+                  <span>🛋️</span>
+                  <span>Ver Sala Ativa na Estante →</span>
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

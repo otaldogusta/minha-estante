@@ -570,7 +570,7 @@ export const convidarLeitorParaSala = createServerFn({ method: "POST" })
     }
 
     const remetenteNome = u.nome || "Um leitor da casa";
-    const corpoCarta = `🛋️ **${remetenteNome}** te convidou para uma Sessão Coletiva de **"${sala.livro_titulo}"** no Modo Cineminha!\n\nAcesse o livro na sua Estante ou entre no Leitor para acompanhar a leitura sincronizada em tempo real.`;
+    const corpoCarta = `🛋️ **${remetenteNome}** te convidou para uma Sessão Coletiva de **"${sala.livro_titulo}"** no Modo Cineminha!\n\nAcesse o livro ou clique no botão abaixo para entrar na sala sincronizada em tempo real.\n\n[SALA_LEITURA:${sala.livro_id}]`;
 
     try {
       await db()
