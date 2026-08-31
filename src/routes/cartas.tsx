@@ -48,7 +48,7 @@ function Lacre() {
   );
 }
 
-function CartaRecebidaItem({ carta }: { carta: CartaRecebida }) {
+function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
   const router = useRouter();
   const jaLida = carta.lida === 1;
   // Já lidas começam recolhidas; novas começam abertas
