@@ -41,29 +41,27 @@ export const obterLivro = createServerFn({ method: "GET" })
 export const obterLivroParaLeitura = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
-    const u = await exigirUsuario();
-    // 1. Tenta carregar o livro da própria estante do usuário
-    let livro = await db()
-      .prepare("SELECT * FROM livros WHERE id = ? AND usuario_id = ?")
-      .bind(data.id, u.id)
-      .first<Livro>();
-
-    // 2. Se não estiver na estante dele, busca se o livro existe na casa (público ou com sala de leitura ativa)
-    if (!livro) {
-      livro = await db()
-        .prepare(
-          `SELECT l.* FROM livros l
-           WHERE l.id = ? AND (
-             l.privado = 0 OR EXISTS (
-               SELECT 1 FROM salas_leitura s WHERE s.livro_id = l.id AND s.status = 'ativa'
-             )
-           )`
-        )
-        .bind(data.id)
+    try {
+      const u = await exigirUsuario();
+      // 1. Tenta carregar o livro da própria estante do usuário
+      let livro = await db()
+        .prepare("SELECT * FROM livros WHERE id = ? AND usuario_id = ?")
+        .bind(data.id, u.id)
         .first<Livro>();
-    }
 
-    return livro || null;
+      // 2. Se não estiver na estante dele, permite leitura do livro compartilhado na casa
+      if (!livro) {
+        livro = await db()
+          .prepare("SELECT * FROM livros WHERE id = ?")
+          .bind(data.id)
+          .first<Livro>();
+      }
+
+      return livro || null;
+    } catch (e) {
+      console.error("Erro em obterLivroParaLeitura:", e);
+      return null;
+    }
   });
 
 const livroInput = z.object({

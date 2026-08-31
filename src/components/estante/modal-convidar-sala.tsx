@@ -43,9 +43,9 @@ export function ModalConvidarSala({
 
   async function handleCopiarLink() {
     try {
-      const url = window.location.href;
+      const url = `${window.location.origin}/ler/${sala.livroId}`;
       await navigator.clipboard.writeText(url);
-      notificar("Link copiado! Envie para quem você quer convidar.", "sucesso");
+      notificar("Link da sala copiado! Envie para quem você quer convidar.", "sucesso");
     } catch {
       notificar("Não foi possível copiar o link.", "erro");
     }
@@ -76,6 +76,7 @@ export function ModalConvidarSala({
 
   // IDs dos participantes que já estão na sala
   const idsNaSala = new Set(sala.participantes.map((p) => p.usuarioId));
+  const linkSala = typeof window !== "undefined" ? `${window.location.origin}/ler/${sala.livroId}` : "";
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -117,7 +118,7 @@ export function ModalConvidarSala({
               Link Direto da Sala
             </span>
             <p className="text-xs font-mono text-tinta truncate mt-0.5 select-all">
-              {typeof window !== "undefined" ? window.location.href : ""}
+              {linkSala}
             </p>
           </div>
           <button
