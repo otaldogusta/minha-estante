@@ -198,21 +198,34 @@ export function LeitorDigital({
   const [textoLocal, setTextoLocal] = useState<string | null>(null);
   const [carregandoLocal, setCarregandoLocal] = useState<boolean>(true);
 
-  // Carrega o conteúdo textual do IndexedDB se existir
+  // Carrega o conteúdo textual do IndexedDB se existir com timeout de segurança
   useEffect(() => {
+    let ativo = true;
+    const safetyTimer = setTimeout(() => {
+      if (ativo) setCarregandoLocal(false);
+    }, 1200);
+
     async function carregar() {
       try {
         const txt = await obterConteudoLocal(livro.id);
-        if (txt) {
+        if (ativo && txt) {
           setTextoLocal(txt);
         }
       } catch (e) {
         console.error("Erro ao carregar texto local:", e);
       } finally {
-        setCarregandoLocal(false);
+        if (ativo) {
+          clearTimeout(safetyTimer);
+          setCarregandoLocal(false);
+        }
       }
     }
     carregar();
+
+    return () => {
+      ativo = false;
+      clearTimeout(safetyTimer);
+    };
   }, [livro.id]);
 
   // Estado da Sala de Leitura Coletiva (Modo Cineminha)
