@@ -39,7 +39,7 @@ const SQL_DESBLOQUEADA = `(c.livro_condicao_id IS NULL OR EXISTS (
 
 export const listarCartas = createServerFn({ method: "GET" }).handler(async () => {
   const u = await exigirUsuario();
-  const recebidas = await db()
+  const rawRecebidas: any = await db()
     .prepare(
       `SELECT c.id,
               CASE WHEN ${SQL_DESBLOQUEADA} THEN c.corpo ELSE NULL END AS corpo,
@@ -54,7 +54,8 @@ export const listarCartas = createServerFn({ method: "GET" }).handler(async () =
     )
     .bind(u.id)
     .all<CartaRecebida>();
-  const enviadas = await db()
+
+  const rawEnviadas: any = await db()
     .prepare(
       `SELECT c.id, c.corpo, ud.nome AS destinatario, c.criado_em, c.lida, c.lida_em,
               ${SQL_DESBLOQUEADA} AS desbloqueada,
@@ -67,18 +68,27 @@ export const listarCartas = createServerFn({ method: "GET" }).handler(async () =
     )
     .bind(u.id)
     .all<CartaEnviada>();
-  return { recebidas: recebidas.results, enviadas: enviadas.results };
+
+  const recebidas: CartaRecebida[] = Array.isArray(rawRecebidas)
+    ? rawRecebidas
+    : (rawRecebidas?.results ?? []);
+  const enviadas: CartaEnviada[] = Array.isArray(rawEnviadas)
+    ? rawEnviadas
+    : (rawEnviadas?.results ?? []);
+
+  return { recebidas, enviadas };
 });
 
 // Destinatários possíveis (as outras contas) + os livros públicos ainda não
 // lidos de CADA destinatário (para lacrar a carta a um livro da pessoa).
 export const dadosParaEscrever = createServerFn({ method: "GET" }).handler(async () => {
   const u = await exigirUsuario();
-  const destinatarios = await db()
+  const rawDest: any = await db()
     .prepare("SELECT id, nome FROM usuarios WHERE id != ? ORDER BY nome")
     .bind(u.id)
     .all<{ id: number; nome: string }>();
-  const livros = await db()
+
+  const rawLivros: any = await db()
     .prepare(
       `SELECT id, titulo, status, usuario_id FROM livros
        WHERE usuario_id != ? AND privado = 0 AND status IN ('lendo', 'quero_ler')
@@ -86,7 +96,11 @@ export const dadosParaEscrever = createServerFn({ method: "GET" }).handler(async
     )
     .bind(u.id)
     .all<{ id: number; titulo: string; status: string; usuario_id: number }>();
-  return { destinatarios: destinatarios.results, livros: livros.results };
+
+  const destinatarios = Array.isArray(rawDest) ? rawDest : (rawDest?.results ?? []);
+  const livros = Array.isArray(rawLivros) ? rawLivros : (rawLivros?.results ?? []);
+
+  return { destinatarios, livros };
 });
 
 export const enviarCarta = createServerFn({ method: "POST" })

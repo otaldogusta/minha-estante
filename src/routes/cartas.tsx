@@ -18,13 +18,23 @@ import { matchSearch } from "../lib/utils";
 export const Route = createFileRoute("/cartas")({
   beforeLoad: () => exigirLogin(),
   loader: async () => {
-    const [cartas, escrever] = await Promise.all([listarCartas(), dadosParaEscrever()]);
-    return {
-      recebidas: cartas.recebidas,
-      enviadas: cartas.enviadas,
-      destinatarios: escrever.destinatarios,
-      livros: escrever.livros,
-    };
+    try {
+      const [cartas, escrever] = await Promise.all([listarCartas(), dadosParaEscrever()]);
+      return {
+        recebidas: cartas?.recebidas ?? [],
+        enviadas: cartas?.enviadas ?? [],
+        destinatarios: escrever?.destinatarios ?? [],
+        livros: escrever?.livros ?? [],
+      };
+    } catch (e) {
+      console.error("Erro ao carregar cartas:", e);
+      return {
+        recebidas: [],
+        enviadas: [],
+        destinatarios: [],
+        livros: [],
+      };
+    }
   },
   component: PaginaCartas,
 });
