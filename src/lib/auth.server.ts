@@ -85,11 +85,22 @@ async function garantirColunaUltimoAcesso() {
       if (!info) {
         await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
       }
+      const infoUsr = await db()
+        .prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'usuarios' AND column_name = 'ultimo_acesso'")
+        .first();
+      if (!infoUsr) {
+        await db().prepare("ALTER TABLE usuarios ADD COLUMN ultimo_acesso TEXT").run();
+      }
     } else {
       const info = await db().prepare("PRAGMA table_info(sessoes)").all<{ name: string }>();
       const colunas = (info.results || []).map((r) => r.name);
       if (!colunas.includes("ultimo_acesso")) {
         await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
+      }
+      const infoUsr = await db().prepare("PRAGMA table_info(usuarios)").all<{ name: string }>();
+      const colunasUsr = (infoUsr.results || []).map((r) => r.name);
+      if (!colunasUsr.includes("ultimo_acesso")) {
+        await db().prepare("ALTER TABLE usuarios ADD COLUMN ultimo_acesso TEXT").run();
       }
     }
   } catch (e) {
@@ -104,21 +115,17 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
   const now = Date.now();
   const cached = sessionCache.get(token);
 
-  if (!cached || cached.expires <= now) {
-    await garantirColunaUltimoAcesso();
-    try {
-      await db()
-        .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
-        .bind(token)
-        .run();
-    } catch {
-      // Silencioso se a coluna não existir
-    }
-  }
-
   if (cached && cached.expires > now) {
     return cached.user;
   }
+
+  await garantirColunaUltimoAcesso();
+  try {
+    await db()
+      .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
+      .bind(token)
+      .run();
+  } catch {}
 
   const row = await db()
     .prepare(
@@ -130,6 +137,14 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
     .first<Usuario>();
 
   const user = row ?? null;
+  if (user) {
+    try {
+      await db()
+        .prepare("UPDATE usuarios SET ultimo_acesso = datetime('now') WHERE id = ?")
+        .bind(user.id)
+        .run();
+    } catch {}
+  }
   sessionCache.set(token, { user, expires: now + 30_000 });
   return user;
 }

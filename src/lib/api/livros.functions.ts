@@ -166,12 +166,14 @@ export type LeitorResumo = {
   lidos: number;
   lendoAgora: string | null;
   statusPresenca: StatusPresenca;
+  ultimoAcesso: string | null;
 };
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
   try {
     try {
       await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
+      await db().prepare("ALTER TABLE usuarios ADD COLUMN ultimo_acesso TEXT").run();
     } catch {
       // Coluna já existe
     }
@@ -182,6 +184,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       rawResults = await db()
         .prepare(
           `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
+                  COALESCE(us.ultimo_acesso, (SELECT MAX(s.ultimo_acesso) FROM sessoes s WHERE s.usuario_id = us.id)) AS ultimoAcesso,
                   (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
                   (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
                    ORDER BY l.inicio DESC LIMIT 1) AS lendoAgora,
@@ -194,7 +197,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       try {
         rawResults = await db()
           .prepare(
-            `SELECT us.usuario, us.nome, NULL AS statusCustom, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
+            `SELECT us.usuario, us.nome, NULL AS statusCustom, NULL AS ultimoAcesso, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
              FROM usuarios us
              ORDER BY us.nome`
           )
@@ -209,6 +212,8 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       nome: string;
       statusCustom?: string | null;
       statuscustom?: string | null;
+      ultimoAcesso?: string | null;
+      ultimoacesso?: string | null;
       lidos: number | string;
       lendoAgora?: string | null;
       lendoagora?: string | null;
@@ -222,6 +227,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       const temSessaoVal = r.temSessao !== undefined ? r.temSessao : r.temsessao;
       const statusCustomVal = r.statusCustom !== undefined ? r.statusCustom : r.statuscustom;
       const lendoAgoraVal = r.lendoAgora !== undefined ? r.lendoAgora : r.lendoagora;
+      const ultimoAcessoVal = r.ultimoAcesso !== undefined ? r.ultimoAcesso : r.ultimoacesso;
 
       const estaOnline = Boolean(temSessaoVal);
       const customStatus = statusCustomVal as StatusPresenca | null;
@@ -243,6 +249,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
         lidos: Number(r.lidos),
         lendoAgora: lendoAgoraVal || null,
         statusPresenca,
+        ultimoAcesso: ultimoAcessoVal || null,
       };
     });
   } catch (e) {

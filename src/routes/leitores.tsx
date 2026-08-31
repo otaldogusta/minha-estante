@@ -26,6 +26,32 @@ export const Route = createFileRoute("/leitores")({
   component: PaginaLeitores,
 });
 
+function formatarVistoPorUltimo(ultimoAcesso: string | null | undefined, status: StatusPresenca, eVoce: boolean): string {
+  if (eVoce) return "Online agora";
+  if (status === "online") return "Online agora";
+  if (status === "lendo") return "Lendo agora";
+  if (status === "ocupado") return "Não perturbe";
+  if (!ultimoAcesso) return "Offline";
+
+  const isoStr = ultimoAcesso.replace(" ", "T") + (ultimoAcesso.includes("Z") ? "" : "Z");
+  const d = new Date(isoStr);
+  const agora = new Date();
+  const diffMs = agora.getTime() - d.getTime();
+  
+  if (isNaN(diffMs) || diffMs < 0) return "Offline";
+
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHoras = Math.floor(diffMin / 60);
+  const diffDias = Math.floor(diffHoras / 24);
+
+  if (diffMin < 2) return "Online agora";
+  if (diffMin < 60) return `Visto há ${diffMin} min`;
+  if (diffHoras < 24) return `Visto há ${diffHoras} ${diffHoras === 1 ? "hora" : "horas"}`;
+  if (diffDias === 1) return "Visto ontem";
+  if (diffDias < 7) return `Visto há ${diffDias} dias`;
+  return `Visto em ${d.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}`;
+}
+
 function PontoPresenca({ status, eVoce }: { status: StatusPresenca; eVoce: boolean }) {
   const statusEfetivo: StatusPresenca = status;
 
@@ -145,14 +171,19 @@ function PaginaLeitores() {
                   >
                     <AvatarLeitor nome={nome} status={l.statusPresenca} tamanho="md" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors inline-flex items-center gap-2 flex-wrap">
-                        <span>{nome}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors">
+                          {nome}
+                        </p>
                         {eVoce && (
                           <span className="font-sans text-xs font-normal text-amora border border-amora/30 bg-amora-clara/60 px-2 py-0.5 rounded-full">
                             (você)
                           </span>
                         )}
-                      </p>
+                        <span className="text-xs text-tinta-3 font-normal">
+                          • {formatarVistoPorUltimo(l.ultimoAcesso, l.statusPresenca, eVoce)}
+                        </span>
+                      </div>
                       <p className="mt-0.5 truncate text-sm text-tinta-2">
                         {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
                         {l.lendoAgora ? ` · lendo ${l.lendoAgora}` : ""}
