@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { listarLeitores, type LeitorPublico } from "../../lib/api/livros.functions";
+import { listarLeitores, type LeitorResumo } from "../../lib/api/livros.functions";
 import { convidarLeitorParaSala, type SalaLeituraDetalhes } from "../../lib/api/sala-leitura.functions";
 import { AvatarLeitor } from "./avatar";
 import { notificar } from "../../lib/toast";
@@ -14,7 +14,7 @@ export function ModalConvidarSala({
   onClose: () => void;
   sala: SalaLeituraDetalhes;
 }) {
-  const [leitores, setLeitores] = useState<LeitorPublico[]>([]);
+  const [leitores, setLeitores] = useState<LeitorResumo[]>([]);
   const [carregando, setCarregando] = useState(false);
   const [enviandoId, setEnviandoId] = useState<number | null>(null);
   const [convidados, setConvidados] = useState<Set<number>>(new Set());
@@ -157,18 +157,18 @@ export function ModalConvidarSala({
                     className="flex items-center justify-between gap-3 rounded-xl border border-papel-3/70 bg-papel-2/50 p-2.5 sm:p-3 transition-colors hover:border-papel-3 hover:bg-papel-2"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <AvatarLeitor nome={leitor.nome} tamanho="sm" status={leitor.status_presenca} />
+                      <AvatarLeitor nome={leitor.nome} tamanho="sm" status={leitor.statusPresenca} />
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm font-semibold text-tinta truncate">
                           {leitor.nome}
                         </p>
                         <p className="text-[11px] text-tinta-3">
-                          {leitor.status_presenca === "online" ? (
+                          {leitor.statusPresenca === "online" ? (
                             <span className="text-emerald-600 font-medium">Online agora</span>
-                          ) : leitor.status_presenca === "lendo" ? (
+                          ) : leitor.statusPresenca === "lendo" ? (
                             <span className="text-amber-600 font-medium">Lendo agora</span>
                           ) : (
-                            <span>{leitor.total_lidos || 0} livros lidos</span>
+                            <span>{leitor.lidos || 0} livros lidos</span>
                           )}
                         </p>
                       </div>

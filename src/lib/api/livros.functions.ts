@@ -189,6 +189,7 @@ export const alterarStatusLivro = createServerFn({ method: "POST" })
 export type StatusPresenca = "online" | "lendo" | "ocupado" | "invisivel" | "offline";
 
 export type LeitorResumo = {
+  id: number;
   usuario: string;
   nome: string;
   lidos: number;
@@ -238,7 +239,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
     try {
       rawResults = await db()
         .prepare(
-          `SELECT us.usuario, us.nome, us.status_presenca AS statusCustom,
+          `SELECT us.id, us.usuario, us.nome, us.status_presenca AS statusCustom,
                   COALESCE(us.ultimo_acesso, (SELECT MAX(s.ultimo_acesso) FROM sessoes s WHERE s.usuario_id = us.id)) AS ultimoAcesso,
                   (SELECT COUNT(*) FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lido' AND l.privado = 0) AS lidos,
                   (SELECT l.titulo FROM livros l WHERE l.usuario_id = us.id AND l.status = 'lendo' AND l.privado = 0
@@ -252,7 +253,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       try {
         rawResults = await db()
           .prepare(
-            `SELECT us.usuario, us.nome, NULL AS statusCustom, NULL AS ultimoAcesso, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
+            `SELECT us.id, us.usuario, us.nome, NULL AS statusCustom, NULL AS ultimoAcesso, 0 AS lidos, NULL AS lendoAgora, 1 AS temSessao
              FROM usuarios us
              ORDER BY us.nome`
           )
@@ -263,6 +264,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
     }
 
     const results: Array<{
+      id?: number | string;
       usuario: string;
       nome: string;
       statusCustom?: string | null;
@@ -310,6 +312,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       }
 
       return {
+        id: Number(r.id || 0),
         usuario: r.usuario,
         nome: r.nome,
         lidos: Number(r.lidos),
