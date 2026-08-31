@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { SalaLeituraDetalhes } from "../../lib/api/sala-leitura.functions";
 import { AvatarLeitor } from "./avatar";
+import { ModalConvidarSala } from "./modal-convidar-sala";
 import { notificar } from "../../lib/toast";
 
 const REACOES_DISPONIVEIS = [
@@ -29,6 +30,7 @@ export function SalaLeituraBar({
 }) {
   const [menuReacoesAberto, setMenuReacoesAberto] = useState(false);
   const [confirmarSaida, setConfirmarSaida] = useState(false);
+  const [modalConviteAberto, setModalConviteAberto] = useState(false);
   const reacoesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -124,9 +126,9 @@ export function SalaLeituraBar({
           {/* Botão Convidar Participantes */}
           <button
             type="button"
-            onClick={handleCopiarConvite}
+            onClick={() => setModalConviteAberto(true)}
             className="spring-bounce flex h-7 sm:h-8 items-center gap-1 sm:gap-1.5 rounded-full border border-dashed border-amora/50 bg-amora/10 hover:bg-amora hover:text-papel px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold text-amora transition-all active:scale-95 cursor-pointer shadow-xs ml-1 select-none"
-            title="Copiar link da sala para convidar outros leitores"
+            title="Convidar outros leitores da casa"
           >
             <span className="text-sm font-bold leading-none">+</span>
             <span className="hidden sm:inline">Convidar</span>
@@ -202,6 +204,13 @@ export function SalaLeituraBar({
           )}
         </div>
       </div>
+
+      {/* Modal de Convidar Leitores da Casa */}
+      <ModalConvidarSala
+        aberto={modalConviteAberto}
+        onClose={() => setModalConviteAberto(false)}
+        sala={sala}
+      />
     </div>
   );
 }

@@ -543,3 +543,46 @@ export const encerrarSala = createServerFn({ method: "POST" })
       return { ok: false, erro: e.message };
     }
   });
+
+// 11. Convidar leitor para a sala (cria uma notificação/carta especial para o leitor convidado)
+export const convidarLeitorParaSala = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      codigo: z.string(),
+      paraUsuarioId: z.number().int(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    await garantirTabelasSalas();
+
+    if (data.paraUsuarioId === u.id) {
+      return { ok: false, erro: "Você não pode convidar a si mesmo." };
+    }
+
+    const sala = await db()
+      .prepare("SELECT id, livro_id, livro_titulo, host_usuario_id FROM salas_leitura WHERE codigo = ? AND status = 'ativa'")
+      .bind(data.codigo)
+      .first<{ id: number; livro_id: number; livro_titulo: string; host_usuario_id: number }>();
+
+    if (!sala) {
+      return { ok: false, erro: "Sala de leitura não encontrada ou encerrada." };
+    }
+
+    const remetenteNome = u.nome || "Um leitor da casa";
+    const corpoCarta = `🛋️ **${remetenteNome}** te convidou para uma Sessão Coletiva de **"${sala.livro_titulo}"** no Modo Cineminha!\n\nAcesse o livro na sua Estante ou entre no Leitor para acompanhar a leitura sincronizada em tempo real.`;
+
+    try {
+      await db()
+        .prepare(
+          "INSERT INTO cartas (de_usuario_id, para_usuario_id, corpo, livro_condicao_id) VALUES (?, ?, ?, NULL)"
+        )
+        .bind(u.id, data.paraUsuarioId, corpoCarta)
+        .run();
+
+      return { ok: true };
+    } catch (e: any) {
+      return { ok: false, erro: e.message || "Erro ao enviar convite" };
+    }
+  });
+
