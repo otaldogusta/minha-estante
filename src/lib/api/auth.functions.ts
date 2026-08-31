@@ -181,16 +181,17 @@ export const validarConvite = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const row = await db()
       .prepare(
-        `SELECT c.usado_por, uc.nome AS convidou,
+        `SELECT c.usado_por, uc.nome AS convidou, un.nome AS usado_por_nome,
          (c.criado_em < datetime('now', '-48 hours')) AS expirado
          FROM convites c
          JOIN usuarios uc ON uc.id = c.criado_por
+         LEFT JOIN usuarios un ON un.id = c.usado_por
          WHERE c.codigo = ?`
       )
       .bind(data.codigo)
-      .first<{ usado_por: number | null; convidou: string; expirado: number | boolean }>();
+      .first<{ usado_por: number | null; convidou: string; usado_por_nome: string | null; expirado: number | boolean }>();
     if (!row) return { valido: false as const };
-    if (row.usado_por) return { valido: false as const, usado: true };
+    if (row.usado_por) return { valido: false as const, usado: true, usadoPorNome: row.usado_por_nome };
     if (Boolean(row.expirado)) return { valido: false as const, expirado: true };
     return { valido: true as const, convidou: row.convidou };
   });
@@ -208,11 +209,11 @@ export const cadastrarComConvite = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const convite = await db()
       .prepare(
-        `SELECT usado_por, (criado_em < datetime('now', '-48 hours')) AS expirado
+        `SELECT criado_por, usado_por, (criado_em < datetime('now', '-48 hours')) AS expirado
          FROM convites WHERE codigo = ?`
       )
       .bind(data.codigo)
-      .first<{ usado_por: number | null; expirado: number | boolean }>();
+      .first<{ criado_por: number; usado_por: number | null; expirado: number | boolean }>();
     if (!convite || convite.usado_por || Boolean(convite.expirado)) {
       return { ok: false as const, erro: "Convite inválido, expirado ou já usado." };
     }
@@ -234,10 +235,32 @@ export const cadastrarComConvite = createServerFn({ method: "POST" })
       .bind(data.nome.trim(), usuario, hash)
       .run();
     const novoId = Number(res.meta.last_row_id);
+    
+    // Finaliza o convite marcando quem usou e a data de uso
     await db()
       .prepare("UPDATE convites SET usado_por = ?, usado_em = datetime('now') WHERE codigo = ? AND usado_por IS NULL")
       .bind(novoId, data.codigo)
       .run();
+
+    // Notifica quem convidou enviando uma carta de boas-vindas na caixa de entrada (/cartas)
+    if (convite.criado_por) {
+      try {
+        await db()
+          .prepare(
+            `INSERT INTO cartas (de_usuario_id, para_usuario_id, corpo, criado_em, lida)
+             VALUES (?, ?, ?, datetime('now'), 0)`
+          )
+          .bind(
+            novoId,
+            convite.criado_por,
+            `🎉 Convite aceito!\n\nOlá! Acabei de criar minha conta no Minha Estante usando seu convite.\nAgora já fazemos parte desta casa literária e podemos acompanhar as leituras e trocar cartas!`
+          )
+          .run();
+      } catch (e) {
+        console.error("Erro ao gerar carta de notificação de convite:", e);
+      }
+    }
+
     await criarSessao(novoId);
     return { ok: true as const, nome: data.nome.trim() };
   });

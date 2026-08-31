@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { validarConvite, cadastrarComConvite } from "../lib/api/auth.functions";
@@ -67,14 +67,27 @@ function PaginaConvite() {
         </div>
 
         {!convite.valido ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-tinta-3 p-8 text-center">
-            <p className="font-display text-xl text-tinta">
-              {"usado" in convite && convite.usado ? "Este convite já foi usado" : "Convite inválido"}
+          <div className="mt-8 rounded-2xl border border-dashed border-tinta-3 bg-papel-2/60 p-8 text-center space-y-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-amora-clara flex items-center justify-center text-amora text-xl">
+              {"usado" in convite && convite.usado ? "✓" : "🔒"}
+            </div>
+            <p className="font-display text-xl font-bold text-tinta">
+              {"usado" in convite && convite.usado
+                ? "Este convite já foi utilizado e finalizado"
+                : "expirado" in convite && convite.expirado
+                ? "Este convite expirou (mais de 48h)"
+                : "Convite inválido ou revogado"}
             </p>
-            <p className="mt-2 text-sm text-tinta-2">Peça um novo link para quem te convidou.</p>
-            <Link to="/entrar" className="mt-4 inline-block text-sm text-amora underline underline-offset-4">
-              Já tenho conta
-            </Link>
+            <p className="text-xs text-tinta-2 leading-relaxed max-w-xs mx-auto">
+              {"usado" in convite && convite.usado
+                ? `Este link era de uso único e já foi utilizado por ${(convite as any).usadoPorNome ? `"${(convite as any).usadoPorNome}"` : "um leitor"} para criar uma conta.`
+                : "Peça um novo link de convite para o dono da estante."}
+            </p>
+            <div className="pt-3">
+              <Link to="/entrar" className="rounded-xl bg-amora px-5 py-2.5 text-xs font-semibold text-papel hover:bg-amora-escura transition-all inline-block shadow-xs">
+                Ir para o login
+              </Link>
+            </div>
           </div>
         ) : (
           <>
