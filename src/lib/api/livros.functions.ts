@@ -169,6 +169,23 @@ export type LeitorResumo = {
   ultimoAcesso: string | null;
 };
 
+function parseUtcDate(val: any): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  if (typeof val === "number") return new Date(val);
+  if (typeof val === "string") {
+    let s = val.trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) {
+      s = s.replace(" ", "T") + "Z";
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+      s = s + "Z";
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
   try {
     let rawResults: any = null;
@@ -205,8 +222,8 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       nome: string;
       statusCustom?: string | null;
       statuscustom?: string | null;
-      ultimoAcesso?: string | null;
-      ultimoacesso?: string | null;
+      ultimoAcesso?: any;
+      ultimoacesso?: any;
       lidos: number | string;
       lendoAgora?: string | null;
       lendoagora?: string | null;
@@ -223,14 +240,13 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
 
       const customStatus = statusCustomVal as StatusPresenca | null;
 
-      // Um usuário é considerado ativo se fez alguma requisição/acesso nos últimos 3 minutos (180s)
+      // Um usuário é considerado ativo se fez alguma requisição/acesso nos últimos 5 minutos
       let estaAtivo = false;
-      if (ultimoAcessoVal) {
-        const isoStr = ultimoAcessoVal.replace(" ", "T") + (ultimoAcessoVal.includes("Z") ? "" : "Z");
-        const dt = new Date(isoStr);
+      const dt = parseUtcDate(ultimoAcessoVal);
+      if (dt) {
         const agora = new Date();
-        const diffMs = agora.getTime() - dt.getTime();
-        if (!isNaN(diffMs) && diffMs >= 0 && diffMs <= 180_000) {
+        const diffMs = Math.abs(agora.getTime() - dt.getTime());
+        if (diffMs <= 5 * 60 * 1000) {
           estaAtivo = true;
         }
       }
@@ -254,7 +270,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
         lidos: Number(r.lidos),
         lendoAgora: lendoAgoraVal || null,
         statusPresenca,
-        ultimoAcesso: ultimoAcessoVal || null,
+        ultimoAcesso: dt ? dt.toISOString() : (typeof ultimoAcessoVal === "string" ? ultimoAcessoVal : null),
       };
     });
   } catch (e) {
@@ -275,7 +291,7 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
     if (!dono) throw new Error("Leitor não encontrado");
 
     // Status de presença do leitor
-    let presencaRow: { statusCustom: string | null; ultimoAcesso: string | null } | null = null;
+    let presencaRow: { statusCustom: string | null; ultimoAcesso: any } | null = null;
     try {
       presencaRow = await db()
         .prepare(
@@ -284,7 +300,7 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
            FROM usuarios us WHERE us.id = ?`
         )
         .bind(dono.id)
-        .first<{ statusCustom: string | null; ultimoAcesso: string | null }>();
+        .first<{ statusCustom: string | null; ultimoAcesso: any }>();
     } catch {
       // Fallback se colunas/tabelas ainda não existirem
     }
@@ -293,12 +309,11 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
     const ultimoAcessoVal = presencaRow?.ultimoAcesso ?? (presencaRow as any)?.ultimoacesso;
 
     let estaAtivo = false;
-    if (ultimoAcessoVal) {
-      const isoStr = ultimoAcessoVal.replace(" ", "T") + (ultimoAcessoVal.includes("Z") ? "" : "Z");
-      const dt = new Date(isoStr);
+    const dt = parseUtcDate(ultimoAcessoVal);
+    if (dt) {
       const agora = new Date();
-      const diffMs = agora.getTime() - dt.getTime();
-      if (!isNaN(diffMs) && diffMs >= 0 && diffMs <= 180_000) {
+      const diffMs = Math.abs(agora.getTime() - dt.getTime());
+      if (diffMs <= 5 * 60 * 1000) {
         estaAtivo = true;
       }
     }

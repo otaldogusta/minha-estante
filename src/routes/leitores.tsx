@@ -26,6 +26,23 @@ export const Route = createFileRoute("/leitores")({
   component: PaginaLeitores,
 });
 
+function parseDataUtc(valor: any): Date | null {
+  if (!valor) return null;
+  if (valor instanceof Date) return isNaN(valor.getTime()) ? null : valor;
+  if (typeof valor === "number") return new Date(valor);
+  if (typeof valor === "string") {
+    let s = valor.trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) {
+      s = s.replace(" ", "T") + "Z";
+    } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+      s = s + "Z";
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 function formatarVistoPorUltimo(ultimoAcesso: string | null | undefined, status: StatusPresenca, eVoce: boolean): string {
   if (eVoce) return "Online agora";
   if (status === "online") return "Online agora";
@@ -33,18 +50,17 @@ function formatarVistoPorUltimo(ultimoAcesso: string | null | undefined, status:
   if (status === "ocupado") return "Não perturbe";
   if (!ultimoAcesso) return "Offline";
 
-  const isoStr = ultimoAcesso.replace(" ", "T") + (ultimoAcesso.includes("Z") ? "" : "Z");
-  const d = new Date(isoStr);
+  const d = parseDataUtc(ultimoAcesso);
+  if (!d) return "Offline";
+
   const agora = new Date();
-  const diffMs = agora.getTime() - d.getTime();
-  
-  if (isNaN(diffMs) || diffMs < 0) return "Offline";
+  const diffMs = Math.abs(agora.getTime() - d.getTime());
 
   const diffMin = Math.floor(diffMs / 60000);
   const diffHoras = Math.floor(diffMin / 60);
   const diffDias = Math.floor(diffHoras / 24);
 
-  if (diffMin < 2) return "Online agora";
+  if (diffMin <= 4) return "Online agora";
   if (diffMin < 60) return `Visto há ${diffMin} min`;
   if (diffHoras < 24) return `Visto há ${diffHoras} ${diffHoras === 1 ? "hora" : "horas"}`;
   if (diffDias === 1) return "Visto ontem";
@@ -169,7 +185,19 @@ function PaginaLeitores() {
                     params={{ usuario: l.usuario }}
                     className="card-surface spring-bounce group flex items-center gap-4 rounded-2xl border border-papel-3/80 p-5 shadow-sm transition-all hover:border-amora hover:shadow-md active:translate-y-[1px]"
                   >
-                    <AvatarLeitor nome={nome} status={l.statusPresenca} tamanho="md" />
+                    <AvatarLeitor
+                      nome={nome}
+                      status={
+                        eVoce
+                          ? l.statusPresenca === "invisivel"
+                            ? "offline"
+                            : l.statusPresenca === "ocupado" || l.statusPresenca === "lendo"
+                            ? l.statusPresenca
+                            : "online"
+                          : l.statusPresenca
+                      }
+                      tamanho="md"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-display text-lg font-semibold text-tinta group-hover:text-amora transition-colors">

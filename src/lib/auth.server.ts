@@ -82,7 +82,13 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
   const now = Date.now();
   const cached = sessionCache.get(token);
 
-  if (cached && cached.expires > now) {
+  if (cached && cached.expires > now && cached.user) {
+    // Atualiza o último acesso em background mesmo com cache em memória
+    db()
+      .prepare("UPDATE usuarios SET ultimo_acesso = datetime('now') WHERE id = ?")
+      .bind(cached.user.id)
+      .run()
+      .catch(() => {});
     return cached.user;
   }
 
