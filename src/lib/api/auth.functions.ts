@@ -18,31 +18,9 @@ function db() {
   return DB;
 }
 
-let statusPresencaGarantido = false;
-async function garantirColunaStatusPresenca() {
-  if (statusPresencaGarantido) return;
-  try {
-    const isPg = (db() as any).isPostgres;
-    if (isPg) {
-      await db().prepare("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS status_presenca TEXT DEFAULT 'online'").run();
-    } else {
-      const info = await db().prepare("PRAGMA table_info(usuarios)").all<{ name: string }>();
-      const colunas = (info.results || []).map((r) => r.name);
-      if (!colunas.includes("status_presenca")) {
-        await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
-      }
-    }
-  } catch (e) {
-    // Silencioso se já existir
-  } finally {
-    statusPresencaGarantido = true;
-  }
-}
-
 export const sessaoAtual = createServerFn({ method: "GET" }).handler(async () => {
   const u = await usuarioDaSessao();
   if (!u) return { autenticado: false as const };
-  await garantirColunaStatusPresenca();
 
   let email: string | null = null;
   let statusPresenca: "online" | "lendo" | "ocupado" | "invisivel" = "online";

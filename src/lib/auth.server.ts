@@ -75,33 +75,6 @@ export async function criarSessao(usuarioId: number): Promise<void> {
   });
 }
 
-let ultimoAcessoGarantido = false;
-async function garantirColunaUltimoAcesso() {
-  if (ultimoAcessoGarantido) return;
-  try {
-    const isPg = (db() as any).isPostgres;
-    if (isPg) {
-      await db().prepare("ALTER TABLE sessoes ADD COLUMN IF NOT EXISTS ultimo_acesso TEXT").run();
-      await db().prepare("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ultimo_acesso TEXT").run();
-    } else {
-      const info = await db().prepare("PRAGMA table_info(sessoes)").all<{ name: string }>();
-      const colunas = (info.results || []).map((r) => r.name);
-      if (!colunas.includes("ultimo_acesso")) {
-        await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
-      }
-      const infoUsr = await db().prepare("PRAGMA table_info(usuarios)").all<{ name: string }>();
-      const colunasUsr = (infoUsr.results || []).map((r) => r.name);
-      if (!colunasUsr.includes("ultimo_acesso")) {
-        await db().prepare("ALTER TABLE usuarios ADD COLUMN ultimo_acesso TEXT").run();
-      }
-    }
-  } catch (e) {
-    // Silencioso se já existir
-  } finally {
-    ultimoAcessoGarantido = true;
-  }
-}
-
 export async function usuarioDaSessao(): Promise<Usuario | null> {
   const token = getCookie(COOKIE);
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
@@ -113,7 +86,6 @@ export async function usuarioDaSessao(): Promise<Usuario | null> {
     return cached.user;
   }
 
-  await garantirColunaUltimoAcesso();
   try {
     await db()
       .prepare("UPDATE sessoes SET ultimo_acesso = datetime('now') WHERE token = ?")
