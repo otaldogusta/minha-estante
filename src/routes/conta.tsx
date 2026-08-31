@@ -87,6 +87,13 @@ function PaginaConta() {
   const [statusPresenca, setStatusPresenca] = useState<"online" | "lendo" | "ocupado" | "invisivel">(
     sessao.autenticado && (sessao as any).statusPresenca ? (sessao as any).statusPresenca : "online"
   );
+
+  useEffect(() => {
+    if (sessao.autenticado && (sessao as any).statusPresenca) {
+      setStatusPresenca((sessao as any).statusPresenca);
+    }
+  }, [sessao]);
+
   const [salvandoStatus, setSalvandoStatus] = useState(false);
   const [fabAberto, setFabAberto] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);

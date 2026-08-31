@@ -399,14 +399,14 @@ export const atualizarStatusPresenca = createServerFn({ method: "POST" })
   .validator(z.object({ status: z.enum(["online", "lendo", "ocupado", "invisivel"]) }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
-    await garantirColunaStatusPresenca();
     try {
       await db()
-        .prepare("UPDATE usuarios SET status_presenca = ? WHERE id = ?")
+        .prepare("UPDATE usuarios SET status_presenca = ?, ultimo_acesso = datetime('now') WHERE id = ?")
         .bind(data.status, u.id)
         .run();
     } catch (e) {
       console.error("Erro ao atualizar status_presenca:", e);
+      return { ok: false as const, erro: "Erro ao salvar status" };
     }
     return { ok: true as const, status: data.status };
   });
