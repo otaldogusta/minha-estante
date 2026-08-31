@@ -429,15 +429,6 @@ function ModalConvites({
               ))}
             </div>
           )}
-
-          {usados.length > 0 && (
-            <div className="border-t border-papel-3 pt-4">
-              <p className="text-xs text-tinta-3 leading-relaxed">
-                <span className="font-semibold">Convites aceitos:</span>{" "}
-                {usados.map((c) => c.usado_por_nome).filter(Boolean).join(", ")}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
