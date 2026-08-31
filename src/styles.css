@@ -566,28 +566,35 @@ html[data-theme="dark"] {
 
 @keyframes flutuar-reacao {
   0% {
-    transform: translateY(0) scale(0.6);
+    transform: translate3d(0, 0, 0) scale(0.6);
     opacity: 0;
   }
-  15% {
-    transform: translateY(-20px) scale(1.15);
+  12% {
+    transform: translate3d(0, -30px, 0) scale(1.2);
     opacity: 1;
   }
-  30% {
-    transform: translateY(-50px) scale(1);
+  25% {
+    transform: translate3d(4px, -70px, 0) scale(1);
     opacity: 1;
+  }
+  55% {
+    transform: translate3d(-6px, -170px, 0) scale(1.05);
+    opacity: 0.95;
   }
   80% {
-    transform: translateY(-160px) scale(1);
-    opacity: 0.85;
+    transform: translate3d(5px, -280px, 0) scale(0.95);
+    opacity: 0.75;
   }
   100% {
-    transform: translateY(-240px) scale(0.85);
+    transform: translate3d(0, -380px, 0) scale(0.8);
     opacity: 0;
   }
 }
 
 .animate-flutuar-reacao {
-  animation: flutuar-reacao 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: flutuar-reacao 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 

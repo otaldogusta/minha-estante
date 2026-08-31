@@ -18,7 +18,7 @@ export function ReacoesFlutuantesContainer({
     if (!novaReacao) return;
 
     const id = `${novaReacao.timestamp}-${Math.random()}`;
-    const leftPercent = 15 + Math.random() * 70; // 15% a 85% da largura
+    const leftPercent = 20 + Math.random() * 60; // 20% a 80% da tela
 
     const item: ReacaoItem = {
       id,
@@ -27,28 +27,28 @@ export function ReacoesFlutuantesContainer({
       leftPercent,
     };
 
-    setReacoes((prev) => [...prev.slice(-15), item]);
+    setReacoes((prev) => [...prev.slice(-10), item]);
 
     const timer = setTimeout(() => {
       setReacoes((prev) => prev.filter((r) => r.id !== id));
-    }, 2800);
+    }, 2300);
 
     return () => clearTimeout(timer);
   }, [novaReacao]);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden select-none">
       {reacoes.map((r) => (
         <div
           key={r.id}
           style={{ left: `${r.leftPercent}%` }}
-          className="absolute bottom-16 flex flex-col items-center animate-flutuar-reacao"
+          className="absolute bottom-20 flex flex-col items-center animate-flutuar-reacao pointer-events-none"
         >
-          <span className="text-3xl drop-shadow-md select-none transform hover:scale-125 transition-transform">
+          <span className="text-4xl select-none leading-none">
             {r.emoji}
           </span>
           {r.autorNome && (
-            <span className="mt-1 rounded-full bg-tinta/80 px-2 py-0.5 text-[10px] font-medium text-papel shadow-xs backdrop-blur-xs">
+            <span className="mt-1 rounded-full bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white shadow-xs">
               {r.autorNome}
             </span>
           )}
