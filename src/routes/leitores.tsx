@@ -208,9 +208,29 @@ function PaginaLeitores() {
                             (você)
                           </span>
                         )}
-                        <span className="text-xs text-tinta-3 font-normal">
-                          • {formatarVistoPorUltimo(l.ultimoAcesso, l.statusPresenca, eVoce)}
-                        </span>
+                        {(() => {
+                          const statusEfetivo = eVoce ? "online" : l.statusPresenca;
+                          const textoStatus = formatarVistoPorUltimo(l.ultimoAcesso, l.statusPresenca, eVoce);
+                          const isOnline = statusEfetivo === "online";
+                          const isLendo = statusEfetivo === "lendo";
+                          const isOcupado = statusEfetivo === "ocupado";
+
+                          return (
+                            <span
+                              className={`text-xs font-normal inline-flex items-center gap-1 ${
+                                isOnline
+                                  ? "text-emerald-500 font-medium dark:text-emerald-400"
+                                  : isLendo
+                                  ? "text-amber-500 font-medium dark:text-amber-400"
+                                  : isOcupado
+                                  ? "text-rose-500 font-medium dark:text-rose-400"
+                                  : "text-tinta-3/80"
+                              }`}
+                            >
+                              • {textoStatus}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <p className="mt-0.5 truncate text-sm text-tinta-2">
                         {l.lidos} {l.lidos === 1 ? "livro lido" : "livros lidos"}
