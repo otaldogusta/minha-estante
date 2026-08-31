@@ -171,13 +171,6 @@ export type LeitorResumo = {
 
 export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    try {
-      await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
-      await db().prepare("ALTER TABLE usuarios ADD COLUMN ultimo_acesso TEXT").run();
-    } catch {
-      // Coluna já existe
-    }
-
     let rawResults: any = null;
 
     try {

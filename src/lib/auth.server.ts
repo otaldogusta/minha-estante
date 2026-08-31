@@ -75,22 +75,14 @@ export async function criarSessao(usuarioId: number): Promise<void> {
   });
 }
 
+let ultimoAcessoGarantido = false;
 async function garantirColunaUltimoAcesso() {
+  if (ultimoAcessoGarantido) return;
   try {
     const isPg = (db() as any).isPostgres;
     if (isPg) {
-      const info = await db()
-        .prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'sessoes' AND column_name = 'ultimo_acesso'")
-        .first();
-      if (!info) {
-        await db().prepare("ALTER TABLE sessoes ADD COLUMN ultimo_acesso TEXT").run();
-      }
-      const infoUsr = await db()
-        .prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'usuarios' AND column_name = 'ultimo_acesso'")
-        .first();
-      if (!infoUsr) {
-        await db().prepare("ALTER TABLE usuarios ADD COLUMN ultimo_acesso TEXT").run();
-      }
+      await db().prepare("ALTER TABLE sessoes ADD COLUMN IF NOT EXISTS ultimo_acesso TEXT").run();
+      await db().prepare("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ultimo_acesso TEXT").run();
     } else {
       const info = await db().prepare("PRAGMA table_info(sessoes)").all<{ name: string }>();
       const colunas = (info.results || []).map((r) => r.name);
@@ -104,7 +96,9 @@ async function garantirColunaUltimoAcesso() {
       }
     }
   } catch (e) {
-    console.error("Erro ao garantir coluna ultimo_acesso:", e);
+    // Silencioso se já existir
+  } finally {
+    ultimoAcessoGarantido = true;
   }
 }
 

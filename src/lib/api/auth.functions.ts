@@ -18,16 +18,13 @@ function db() {
   return DB;
 }
 
+let statusPresencaGarantido = false;
 async function garantirColunaStatusPresenca() {
+  if (statusPresencaGarantido) return;
   try {
     const isPg = (db() as any).isPostgres;
     if (isPg) {
-      const info = await db()
-        .prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'usuarios' AND column_name = 'status_presenca'")
-        .first();
-      if (!info) {
-        await db().prepare("ALTER TABLE usuarios ADD COLUMN status_presenca TEXT DEFAULT 'online'").run();
-      }
+      await db().prepare("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS status_presenca TEXT DEFAULT 'online'").run();
     } else {
       const info = await db().prepare("PRAGMA table_info(usuarios)").all<{ name: string }>();
       const colunas = (info.results || []).map((r) => r.name);
@@ -36,7 +33,9 @@ async function garantirColunaStatusPresenca() {
       }
     }
   } catch (e) {
-    console.error("Erro ao garantir coluna status_presenca:", e);
+    // Silencioso se já existir
+  } finally {
+    statusPresencaGarantido = true;
   }
 }
 
