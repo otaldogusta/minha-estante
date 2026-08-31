@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { obterLivro } from "../lib/api/livros.functions";
+import { obterLivroParaLeitura } from "../lib/api/livros.functions";
 import { carregarTextoGutenberg } from "../lib/api/conquistas.functions";
 import { LeitorDigital } from "../components/estante/leitor-digital";
 import { Cabecalho } from "../components/estante/cabecalho";
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/ler/$livroId")({
   loader: async ({ params }) => {
     const id = Number(params.livroId);
     if (isNaN(id) || id <= 0) throw notFound();
-    const livro = await obterLivro({ data: { id } });
+    const livro = await obterLivroParaLeitura({ data: { id } });
     if (!livro) throw notFound();
 
     let textoOnline: string | undefined = undefined;

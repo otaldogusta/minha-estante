@@ -783,7 +783,7 @@ export function LeitorDigital({
             !exibindoCapa && !precisaCarregarArquivo && (textoPaginaAtual || "").trim().startsWith("<") ? "" : "whitespace-pre-line"
           }`}>
             {precisaCarregarArquivo ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-6 font-sans">
+              <div className="flex-1 flex flex-col items-center justify-center py-8 text-center max-w-md mx-auto space-y-5 font-sans">
                 <div className="h-16 w-16 bg-amora/10 text-amora rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -792,26 +792,45 @@ export function LeitorDigital({
                   </svg>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-tinta">Texto não carregado neste dispositivo</h3>
+                  <h3 className="text-lg font-bold text-tinta">Arquivo do Livro Necessário</h3>
                   <p className="text-xs text-tinta-2 leading-relaxed">
-                    Você adicionou este livro a partir de outro dispositivo. Como os seus livros são processados e armazenados localmente no navegador por velocidade e privacidade, você precisa selecionar o arquivo do livro (<strong>EPUB, PDF ou TXT</strong>) uma única vez neste celular ou computador para começar a ler aqui.
+                    Para ler com máxima privacidade e velocidade offline, carregue o arquivo (<strong>EPUB, PDF ou TXT</strong>) deste livro uma única vez neste dispositivo.
                   </p>
                 </div>
-                
-                <label className="inline-flex items-center gap-2 rounded-xl bg-[#7a3b52] hover:bg-[#5e2c3f] text-white font-semibold text-xs px-5 py-3 shadow-md cursor-pointer transition-colors active:scale-98">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                  <span>{processandoArquivoLocal ? "Lendo arquivo..." : "Selecionar Arquivo do Livro"}</span>
-                  <input
-                    type="file"
-                    accept=".epub,.pdf,.txt"
-                    onChange={handleFileSelectLocal}
-                    disabled={processandoArquivoLocal}
-                    className="hidden"
-                  />
-                </label>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                  {livro.arquivo_url && (
+                    <a
+                      href={livro.arquivo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-3 shadow-md transition-all active:scale-98 w-full sm:w-auto cursor-pointer"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Baixar Arquivo ({livro.formato || "EPUB / PDF"})</span>
+                    </a>
+                  )}
+
+                  <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-amora hover:bg-amora-escura text-white font-semibold text-xs px-5 py-3 shadow-md cursor-pointer transition-all active:scale-98 w-full sm:w-auto">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span>{processandoArquivoLocal ? "Lendo arquivo..." : "Selecionar Arquivo (EPUB/PDF)"}</span>
+                    <input
+                      type="file"
+                      accept=".epub,.pdf,.txt"
+                      onChange={handleFileSelectLocal}
+                      disabled={processandoArquivoLocal}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             ) : exibindoCapa ? (
               <div className="flex-1 flex items-center justify-center w-full h-full min-h-0 py-2">

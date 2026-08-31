@@ -38,6 +38,34 @@ export const obterLivro = createServerFn({ method: "GET" })
     return livro || null;
   });
 
+export const obterLivroParaLeitura = createServerFn({ method: "GET" })
+  .validator(z.object({ id: z.number().int() }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    // 1. Tenta carregar o livro da própria estante do usuário
+    let livro = await db()
+      .prepare("SELECT * FROM livros WHERE id = ? AND usuario_id = ?")
+      .bind(data.id, u.id)
+      .first<Livro>();
+
+    // 2. Se não estiver na estante dele, busca se o livro existe na casa (público ou com sala de leitura ativa)
+    if (!livro) {
+      livro = await db()
+        .prepare(
+          `SELECT l.* FROM livros l
+           WHERE l.id = ? AND (
+             l.privado = 0 OR EXISTS (
+               SELECT 1 FROM salas_leitura s WHERE s.livro_id = l.id AND s.status = 'ativa'
+             )
+           )`
+        )
+        .bind(data.id)
+        .first<Livro>();
+    }
+
+    return livro || null;
+  });
+
 const livroInput = z.object({
   id: z.number().int().optional(),
   titulo: z.string().min(1).max(300),
