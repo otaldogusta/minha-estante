@@ -5,6 +5,20 @@ import { notificar } from "../../lib/toast";
 import type { Livro } from "../../lib/livros";
 import { obterConteudoLocal, salvarConteudoLocal } from "../../lib/db-local";
 import { extrairDadosDeArquivo } from "../../lib/file-parser";
+import {
+  criarSalaLeitura,
+  obterSalaLeitura,
+  obterSalaAtivaDoLivro,
+  entrarSalaLeitura,
+  sairSalaLeitura,
+  sincronizarPaginaHost,
+  marcarPaginaPronta,
+  enviarReacao,
+  encerrarSala,
+  type SalaLeituraDetalhes,
+} from "../../lib/api/sala-leitura.functions";
+import { SalaLeituraBar } from "./sala-leitura-bar";
+import { ReacoesFlutuantesContainer } from "./reacoes-flutuantes";
 
 type TemaLeitor = "claro" | "sepia" | "noturno";
 
@@ -201,7 +215,166 @@ export function LeitorDigital({
     carregar();
   }, [livro.id]);
 
-  const [processandoArquivoLocal, setProcessandoArquivoLocal] = useState<boolean>(false);
+  // Estado da Sala de Leitura Coletiva (Modo Cineminha)
+  const [codigoSala, setCodigoSala] = useState<string | null>(null);
+  const [dadosSala, setDadosSala] = useState<SalaLeituraDetalhes | null>(null);
+  const [modalSalaAberto, setModalSalaAberto] = useState(false);
+  const [criandoSala, setCriandoSala] = useState(false);
+  const [salaAtivaDoLivro, setSalaAtivaDoLivro] = useState<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null>(null);
+  const [ultimaReacao, setUltimaReacao] = useState<{ emoji: string; autorNome: string; timestamp: number } | null>(null);
+  const ultimaReacaoProcessadaRef = useRef<string | null>(null);
+
+  // Verifica se há alguma sala ativa para este livro
+  useEffect(() => {
+    let montado = true;
+    async function checarSalaAtiva() {
+      try {
+        const res = await obterSalaAtivaDoLivro({ data: { livroId: livro.id } });
+        if (montado && res && res.temSala) {
+          setSalaAtivaDoLivro(res);
+        } else if (montado && !res?.temSala) {
+          setSalaAtivaDoLivro(null);
+        }
+      } catch {}
+    }
+    checarSalaAtiva();
+    const intv = setInterval(checarSalaAtiva, 8000);
+    return () => {
+      montado = false;
+      clearInterval(intv);
+    };
+  }, [livro.id]);
+
+  // Polling e sincronização contínua da sala
+  useEffect(() => {
+    if (!codigoSala) return;
+
+    let cancelado = false;
+
+    async function sincronizar() {
+      try {
+        const res = await obterSalaLeitura({ data: { codigo: codigoSala! } });
+        if (cancelado) return;
+
+        if (!res || res.status === "encerrada") {
+          notificar("A sala de leitura coletiva foi encerrada.", "info");
+          setCodigoSala(null);
+          setDadosSala(null);
+          return;
+        }
+
+        setDadosSala(res);
+
+        // Se NÃO for o host, segue a página oficial da sala definida pelo host
+        if (!res.souHost && res.paginaAtual !== paginaAtual) {
+          setPaginaAtual(res.paginaAtual);
+        }
+
+        // Verifica novas reações ao vivo dos outros participantes
+        for (const p of res.participantes) {
+          if (p.reacao && p.reacaoEm) {
+            const reacaoKey = `${p.usuarioId}-${p.reacao}-${p.reacaoEm}`;
+            if (ultimaReacaoProcessadaRef.current !== reacaoKey) {
+              ultimaReacaoProcessadaRef.current = reacaoKey;
+              setUltimaReacao({
+                emoji: p.reacao,
+                autorNome: p.nome,
+                timestamp: Date.now(),
+              });
+            }
+          }
+        }
+      } catch {}
+    }
+
+    sincronizar();
+    const interval = setInterval(sincronizar, 1500); // 1.5s para resposta ágil
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
+  }, [codigoSala, paginaAtual]);
+
+  async function handleAbrirSala() {
+    setCriandoSala(true);
+    try {
+      const res = await criarSalaLeitura({
+        data: {
+          livroId: livro.id,
+          paginaInicial: paginaAtual,
+          totalPaginas: totalPaginas,
+        },
+      });
+      if (res.ok && res.codigo) {
+        setCodigoSala(res.codigo);
+        setModalSalaAberto(false);
+        notificar("Sala de leitura coletiva aberta! Você é o Host da sessão.", "sucesso");
+      } else {
+        notificar(res.erro || "Não foi possível criar a sala.", "erro");
+      }
+    } catch (e: any) {
+      notificar(e.message || "Erro ao criar sala", "erro");
+    } finally {
+      setCriandoSala(false);
+    }
+  }
+
+  async function handleEntrarSala(codigo: string) {
+    try {
+      const res = await entrarSalaLeitura({ data: { codigo } });
+      if (res.ok) {
+        setCodigoSala(codigo);
+        setModalSalaAberto(false);
+        setSalaAtivaDoLivro(null);
+        notificar("Você entrou na sala de leitura coletiva!", "sucesso");
+      } else {
+        notificar(res.erro || "Não foi possível entrar na sala.", "erro");
+      }
+    } catch (e: any) {
+      notificar(e.message || "Erro ao entrar na sala", "erro");
+    }
+  }
+
+  async function handleSairSala() {
+    if (!codigoSala) return;
+    try {
+      await sairSalaLeitura({ data: { codigo: codigoSala } });
+      setCodigoSala(null);
+      setDadosSala(null);
+      notificar("Você saiu da sala de leitura.");
+    } catch {}
+  }
+
+  async function handleEncerrarSala() {
+    if (!codigoSala) return;
+    try {
+      await encerrarSala({ data: { codigo: codigoSala } });
+      setCodigoSala(null);
+      setDadosSala(null);
+      notificar("Sala de leitura coletiva encerrada.");
+    } catch {}
+  }
+
+  async function handleReagir(emoji: string) {
+    if (!codigoSala) return;
+    // Anima localmente
+    setUltimaReacao({
+      emoji,
+      autorNome: "Você",
+      timestamp: Date.now(),
+    });
+    try {
+      await enviarReacao({ data: { codigo: codigoSala, reacao: emoji } });
+    } catch {}
+  }
+
+  async function handleMarcarPronto() {
+    if (!codigoSala) return;
+    try {
+      await marcarPaginaPronta({ data: { codigo: codigoSala, pagina: paginaAtual } });
+      notificar(`✓ Você marcou que terminou a página ${paginaAtual}!`, "sucesso");
+    } catch {}
+  }
 
   // Manipulador para carregar o arquivo localmente caso o leitor mude de dispositivo
   async function handleFileSelectLocal(e: React.ChangeEvent<HTMLInputElement>) {
@@ -384,11 +557,27 @@ export function LeitorDigital({
     handleInternalLink(href);
   }
 
-  // Sincroniza página atual com a estante via debounce
+  // Sincroniza página atual com a estante e com a sala coletiva
   function mudarPagina(novaPag: number) {
     if (novaPag < 1 || novaPag > totalPaginas) return;
+
+    // Se estiver em sala coletiva e NÃO for o host:
+    if (codigoSala && dadosSala && !dadosSala.souHost) {
+      if (novaPag > paginaAtual) {
+        // Sinaliza prontidão
+        marcarPaginaPronta({ data: { codigo: codigoSala, pagina: paginaAtual } }).catch(() => {});
+        notificar(`✓ Você marcou que terminou a página ${paginaAtual}! Aguardando o host mudar a página...`, "info");
+        return;
+      }
+    }
+
     setPaginaAtual(novaPag);
     setSincronizado(false);
+
+    // Se for o Host da sala, sincroniza imediatamente para todos os participantes
+    if (codigoSala && dadosSala?.souHost) {
+      sincronizarPaginaHost({ data: { codigo: codigoSala, paginaAtual: novaPag } }).catch(() => {});
+    }
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -464,13 +653,43 @@ export function LeitorDigital({
           </div>
         </div>
 
-        {/* Controles de Fonte e Tema */}
-        <div className="flex items-center gap-3 font-sans">
+        {/* Controles de Fonte, Tema e Sala Coletiva */}
+        <div className="flex items-center gap-2 sm:gap-3 font-sans">
+          {/* Botão Sala Coletiva */}
+          {codigoSala && dadosSala ? (
+            <button
+              onClick={() => setModalSalaAberto(true)}
+              className="spring-bounce flex items-center gap-1.5 rounded-full bg-amora px-3 py-1 text-xs font-sans font-medium text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs"
+              title="Gerenciar leitura coletiva"
+            >
+              <span>🛋️</span>
+              <span className="hidden sm:inline">Sala ({dadosSala.participantes.length})</span>
+            </button>
+          ) : salaAtivaDoLivro?.temSala && salaAtivaDoLivro.codigo ? (
+            <button
+              onClick={() => handleEntrarSala(salaAtivaDoLivro.codigo!)}
+              className="spring-bounce flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-sans font-medium text-white hover:bg-emerald-700 transition-all cursor-pointer shadow-xs animate-pulse"
+              title={`Entrar na sala de ${salaAtivaDoLivro.hostNome}`}
+            >
+              <span>🛋️</span>
+              <span className="hidden sm:inline">Entrar na Sala ({salaAtivaDoLivro.hostNome})</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setModalSalaAberto(true)}
+              className="spring-bounce flex items-center gap-1.5 rounded-full border border-current/20 px-2.5 py-1 text-xs font-sans font-medium hover:border-amora hover:text-amora transition-all cursor-pointer"
+              title="Criar sala de leitura coletiva sincronizada"
+            >
+              <span>🛋️</span>
+              <span className="hidden sm:inline">Abrir Sala</span>
+            </button>
+          )}
+
           {/* Ajuste de Fonte */}
           <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 rounded-lg p-1 text-xs">
             <button
               onClick={() => setTamanhoFonte((f) => Math.max(14, f - 2))}
-              className="h-6 w-6 rounded flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 font-bold"
+              className="h-6 w-6 rounded flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 font-bold cursor-pointer"
               title="Diminuir fonte"
             >
               A-
@@ -478,7 +697,7 @@ export function LeitorDigital({
             <span className="px-1 font-num text-[11px]">{tamanhoFonte}px</span>
             <button
               onClick={() => setTamanhoFonte((f) => Math.min(26, f + 2))}
-              className="h-6 w-6 rounded flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 font-bold"
+              className="h-6 w-6 rounded flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 font-bold cursor-pointer"
               title="Aumentar fonte"
             >
               A+
@@ -489,7 +708,7 @@ export function LeitorDigital({
           <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 rounded-lg p-1 text-xs">
             <button
               onClick={() => setTema("claro")}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${
+              className={`px-2 py-1 rounded text-[11px] font-medium transition-all cursor-pointer ${
                 tema === "claro" ? "bg-white text-black shadow-xs" : "opacity-70 hover:opacity-100"
               }`}
             >
@@ -497,7 +716,7 @@ export function LeitorDigital({
             </button>
             <button
               onClick={() => setTema("sepia")}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${
+              className={`px-2 py-1 rounded text-[11px] font-medium transition-all cursor-pointer ${
                 tema === "sepia" ? "bg-[#eadecc] text-[#2b221a] shadow-xs" : "opacity-70 hover:opacity-100"
               }`}
             >
@@ -505,7 +724,7 @@ export function LeitorDigital({
             </button>
             <button
               onClick={() => setTema("noturno")}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${
+              className={`px-2 py-1 rounded text-[11px] font-medium transition-all cursor-pointer ${
                 tema === "noturno" ? "bg-[#2c2436] text-white shadow-xs" : "opacity-70 hover:opacity-100"
               }`}
             >
@@ -515,8 +734,23 @@ export function LeitorDigital({
         </div>
       </header>
 
+      {/* Barra de Presença e Sincronização da Sala de Leitura Coletiva */}
+      {codigoSala && dadosSala && (
+        <SalaLeituraBar
+          sala={dadosSala}
+          paginaAtual={paginaAtual}
+          onReagir={handleReagir}
+          onSair={handleSairSala}
+          onEncerrar={handleEncerrarSala}
+          souHost={dadosSala.souHost}
+        />
+      )}
+
+      {/* Camada de Reações Flutuantes ao Vivo */}
+      <ReacoesFlutuantesContainer novaReacao={ultimaReacao} />
+
       {/* Área Principal de Leitura */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden relative">
         <article
           onClick={handleCardClick}
           onTouchStart={handleTouchStart}
@@ -608,14 +842,27 @@ export function LeitorDigital({
           </div>
         </article>
 
+        {/* Botão de Conclusão de Página para Participantes da Sala Coletiva */}
+        {codigoSala && dadosSala && !dadosSala.souHost && (
+          <div className="mt-3 flex items-center justify-center">
+            <button
+              onClick={handleMarcarPronto}
+              className="spring-bounce inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-5 py-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+            >
+              <span>✓</span>
+              <span>Já terminei de ler a página {paginaAtual}</span>
+            </button>
+          </div>
+        )}
+
         {/* Botões de navegação e ação */}
-        <div className={`mt-4 sm:mt-6 flex-shrink-0 flex flex-col gap-4 font-sans transition-all duration-300 ${
+        <div className={`mt-3 sm:mt-4 flex-shrink-0 flex flex-col gap-4 font-sans transition-all duration-300 ${
           mostrarControles ? "opacity-100 max-h-40 translate-y-0" : "opacity-0 max-h-0 translate-y-4 overflow-hidden pointer-events-none mt-0"
         }`}>
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => mudarPagina(paginaAtual - 1)}
-              disabled={paginaAtual <= 1}
+              disabled={paginaAtual <= 1 || (Boolean(codigoSala && dadosSala && !dadosSala.souHost))}
               className="rounded-xl border border-current/20 px-4 py-2.5 text-xs sm:text-sm font-medium transition-all hover:border-current/50 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               ← Página anterior
@@ -630,7 +877,7 @@ export function LeitorDigital({
                 onClick={() => mudarPagina(paginaAtual + 1)}
                 className="rounded-xl bg-[#7a3b52] text-white px-5 py-2.5 text-xs sm:text-sm font-medium transition-all hover:bg-[#5e2c3f] shadow-xs cursor-pointer"
               >
-                Próxima página →
+                {codigoSala && dadosSala && !dadosSala.souHost ? "✓ Li essa página" : "Próxima página →"}
               </button>
             ) : (
               <Link
@@ -662,6 +909,124 @@ export function LeitorDigital({
           </div>
         </div>
       </footer>
+
+      {/* Modal de Abertura / Gestão da Sala de Leitura Coletiva */}
+      {modalSalaAberto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-5 animate-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amora-clara text-xl select-none">
+                  🛋️
+                </span>
+                <h3 className="font-display text-xl font-bold">Leitura Coletiva</h3>
+              </div>
+              <button
+                onClick={() => setModalSalaAberto(false)}
+                className="rounded-full p-1 text-tinta-3 hover:bg-papel-2 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {codigoSala && dadosSala ? (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-amora/30 bg-amora-clara/40 p-4 space-y-2">
+                  <p className="text-xs font-semibold text-amora uppercase tracking-wider">
+                    Sessão em Andamento · Código: {codigoSala}
+                  </p>
+                  <p className="text-sm font-medium text-tinta">
+                    {dadosSala.souHost ? "👑 Você é o Moderador/Host desta leitura coletiva." : `Host: ${dadosSala.hostNome}`}
+                  </p>
+                  <p className="text-xs text-tinta-2">
+                    {dadosSala.participantes.length} leitor(es) conectado(s) na página {dadosSala.paginaAtual}.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-tinta-2">Leitores na sala:</p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    {dadosSala.participantes.map((p) => (
+                      <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{p.nome}</span>
+                          {p.usuarioId === dadosSala.hostUsuarioId && (
+                            <span className="text-[10px] text-amora font-bold">👑 Host</span>
+                          )}
+                        </div>
+                        <span className={p.paginaPronta >= paginaAtual ? "text-emerald-500 font-medium" : "text-amber-500"}>
+                          {p.paginaPronta >= paginaAtual ? "✓ Pronto" : "Lendo…"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  {dadosSala.souHost ? (
+                    <button
+                      onClick={handleEncerrarSala}
+                      className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition-all cursor-pointer shadow-xs"
+                    >
+                      Encerrar Sessão Coletiva
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSairSala}
+                      className="rounded-xl border border-papel-3 px-4 py-2 text-xs font-semibold text-tinta hover:bg-papel-2 transition-all cursor-pointer"
+                    >
+                      Sair da Leitura
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setModalSalaAberto(false)}
+                    className="rounded-xl bg-amora px-5 py-2 text-xs font-semibold text-white hover:bg-amora-escura transition-all cursor-pointer"
+                  >
+                    Continuar Lendo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-tinta-2 leading-relaxed">
+                  Abra uma sala de <strong>Modo Cineminha</strong> para que os outros leitores da casa leiam <em>"{livro.titulo}"</em> sincronizados com você em tempo real.
+                </p>
+
+                <div className="rounded-xl border border-papel-3 bg-papel-2/60 p-4 text-xs space-y-2 text-tinta-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amora font-bold">1.</span>
+                    <span>Você passa a página como moderador e a leitura vira para todos na sala.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-amora font-bold">2.</span>
+                    <span>Cada participante sinaliza quando terminar de ler a página atual.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-amora font-bold">3.</span>
+                    <span>Reações ao vivo e emoções flutuam na tela enquanto leem juntos.</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setModalSalaAberto(false)}
+                    className="rounded-xl border border-papel-3 px-4 py-2.5 text-xs font-medium text-tinta hover:bg-papel-2 transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleAbrirSala}
+                    disabled={criandoSala}
+                    className="rounded-xl bg-amora px-5 py-2.5 text-xs font-semibold text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-md disabled:opacity-50"
+                  >
+                    {criandoSala ? "Abrindo sala..." : "🛋️ Abrir Sala de Leitura"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

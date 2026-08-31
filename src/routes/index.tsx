@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { listarLivros, atualizarProgresso, excluirLivro, alterarStatusLivro, buscarLivroExterno, salvarLivro, type ResultadoBusca } from "../lib/api/livros.functions";
+import { listarSalasAtivas } from "../lib/api/sala-leitura.functions";
 import { matchSearch } from "../lib/utils";
 import { cartaStatus } from "../lib/api/auth.functions";
 import {
@@ -1443,9 +1444,71 @@ function PaginaEstante() {
       .filter(([, livrosExibir]) => livrosExibir.length > 0);
   }, [porAno, limiteExibicao]);
 
+  const [salasAtivas, setSalasAtivas] = useState<Array<{
+    codigo: string;
+    livroId: number;
+    livroTitulo: string;
+    livroAutor: string;
+    livroCapa: string | null;
+    hostNome: string;
+    hostUsuarioId: number;
+    numParticipantes: number;
+  }>>([]);
+
+  useEffect(() => {
+    let ativo = true;
+    async function carregarSalas() {
+      try {
+        const s = await listarSalasAtivas();
+        if (ativo && Array.isArray(s)) setSalasAtivas(s);
+      } catch {}
+    }
+    carregarSalas();
+    const intv = setInterval(carregarSalas, 8000);
+    return () => {
+      ativo = false;
+      clearInterval(intv);
+    };
+  }, []);
+
   return (
     <div className="min-h-dvh pb-24">
       <Cabecalho paginaAtiva="estante" />
+
+      {/* Banner de Sala de Leitura Coletiva ao Vivo na Casa */}
+      {salasAtivas.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 animate-in fade-in">
+          <div className="rounded-2xl border border-amora/40 bg-gradient-to-r from-amora-clara/90 via-papel-2 to-amora-clara/50 p-4 sm:p-5 shadow-md flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amora/20 text-2xl shadow-xs shrink-0 select-none">
+                🛋️
+              </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                    Leitura Coletiva ao Vivo
+                  </span>
+                  <span className="text-xs text-tinta-3 font-normal">
+                    Host: <strong className="font-semibold text-tinta">{salasAtivas[0].hostNome}</strong>
+                  </span>
+                </div>
+                <p className="mt-1 font-display text-base sm:text-lg font-bold text-tinta truncate">
+                  Lendo "{salasAtivas[0].livroTitulo}" · {salasAtivas[0].numParticipantes || 1} leitor(es) na sala
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/ler/$livroId"
+              params={{ livroId: String(salasAtivas[0].livroId) }}
+              className="spring-bounce inline-flex items-center justify-center gap-2 rounded-full bg-amora px-5 py-2.5 text-xs sm:text-sm font-semibold text-papel hover:bg-amora-escura shadow-md transition-all active:scale-95 shrink-0 cursor-pointer"
+            >
+              <span>Entrar no Cineminha</span>
+              <span>→</span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {lendo.length > 0 ? (
         <CartaoLendoAgora livros={lendo} />

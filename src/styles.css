@@ -563,3 +563,31 @@ html[data-theme="dark"] {
     transform: translateX(100%);
   }
 }
+
+@keyframes flutuar-reacao {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-20px) scale(1.15);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-50px) scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-160px) scale(1);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-240px) scale(0.85);
+    opacity: 0;
+  }
+}
+
+.animate-flutuar-reacao {
+  animation: flutuar-reacao 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
