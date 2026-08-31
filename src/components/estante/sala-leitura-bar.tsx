@@ -77,7 +77,7 @@ export function SalaLeituraBar({
         </div>
 
         {/* Centro: Avatares com Indicadores de Prontidão */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-[200px] sm:max-w-xs scrollbar-none">
+        <div className="flex items-center gap-2.5 overflow-visible py-1 shrink-0">
           {sala.participantes.map((p) => {
             const estaPronto = p.paginaPronta >= paginaAtual;
             const isHost = p.usuarioId === sala.hostUsuarioId;
@@ -85,26 +85,24 @@ export function SalaLeituraBar({
             return (
               <div
                 key={p.usuarioId}
-                className="relative group shrink-0"
+                className="relative shrink-0 flex items-center justify-center p-0.5"
                 title={`${p.nome} (${isHost ? "Host · " : ""}${estaPronto ? "Pronto ✓" : "Lendo..."})`}
               >
-                <div className="relative">
-                  <AvatarLeitor nome={p.nome} tamanho="sm" status={estaPronto ? "online" : "lendo"} />
-                  {isHost && (
-                    <span className="absolute -top-1 -right-1 text-[10px] select-none" title="Host da sala">
-                      👑
-                    </span>
-                  )}
-                  <span
-                    className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-papel ${
-                      estaPronto
-                        ? "bg-emerald-500 text-white"
-                        : "bg-amber-500/90 text-white animate-pulse"
-                    }`}
-                  >
-                    {estaPronto ? "✓" : "…"}
+                <AvatarLeitor nome={p.nome} tamanho="sm" />
+                {isHost && (
+                  <span className="absolute -top-1.5 -right-1 text-xs select-none" title="Host da sala">
+                    👑
                   </span>
-                </div>
+                )}
+                <span
+                  className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-papel shadow-xs select-none ${
+                    estaPronto
+                      ? "bg-emerald-500 text-white"
+                      : "bg-amber-500 text-white animate-pulse"
+                  }`}
+                >
+                  {estaPronto ? "✓" : "…"}
+                </span>
               </div>
             );
           })}
