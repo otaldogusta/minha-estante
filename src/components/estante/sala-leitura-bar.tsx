@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { SalaLeituraDetalhes } from "../../lib/api/sala-leitura.functions";
 import { AvatarLeitor } from "./avatar";
 
@@ -28,13 +28,25 @@ export function SalaLeituraBar({
 }) {
   const [menuReacoesAberto, setMenuReacoesAberto] = useState(false);
   const [confirmarSaida, setConfirmarSaida] = useState(false);
+  const reacoesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuReacoesAberto) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (reacoesRef.current && !reacoesRef.current.contains(e.target as Node)) {
+        setMenuReacoesAberto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuReacoesAberto]);
 
   const numProntos = sala.participantes.filter((p) => p.paginaPronta >= paginaAtual).length;
   const total = Math.max(1, sala.participantes.length);
   const todosProntos = numProntos >= total;
 
   return (
-    <div className="w-full bg-papel-2/95 border-b border-papel-3/90 backdrop-blur-md px-3 sm:px-6 py-2.5 transition-all shadow-xs">
+    <div className="relative z-40 w-full bg-papel-2/95 border-b border-papel-3/90 backdrop-blur-md px-3 sm:px-6 py-2.5 transition-all shadow-xs">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
         {/* Esquerda: Identificação da Sala & Host */}
         <div className="flex items-center gap-2.5 min-w-0">
@@ -101,7 +113,7 @@ export function SalaLeituraBar({
         {/* Direita: Botões de Reação & Sair */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Menu de Reações Rápidas */}
-          <div className="relative">
+          <div className="relative" ref={reacoesRef}>
             <button
               type="button"
               onClick={() => setMenuReacoesAberto((v) => !v)}
@@ -113,7 +125,7 @@ export function SalaLeituraBar({
             </button>
 
             {menuReacoesAberto && (
-              <div className="absolute right-0 top-full mt-2 z-50 flex items-center gap-1.5 rounded-2xl border border-papel-3 bg-papel p-1.5 shadow-xl ring-1 ring-tinta/10 animate-in fade-in zoom-in-95">
+              <div className="absolute right-0 top-full mt-2 z-[100] flex items-center gap-1.5 rounded-2xl border border-papel-3 bg-papel p-1.5 shadow-2xl ring-1 ring-tinta/10 animate-in fade-in zoom-in-95">
                 {REACOES_DISPONIVEIS.map((r) => (
                   <button
                     key={r.emoji}
