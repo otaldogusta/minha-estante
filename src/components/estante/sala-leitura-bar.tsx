@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { SalaLeituraDetalhes } from "../../lib/api/sala-leitura.functions";
 import { AvatarLeitor } from "./avatar";
+import { notificar } from "../../lib/toast";
 
 const REACOES_DISPONIVEIS = [
   { emoji: "❤️", label: "Amei" },
@@ -45,6 +46,16 @@ export function SalaLeituraBar({
   const total = Math.max(1, sala.participantes.length);
   const todosProntos = numProntos >= total;
 
+  async function handleCopiarConvite() {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      notificar("Link da sala de leitura copiado! Envie para outros leitores entrarem.", "sucesso");
+    } catch {
+      notificar("Não foi possível copiar o link automaticamente.", "erro");
+    }
+  }
+
   return (
     <div className="relative z-40 w-full bg-papel-2/95 border-b border-papel-3/90 backdrop-blur-md px-3 sm:px-6 py-2.5 transition-all shadow-xs">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
@@ -76,8 +87,8 @@ export function SalaLeituraBar({
           </div>
         </div>
 
-        {/* Centro: Avatares com Indicadores de Prontidão */}
-        <div className="flex items-center gap-2.5 overflow-visible py-1 shrink-0">
+        {/* Centro: Avatares com Indicadores de Prontidão + Botão de Convidar */}
+        <div className="flex items-center gap-2 overflow-visible py-1.5 shrink-0">
           {sala.participantes.map((p) => {
             const estaPronto = p.paginaPronta >= paginaAtual;
             const isHost = p.usuarioId === sala.hostUsuarioId;
@@ -85,17 +96,20 @@ export function SalaLeituraBar({
             return (
               <div
                 key={p.usuarioId}
-                className="relative shrink-0 flex items-center justify-center p-0.5"
+                className="relative shrink-0 flex items-center justify-center pt-2 px-0.5"
                 title={`${p.nome} (${isHost ? "Host · " : ""}${estaPronto ? "Pronto ✓" : "Lendo..."})`}
               >
-                <AvatarLeitor nome={p.nome} tamanho="sm" />
                 {isHost && (
-                  <span className="absolute -top-1.5 -right-1 text-xs select-none" title="Host da sala">
+                  <span
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 text-sm leading-none select-none pointer-events-none filter drop-shadow-xs"
+                    title="Host da sala"
+                  >
                     👑
                   </span>
                 )}
+                <AvatarLeitor nome={p.nome} tamanho="sm" />
                 <span
-                  className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-papel shadow-xs select-none ${
+                  className={`absolute -bottom-1 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-papel shadow-xs select-none ${
                     estaPronto
                       ? "bg-emerald-500 text-white"
                       : "bg-amber-500 text-white animate-pulse"
@@ -106,6 +120,17 @@ export function SalaLeituraBar({
               </div>
             );
           })}
+
+          {/* Botão Convidar Participantes */}
+          <button
+            type="button"
+            onClick={handleCopiarConvite}
+            className="spring-bounce flex h-7 sm:h-8 items-center gap-1 sm:gap-1.5 rounded-full border border-dashed border-amora/50 bg-amora/10 hover:bg-amora hover:text-papel px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold text-amora transition-all active:scale-95 cursor-pointer shadow-xs ml-1 select-none"
+            title="Copiar link da sala para convidar outros leitores"
+          >
+            <span className="text-sm font-bold leading-none">+</span>
+            <span className="hidden sm:inline">Convidar</span>
+          </button>
         </div>
 
         {/* Direita: Botões de Reação & Sair */}
