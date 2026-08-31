@@ -40,27 +40,39 @@ function LeitorLivroNaoEncontrado() {
 }
 
 export const Route = createFileRoute("/ler/$livroId")({
-  beforeLoad: () => exigirLogin(),
+  beforeLoad: async () => {
+    await exigirLogin();
+  },
   loader: async ({ params }) => {
     const id = Number(params.livroId);
     if (isNaN(id) || id <= 0) throw notFound();
-    const livro = await obterLivroParaLeitura({ data: { id } });
-    if (!livro) throw notFound();
 
-    let textoOnline: string | undefined = undefined;
     try {
-      const gut = await carregarTextoGutenberg({
-        data: {
-          gutenbergId: livro.gutenberg_id ?? undefined,
-          titulo: livro.titulo,
-        },
-      });
-      if (gut?.texto) {
-        textoOnline = gut.texto;
-      }
-    } catch {}
+      const livro = await obterLivroParaLeitura({ data: { id } });
+      if (!livro) throw notFound();
 
-    return { livro, textoOnline };
+      let textoOnline: string | undefined = undefined;
+      try {
+        if (livro.gutenberg_id || livro.sinopse?.length > 100) {
+          const gut = await carregarTextoGutenberg({
+            data: {
+              gutenbergId: livro.gutenberg_id ?? undefined,
+              titulo: livro.titulo,
+            },
+          });
+          if (gut?.texto) {
+            textoOnline = gut.texto;
+          }
+        }
+      } catch {}
+
+      return { livro, textoOnline };
+    } catch (e: any) {
+      // Se for notFound de propósito, propaga
+      if (e?.isNotFound || e?.status === 404) throw e;
+      console.error("Erro ao carregar livro para leitura:", e);
+      throw notFound();
+    }
   },
   notFoundComponent: LeitorLivroNaoEncontrado,
   component: PaginaLeitura,

@@ -231,6 +231,10 @@ export function LeitorDigital({
         const res = await obterSalaAtivaDoLivro({ data: { livroId: livro.id } });
         if (montado && res && res.temSala) {
           setSalaAtivaDoLivro(res);
+          // Se ainda não conectou à sala, conecta automaticamente
+          if (!codigoSala && res.codigo) {
+            setCodigoSala(res.codigo);
+          }
         } else if (montado && !res?.temSala) {
           setSalaAtivaDoLivro(null);
         }
@@ -242,7 +246,7 @@ export function LeitorDigital({
       montado = false;
       clearInterval(intv);
     };
-  }, [livro.id]);
+  }, [livro.id, codigoSala]);
 
   // Polling e sincronização contínua da sala
   useEffect(() => {
