@@ -217,23 +217,35 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
       : (rawResults?.results ?? []);
 
     return results.map((r): LeitorResumo => {
-      const temSessaoVal = r.temSessao !== undefined ? r.temSessao : r.temsessao;
       const statusCustomVal = r.statusCustom !== undefined ? r.statusCustom : r.statuscustom;
       const lendoAgoraVal = r.lendoAgora !== undefined ? r.lendoAgora : r.lendoagora;
       const ultimoAcessoVal = r.ultimoAcesso !== undefined ? r.ultimoAcesso : r.ultimoacesso;
 
-      const estaOnline = Boolean(temSessaoVal);
       const customStatus = statusCustomVal as StatusPresenca | null;
+
+      // Um usuário é considerado ativo se fez alguma requisição/acesso nos últimos 3 minutos (180s)
+      let estaAtivo = false;
+      if (ultimoAcessoVal) {
+        const isoStr = ultimoAcessoVal.replace(" ", "T") + (ultimoAcessoVal.includes("Z") ? "" : "Z");
+        const dt = new Date(isoStr);
+        const agora = new Date();
+        const diffMs = agora.getTime() - dt.getTime();
+        if (!isNaN(diffMs) && diffMs >= 0 && diffMs <= 180_000) {
+          estaAtivo = true;
+        }
+      }
 
       let statusPresenca: StatusPresenca = "offline";
       if (customStatus === "invisivel") {
         statusPresenca = "offline";
-      } else if (customStatus === "online" || customStatus === "lendo" || customStatus === "ocupado") {
-        statusPresenca = customStatus;
-      } else if (estaOnline) {
-        statusPresenca = "online";
-      } else if (lendoAgoraVal) {
-        statusPresenca = "lendo";
+      } else if (estaAtivo) {
+        if (customStatus === "lendo" || customStatus === "ocupado") {
+          statusPresenca = customStatus;
+        } else {
+          statusPresenca = "online";
+        }
+      } else {
+        statusPresenca = "offline";
       }
 
       return {
@@ -263,30 +275,45 @@ export const obterPerfilPublico = createServerFn({ method: "GET" })
     if (!dono) throw new Error("Leitor não encontrado");
 
     // Status de presença do leitor
-    let presencaRow: { statusCustom: string | null; temSessao: number } | null = null;
+    let presencaRow: { statusCustom: string | null; ultimoAcesso: string | null } | null = null;
     try {
       presencaRow = await db()
         .prepare(
           `SELECT us.status_presenca AS statusCustom,
-                  EXISTS(SELECT 1 FROM sessoes s WHERE s.usuario_id = us.id AND s.expira_em > datetime('now')) AS temSessao
+                  COALESCE(us.ultimo_acesso, (SELECT MAX(s.ultimo_acesso) FROM sessoes s WHERE s.usuario_id = us.id)) AS ultimoAcesso
            FROM usuarios us WHERE us.id = ?`
         )
         .bind(dono.id)
-        .first<{ statusCustom: string | null; temSessao: number }>();
+        .first<{ statusCustom: string | null; ultimoAcesso: string | null }>();
     } catch {
       // Fallback se colunas/tabelas ainda não existirem
     }
 
     const customStatus = (presencaRow?.statusCustom ?? (presencaRow as any)?.statuscustom) as StatusPresenca | null;
-    const estaOnline = Boolean(presencaRow?.temSessao ?? (presencaRow as any)?.temsessao);
+    const ultimoAcessoVal = presencaRow?.ultimoAcesso ?? (presencaRow as any)?.ultimoacesso;
+
+    let estaAtivo = false;
+    if (ultimoAcessoVal) {
+      const isoStr = ultimoAcessoVal.replace(" ", "T") + (ultimoAcessoVal.includes("Z") ? "" : "Z");
+      const dt = new Date(isoStr);
+      const agora = new Date();
+      const diffMs = agora.getTime() - dt.getTime();
+      if (!isNaN(diffMs) && diffMs >= 0 && diffMs <= 180_000) {
+        estaAtivo = true;
+      }
+    }
 
     let statusPresenca: StatusPresenca = "offline";
     if (customStatus === "invisivel") {
       statusPresenca = "offline";
-    } else if (customStatus === "online" || customStatus === "lendo" || customStatus === "ocupado") {
-      statusPresenca = customStatus;
-    } else if (estaOnline) {
-      statusPresenca = "online";
+    } else if (estaAtivo) {
+      if (customStatus === "lendo" || customStatus === "ocupado") {
+        statusPresenca = customStatus;
+      } else {
+        statusPresenca = "online";
+      }
+    } else {
+      statusPresenca = "offline";
     }
 
     const { results } = await db()
