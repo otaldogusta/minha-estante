@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { SalaLeituraDetalhes } from "../../lib/api/sala-leitura.functions";
 import { AvatarLeitor } from "./avatar";
 import { ModalConvidarSala } from "./modal-convidar-sala";
@@ -59,8 +60,9 @@ export function SalaLeituraBar({
   }
 
   return (
-    <div className="relative z-40 w-full bg-papel-2/95 border-b border-papel-3/90 backdrop-blur-md px-3 sm:px-6 py-2.5 transition-all shadow-xs">
-      <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+    <>
+      <div className="relative z-40 w-full bg-papel-2/95 border-b border-papel-3/90 backdrop-blur-md px-3 sm:px-6 py-2.5 transition-all shadow-xs">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
         {/* Esquerda: Identificação da Sala & Host */}
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amora-clara text-amora text-base shadow-xs shrink-0 select-none">
@@ -189,8 +191,9 @@ export function SalaLeituraBar({
           </button>
         </div>
       </div>
+    </div>
 
-      {/* Modal de Convidar Leitores da Casa */}
+    {/* Modal de Convidar Leitores da Casa */}
       <ModalConvidarSala
         aberto={modalConviteAberto}
         onClose={() => setModalConviteAberto(false)}
@@ -198,7 +201,7 @@ export function SalaLeituraBar({
       />
 
       {/* Modal de Confirmação de Saída/Encerramento */}
-      {confirmarSaida && (
+      {confirmarSaida && createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in">
           <div className="w-full max-w-sm rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-4 animate-in zoom-in-95">
             <div className="flex items-center gap-3 text-rose-500">
@@ -238,8 +241,9 @@ export function SalaLeituraBar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
