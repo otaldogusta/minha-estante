@@ -214,6 +214,7 @@ export function LeitorDigital({
   const reacoesRef = useRef<HTMLDivElement>(null);
   const [confirmarSaida, setConfirmarSaida] = useState(false);
   const [codigoConviteInput, setCodigoConviteInput] = useState("");
+  const [abaSalaModal, setAbaSalaModal] = useState<"criar" | "entrar">("criar");
 
   useEffect(() => {
     if (!menuReacoesAberto) return;
@@ -1090,40 +1091,71 @@ export function LeitorDigital({
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-tinta-2 leading-relaxed">
-                  Abra uma sala de <strong>Modo Cineminha</strong> para que os outros leitores da casa leiam <em>"{livro.titulo}"</em> sincronizados com você em tempo real.
-                </p>
+                <div className="flex rounded-xl bg-papel-2 p-1">
+                  <button
+                    onClick={() => setAbaSalaModal("criar")}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs transition-all cursor-pointer ${
+                      abaSalaModal === "criar" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
+                    }`}
+                  >
+                    Criar Sala
+                  </button>
+                  <button
+                    onClick={() => setAbaSalaModal("entrar")}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs transition-all cursor-pointer ${
+                      abaSalaModal === "entrar" ? "bg-papel text-amora shadow-xs font-semibold" : "text-tinta-3 hover:text-tinta"
+                    }`}
+                  >
+                    Entrar na Sala
+                  </button>
+                </div>
 
-                <div className="rounded-xl border border-papel-3 bg-papel-2/60 p-4 text-xs space-y-2 text-tinta-2">
-                  <div className="flex items-start gap-2">
-                    <span className="text-amora font-bold">1.</span>
-                    <span>Você passa a página como moderador e a leitura vira para todos na sala.</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-amora font-bold">2.</span>
-                    <span>Cada participante sinaliza quando terminar de ler a página atual.</span>
-                  </div>
-                  <div className="pt-2 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-px flex-1 bg-papel-3"></div>
-                      <span className="text-xs font-medium text-tinta-3 uppercase">ou entrar numa sala</span>
-                      <div className="h-px flex-1 bg-papel-3"></div>
+                {abaSalaModal === "criar" ? (
+                  <div className="space-y-4 animate-in slide-in-from-left-2 fade-in">
+                    <p className="text-sm text-tinta-2 leading-relaxed">
+                      Abra uma sala de <strong>Modo Cineminha</strong> para que os outros leitores da casa leiam <em>"{livro.titulo}"</em> sincronizados com você em tempo real.
+                    </p>
+
+                    <div className="rounded-xl border border-papel-3 bg-papel-2/60 p-4 text-xs space-y-2 text-tinta-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-amora font-bold">1.</span>
+                        <span>Você passa a página como moderador e a leitura vira para todos na sala.</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-amora font-bold">2.</span>
+                        <span>Cada participante sinaliza quando terminar de ler a página atual.</span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="pt-2">
+                      <button
+                        onClick={handleAbrirSala}
+                        disabled={criandoSala}
+                        className="w-full rounded-xl bg-amora px-5 py-3 text-sm font-semibold text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-md disabled:opacity-50"
+                      >
+                        {criandoSala ? "Criando sala..." : "🛋️ Criar Sala de Leitura"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 animate-in slide-in-from-right-2 fade-in">
+                    <p className="text-sm text-tinta-2 leading-relaxed">
+                      Tem um código ou link de convite? Cole abaixo para sincronizar sua leitura com a sala.
+                    </p>
+                    
+                    <div className="flex flex-col gap-3 pt-2">
                       <input
                         type="text"
-                        placeholder="Cole o link ou código da sala"
+                        placeholder="Ex: BM3GH5 ou https://..."
                         value={codigoConviteInput}
                         onChange={(e) => setCodigoConviteInput(e.target.value)}
-                        className="flex-1 rounded-xl border border-papel-3 bg-papel px-3 py-2 text-sm text-tinta outline-none focus:border-amora focus:ring-1 focus:ring-amora placeholder:text-tinta-3"
+                        className="w-full rounded-xl border border-papel-3 bg-papel px-4 py-3 text-sm text-tinta outline-none focus:border-amora focus:ring-1 focus:ring-amora placeholder:text-tinta-3"
                       />
                       <button
                         onClick={() => {
                           const match = codigoConviteInput.match(/convite\/([A-Za-z0-9]+)/);
                           let codigo = match ? match[1] : codigoConviteInput.trim();
                           
-                          // Tenta extrair código do parâmetro da url ?sala=
                           if (codigo.includes('sala=')) {
                             const urlMatch = codigo.match(/sala=([A-Za-z0-9]+)/);
                             if (urlMatch) codigo = urlMatch[1];
@@ -1132,29 +1164,13 @@ export function LeitorDigital({
                           if (codigo) handleEntrarSala(codigo);
                         }}
                         disabled={!codigoConviteInput.trim()}
-                        className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-all cursor-pointer shadow-md disabled:opacity-50"
+                        className="w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-all cursor-pointer shadow-md disabled:opacity-50"
                       >
-                        Entrar
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-3 pt-4 mt-2">
-                      <button
-                        onClick={() => setModalSalaAberto(false)}
-                        className="rounded-xl border border-papel-3 px-4 py-2 text-xs font-medium text-tinta hover:bg-papel-2 transition-all cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleAbrirSala}
-                        disabled={criandoSala}
-                        className="rounded-xl bg-amora px-5 py-2 text-xs font-semibold text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-md disabled:opacity-50"
-                      >
-                        {criandoSala ? "Criando sala..." : "🛋️ Criar Sala de Leitura"}
+                        Entrar na Sala
                       </button>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
