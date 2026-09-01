@@ -174,38 +174,19 @@ export function SalaLeituraBar({
           </div>
 
           {/* Botão Sair / Encerrar */}
-          {confirmarSaida ? (
-            <div className="flex items-center gap-1.5 animate-in fade-in">
-              <button
-                type="button"
-                onClick={souHost ? onEncerrar : onSair}
-                className="rounded-full bg-rose-600 px-3 py-1 text-xs font-medium text-white hover:bg-rose-700 transition-colors cursor-pointer shadow-xs"
-              >
-                {souHost ? "Encerrar" : "Sair"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmarSaida(false)}
-                className="rounded-full border border-papel-3 px-2 py-1 text-xs text-tinta-2 hover:bg-papel-2 transition-colors cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmarSaida(true)}
-              className="spring-bounce flex items-center gap-1 rounded-full border border-papel-3 px-2.5 py-1.5 text-xs text-tinta-3 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
-              title={souHost ? "Encerrar leitura coletiva" : "Sair da leitura coletiva"}
-            >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              <span className="hidden sm:inline">{souHost ? "Encerrar" : "Sair"}</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setConfirmarSaida(true)}
+            className="spring-bounce flex items-center gap-1 rounded-full border border-papel-3 px-2.5 py-1.5 text-xs text-tinta-3 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
+            title={souHost ? "Encerrar leitura coletiva" : "Sair da leitura coletiva"}
+          >
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span className="hidden sm:inline">{souHost ? "Encerrar" : "Sair"}</span>
+          </button>
         </div>
       </div>
 
@@ -215,6 +196,50 @@ export function SalaLeituraBar({
         onClose={() => setModalConviteAberto(false)}
         sala={sala}
       />
+
+      {/* Modal de Confirmação de Saída/Encerramento */}
+      {confirmarSaida && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in">
+          <div className="w-full max-w-sm rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-500">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <h2 className="text-lg font-bold">
+                {souHost ? "Encerrar Sala?" : "Sair da Sala?"}
+              </h2>
+            </div>
+            
+            <p className="text-sm text-tinta-2 leading-relaxed">
+              {souHost 
+                ? "Você é o host da sessão. Ao encerrar, a leitura coletiva será finalizada para todos os participantes. Deseja mesmo encerrar?" 
+                : "Você está saindo da leitura coletiva. O host e os demais participantes continuarão na sala. Deseja mesmo sair?"}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-papel-3/50">
+              <button
+                type="button"
+                onClick={() => setConfirmarSaida(false)}
+                className="rounded-xl border border-papel-3 px-4 py-2 text-xs font-medium text-tinta hover:bg-papel-2 transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmarSaida(false);
+                  souHost ? onEncerrar() : onSair();
+                }}
+                className="rounded-xl bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
+              >
+                {souHost ? "Sim, encerrar" : "Sim, sair"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
