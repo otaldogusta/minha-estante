@@ -37,6 +37,8 @@ function sanitizeRow<T>(row: T): T {
     "para_usuario_id",
     "livro_condicao_id",
     "livro_id",
+    "host_usuario_id",
+    "sala_id",
     "ano",
     "paginas",
     "ano_leitura",
