@@ -188,7 +188,14 @@ export function LeitorDigital({
   conteudoTexto?: string;
 }) {
   const navigate = useNavigate();
-  const [tema, setTema] = useState<TemaLeitor>("sepia");
+  const [tema, setTema] = useState<TemaLeitor>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("minha-estante-theme");
+      if (stored === "dark") return "noturno";
+      return "claro";
+    }
+    return "claro";
+  });
   const [tamanhoFonte, setTamanhoFonte] = useState<number>(18); // 16, 18, 20, 22px
   const [paginaAtual, setPaginaAtual] = useState<number>(livro.pagina_atual || 1);
   const [salvando, setSalvando] = useState<boolean>(false);

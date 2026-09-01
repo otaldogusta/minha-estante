@@ -202,8 +202,14 @@ export function SalaLeituraBar({
 
       {/* Modal de Confirmação de Saída/Encerramento */}
       {confirmarSaida && createPortal(
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in">
-          <div className="w-full max-w-sm rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-4 animate-in zoom-in-95">
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in"
+          onClick={() => setConfirmarSaida(false)}
+        >
+          <div 
+            className="w-full max-w-sm rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-4 animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 text-rose-500">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
