@@ -18,7 +18,7 @@ function db() {
   return DB;
 }
 
-export const sessaoAtual = createServerFn({ method: "GET" }).handler(async () => {
+export const sessaoAtual = createServerFn({ method: "POST" }).handler(async () => {
   const u = await usuarioDaSessao();
   if (!u) return { autenticado: false as const };
 
@@ -86,7 +86,7 @@ export const sair = createServerFn({ method: "POST" }).handler(async () => {
 
 // Carta de boas-vindas: pendente até ela guardar; depois fica em "Minha conta".
 // A carta pertence à PRIMEIRA conta da casa (id 1) e só ela pode vê-la.
-export const cartaStatus = createServerFn({ method: "GET" }).handler(async () => {
+export const cartaStatus = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const row = await db().prepare("SELECT carta_vista FROM usuarios WHERE id = ?").bind(u.id).first<{ carta_vista: number }>();
   return { vista: (row?.carta_vista ?? 0) === 1, nome: u.nome, dona: u.id === 1 };
@@ -125,7 +125,7 @@ export const criarConvite = createServerFn({ method: "POST" }).handler(async () 
   return { codigo };
 });
 
-export const listarConvites = createServerFn({ method: "GET" }).handler(async () => {
+export const listarConvites = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const { results } = await db()
     .prepare(
@@ -153,7 +153,7 @@ export const revogarConvite = createServerFn({ method: "POST" })
   });
 
 // Público: valida um convite (para a tela de cadastro).
-export const validarConvite = createServerFn({ method: "GET" })
+export const validarConvite = createServerFn({ method: "POST" })
   .validator(z.object({ codigo: z.string().regex(/^[0-9a-f]{24}$/) }))
   .handler(async ({ data }) => {
     const row = await db()
@@ -304,7 +304,7 @@ export const solicitarRecuperacao = createServerFn({ method: "POST" })
   });
 
 // Público: valida um token de redefinição (para a página /redefinir).
-export const validarRedefinicao = createServerFn({ method: "GET" })
+export const validarRedefinicao = createServerFn({ method: "POST" })
   .validator(z.object({ token: z.string().regex(/^[0-9a-f]{48}$/) }))
   .handler(async ({ data }) => {
     const row = await db()
@@ -340,7 +340,7 @@ export const redefinirSenha = createServerFn({ method: "POST" })
 
 // Pedidos de recuperação dos OUTROS leitores (para a "recuperação pela casa":
 // Apenas a conta administradora principal da casa pode gerar o link e passar pessoalmente).
-export const listarPedidosRecuperacao = createServerFn({ method: "GET" }).handler(async () => {
+export const listarPedidosRecuperacao = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   // Restrição de segurança: Apenas a conta ID 1 (dono/administrador da casa) pode ver os tokens
   if (u.id !== 1) return [];

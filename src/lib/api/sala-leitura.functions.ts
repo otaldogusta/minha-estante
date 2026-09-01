@@ -184,7 +184,7 @@ export const criarSalaLeitura = createServerFn({ method: "POST" })
   });
 
 // 2. Obter estado da sala de leitura
-export const obterSalaLeitura = createServerFn({ method: "GET" })
+export const obterSalaLeitura = createServerFn({ method: "POST" })
   .validator(z.object({ codigo: z.string() }))
   .handler(async ({ data }): Promise<SalaLeituraDetalhes | null> => {
     const u = await usuarioDaSessao();
@@ -297,7 +297,7 @@ export const obterSalaLeitura = createServerFn({ method: "GET" })
   });
 
 // 3. Obter sala ativa de um livro específico (para sugerir entrada ao abrir o leitor)
-export const obterSalaAtivaDoLivro = createServerFn({ method: "GET" })
+export const obterSalaAtivaDoLivro = createServerFn({ method: "POST" })
   .validator(z.object({ livroId: z.number().int() }))
   .handler(async ({ data }): Promise<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null> => {
     await garantirTabelasSalas();
@@ -326,7 +326,7 @@ export const obterSalaAtivaDoLivro = createServerFn({ method: "GET" })
   });
 
 // 4. Listar todas as salas ativas na casa (para o banner no cabeçalho/estante)
-export const listarSalasAtivas = createServerFn({ method: "GET" }).handler(async () => {
+export const listarSalasAtivas = createServerFn({ method: "POST" }).handler(async () => {
   await garantirTabelasSalas();
   try {
     const { results } = await db()

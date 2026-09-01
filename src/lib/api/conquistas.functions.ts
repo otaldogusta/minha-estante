@@ -244,7 +244,7 @@ In another moment down went Alice after it, never once considering how in the wo
   }
 ];
 
-export const obterConquistasEAcervo = createServerFn({ method: "GET" }).handler(async () => {
+export const obterConquistasEAcervo = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
 
   // Busca dados de leitura do usuário para cálculo de conquistas
@@ -432,7 +432,7 @@ export const adicionarLivroDoAcervo = createServerFn({ method: "POST" })
     return { id: Number(criado?.id) || item.id };
   });
 
-export const carregarTextoGutenberg = createServerFn({ method: "GET" })
+export const carregarTextoGutenberg = createServerFn({ method: "POST" })
   .validator(z.object({ gutenbergId: z.number().int().optional(), titulo: z.string().optional() }))
   .handler(async ({ data }) => {
     const item = CLASSICOS_CURADOS.find(

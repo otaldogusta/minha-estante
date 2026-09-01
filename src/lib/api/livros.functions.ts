@@ -13,7 +13,7 @@ function db() {
 }
 
 // Sempre a estante do usuário logado.
-export const listarLivros = createServerFn({ method: "GET" }).handler(async () => {
+export const listarLivros = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const { results } = await db()
     .prepare(
@@ -27,7 +27,7 @@ export const listarLivros = createServerFn({ method: "GET" }).handler(async () =
   return results;
 });
 
-export const obterLivro = createServerFn({ method: "GET" })
+export const obterLivro = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
@@ -38,7 +38,7 @@ export const obterLivro = createServerFn({ method: "GET" })
     return livro || null;
   });
 
-export const obterLivroParaLeitura = createServerFn({ method: "GET" })
+export const obterLivroParaLeitura = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int() }))
   .handler(async ({ data }) => {
     try {
@@ -230,7 +230,7 @@ export const registrarPresencaAtiva = createServerFn({ method: "POST" }).handler
   return { ok: true };
 });
 
-export const listarLeitores = createServerFn({ method: "GET" }).handler(async () => {
+export const listarLeitores = createServerFn({ method: "POST" }).handler(async () => {
   try {
     let rawResults: any = null;
 
@@ -326,7 +326,7 @@ export const listarLeitores = createServerFn({ method: "GET" }).handler(async ()
 });
 
 // Perfil público: apenas livros não privados, sem valores gastos.
-export const obterPerfilPublico = createServerFn({ method: "GET" })
+export const obterPerfilPublico = createServerFn({ method: "POST" })
   .validator(z.object({ usuario: z.string().min(1).max(80) }))
   .handler(async ({ data }) => {
     const eu = await exigirUsuario();
@@ -412,7 +412,7 @@ export type ResultadoBusca = {
   genero: string | null;
 };
 
-export const buscarLivroExterno = createServerFn({ method: "GET" })
+export const buscarLivroExterno = createServerFn({ method: "POST" })
   .validator(z.object({ q: z.string().min(2).max(200) }))
   .handler(async ({ data }): Promise<ResultadoBusca[]> => {
     await exigirUsuario();

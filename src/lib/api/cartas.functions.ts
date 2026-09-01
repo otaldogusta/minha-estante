@@ -37,7 +37,7 @@ const SQL_DESBLOQUEADA = `(c.livro_condicao_id IS NULL OR EXISTS (
   SELECT 1 FROM livros lv WHERE lv.id = c.livro_condicao_id AND lv.status = 'lido'
 ))`;
 
-export const listarCartas = createServerFn({ method: "GET" }).handler(async () => {
+export const listarCartas = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const rawRecebidas: any = await db()
     .prepare(
@@ -81,7 +81,7 @@ export const listarCartas = createServerFn({ method: "GET" }).handler(async () =
 
 // Destinatários possíveis (as outras contas) + os livros públicos ainda não
 // lidos de CADA destinatário (para lacrar a carta a um livro da pessoa).
-export const dadosParaEscrever = createServerFn({ method: "GET" }).handler(async () => {
+export const dadosParaEscrever = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const rawDest: any = await db()
     .prepare("SELECT id, nome FROM usuarios WHERE id != ? ORDER BY nome")
@@ -209,7 +209,7 @@ export const lerCarta = createServerFn({ method: "POST" })
   });
 
 // Badge do cabeçalho: cartas desbloqueadas e ainda não lidas.
-export const contarCartasNovas = createServerFn({ method: "GET" }).handler(async () => {
+export const contarCartasNovas = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const row = await db()
     .prepare(
@@ -222,7 +222,7 @@ export const contarCartasNovas = createServerFn({ method: "GET" }).handler(async
 });
 
 // Usado na celebração: cartas que acabaram de destravar com este livro.
-export const cartasDesbloqueadasPorLivro = createServerFn({ method: "GET" })
+export const cartasDesbloqueadasPorLivro = createServerFn({ method: "POST" })
   .validator(z.object({ livroId: z.number().int() }))
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
