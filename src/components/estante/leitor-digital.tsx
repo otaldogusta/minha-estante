@@ -236,6 +236,7 @@ export function LeitorDigital({
   const [criandoSala, setCriandoSala] = useState(false);
   const [salaAtivaDoLivro, setSalaAtivaDoLivro] = useState<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null>(null);
   const reacoesProcessadasRef = useRef<Set<string>>(new Set());
+  const primeiraSincronizacaoRef = useRef<boolean>(true);
   const ultimaPaginaDoHostRef = useRef<number | null>(null);
 
   // Verifica se há alguma sala ativa para este livro
@@ -305,9 +306,16 @@ export function LeitorDigital({
             const reacaoKey = `${p.usuarioId}-${p.reacao}-${p.reacaoEm}`;
             if (!reacoesProcessadasRef.current.has(reacaoKey)) {
               reacoesProcessadasRef.current.add(reacaoKey);
-              dispararEfeitoReacao(p.reacao, p.nome);
+              // Não dispara a animação visual se for a primeira vez carregando a sala (evita chuva de reações antigas no F5)
+              if (!primeiraSincronizacaoRef.current) {
+                dispararEfeitoReacao(p.reacao, p.nome);
+              }
             }
           }
+        }
+
+        if (primeiraSincronizacaoRef.current) {
+          primeiraSincronizacaoRef.current = false;
         }
       } catch (e) {
         console.error("Erro ao sincronizar sala:", e);
