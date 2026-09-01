@@ -236,6 +236,7 @@ export function LeitorDigital({
   const [criandoSala, setCriandoSala] = useState(false);
   const [salaAtivaDoLivro, setSalaAtivaDoLivro] = useState<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null>(null);
   const reacoesProcessadasRef = useRef<Set<string>>(new Set());
+  const ultimaPaginaDoHostRef = useRef<number | null>(null);
 
   // Verifica se há alguma sala ativa para este livro
   useEffect(() => {
@@ -285,9 +286,17 @@ export function LeitorDigital({
         const pagAtual = Number(res.paginaAtual) || 1;
         const minhaPagAtual = Number(paginaAtual) || 1;
 
-        // Se NÃO for o host, segue a página oficial da sala definida pelo host
-        if (!res.souHost && pagAtual !== minhaPagAtual) {
-          setPaginaAtual(pagAtual);
+        // Se NÃO for o host, só sincroniza a página SE o host MUDOU a página.
+        // Isso permite que o usuário navegue livremente pela sala, mas seja "puxado"
+        // para a página do host sempre que o host avançar/voltar.
+        if (!res.souHost) {
+          if (
+            (ultimaPaginaDoHostRef.current === null && pagAtual !== minhaPagAtual) ||
+            (ultimaPaginaDoHostRef.current !== null && ultimaPaginaDoHostRef.current !== pagAtual)
+          ) {
+            setPaginaAtual(pagAtual);
+          }
+          ultimaPaginaDoHostRef.current = pagAtual;
         }
 
         // Verifica novas reações ao vivo dos outros participantes e emite para o Canvas
@@ -380,13 +389,6 @@ export function LeitorDigital({
     } catch {}
   }
 
-  async function handleMarcarPronto() {
-    if (!codigoSala) return;
-    try {
-      await marcarPaginaPronta({ data: { codigo: codigoSala, pagina: paginaAtual } });
-      notificar(`✓ Você marcou que terminou a página ${paginaAtual}!`, "sucesso");
-    } catch {}
-  }
 
   // Manipulador para carregar o arquivo localmente caso o leitor mude de dispositivo
   async function handleFileSelectLocal(e: React.ChangeEvent<HTMLInputElement>) {
@@ -576,10 +578,8 @@ export function LeitorDigital({
     // Se estiver em sala coletiva e NÃO for o host:
     if (codigoSala && dadosSala && !dadosSala.souHost) {
       if (novaPag > paginaAtual) {
-        // Sinaliza prontidão
+        // Sinaliza prontidão automaticamente ao avançar
         marcarPaginaPronta({ data: { codigo: codigoSala, pagina: paginaAtual } }).catch(() => {});
-        notificar(`✓ Você marcou que terminou a página ${paginaAtual}! Aguardando o host mudar a página...`, "info");
-        return;
       }
     }
 
@@ -873,18 +873,6 @@ export function LeitorDigital({
           </div>
         </article>
 
-        {/* Botão de Conclusão de Página para Participantes da Sala Coletiva */}
-        {codigoSala && dadosSala && !dadosSala.souHost && (
-          <div className="mt-3 flex items-center justify-center">
-            <button
-              onClick={handleMarcarPronto}
-              className="spring-bounce inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-5 py-2 shadow-sm transition-all active:scale-95 cursor-pointer"
-            >
-              <span>✓</span>
-              <span>Já terminei de ler a página {paginaAtual}</span>
-            </button>
-          </div>
-        )}
 
         {/* Botões de navegação e ação */}
         <div className={`mt-3 sm:mt-4 flex-shrink-0 flex flex-col gap-4 font-sans transition-all duration-300 ${
@@ -893,7 +881,7 @@ export function LeitorDigital({
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => mudarPagina(paginaAtual - 1)}
-              disabled={paginaAtual <= 1 || (Boolean(codigoSala && dadosSala && !dadosSala.souHost))}
+              disabled={paginaAtual <= 1}
               className="rounded-xl border border-current/20 px-4 py-2.5 text-xs sm:text-sm font-medium transition-all hover:border-current/50 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               ← Página anterior
