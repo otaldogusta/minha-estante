@@ -103,22 +103,26 @@ export function SalaLeituraBar({
               >
                 {isHost && (
                   <span
-                    className="absolute -top-1 left-1/2 -translate-x-1/2 text-sm leading-none select-none pointer-events-none filter drop-shadow-xs"
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] leading-none select-none pointer-events-none filter drop-shadow-xs"
                     title="Host da sala"
                   >
                     👑
                   </span>
                 )}
-                <AvatarLeitor nome={p.nome} tamanho="sm" />
-                <span
-                  className={`absolute -bottom-1 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-papel shadow-xs select-none ${
-                    estaPronto
-                      ? "bg-emerald-500 text-white"
-                      : "bg-amber-500 text-white animate-pulse"
-                  }`}
-                >
-                  {estaPronto ? "✓" : "…"}
-                </span>
+                
+                <AvatarLeitor
+                  nome={p.nome}
+                  status={p.estaConectado ? (estaPronto ? "online" : "lendo") : "offline"}
+                  tamanho="sm"
+                />
+
+                {estaPronto && (
+                  <div className="absolute -bottom-1 -right-0.5 bg-emerald-500 rounded-full w-4 h-4 flex items-center justify-center shadow-sm border-2 border-papel z-10" title="Pronto para a próxima página!">
+                    <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                )}
               </div>
             );
           })}
