@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { AvatarLeitor } from "./avatar";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { atualizarProgresso } from "../../lib/api/livros.functions";
 import { notificar } from "../../lib/toast";
@@ -719,6 +720,33 @@ export function LeitorDigital({
             {/* Botões Sala Coletiva */}
             {codigoSala && dadosSala ? (
               <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Grupo de Avatares */}
+                <button
+                  onClick={() => setModalSalaAberto(true)}
+                  className="flex items-center -space-x-2 mr-1 sm:mr-2 cursor-pointer hover:scale-105 transition-transform"
+                  title="Gerenciar participantes"
+                >
+                  {dadosSala.participantes.slice(0, 3).map((p, i) => (
+                    <div key={p.usuarioId} className="relative" style={{ zIndex: 10 - i }}>
+                      <AvatarLeitor 
+                        nome={p.nome} 
+                        tamanho="sm" 
+                        status={p.estaConectado ? (p.paginaPronta >= paginaAtual ? "online" : "lendo") : "offline"}
+                        className={`rounded-full border-2 ${
+                          tema === "claro" ? "border-[#fbf7ee]" : tema === "sepia" ? "border-[#f5efe1]" : "border-[#151218]"
+                        } shadow-sm`}
+                      />
+                    </div>
+                  ))}
+                  {dadosSala.participantes.length > 3 && (
+                    <div className={`relative z-0 flex h-8 w-8 items-center justify-center rounded-full bg-amora text-papel border-2 ${
+                      tema === "claro" ? "border-[#fbf7ee]" : tema === "sepia" ? "border-[#f5efe1]" : "border-[#151218]"
+                    } text-[10px] font-bold shadow-sm`}>
+                      +{dadosSala.participantes.length - 3}
+                    </div>
+                  )}
+                </button>
+
                 <button
                   onClick={handleCopiarConvite}
                   className="spring-bounce hidden sm:flex items-center gap-1 rounded-full border border-dashed border-amora/50 bg-amora/10 hover:bg-amora hover:text-papel px-2.5 py-1 text-xs font-semibold text-amora transition-all cursor-pointer shadow-xs"
@@ -727,8 +755,6 @@ export function LeitorDigital({
                   <span className="text-sm font-bold leading-none">+</span>
                   <span>Convidar</span>
                 </button>
-
-
 
                 <button
                   onClick={() => setModalSalaAberto(true)}
