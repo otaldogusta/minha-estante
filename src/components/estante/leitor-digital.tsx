@@ -197,6 +197,7 @@ export function LeitorDigital({
 
   const [textoLocal, setTextoLocal] = useState<string | null>(null);
   const [carregandoLocal, setCarregandoLocal] = useState<boolean>(true);
+  const [processandoArquivoLocal, setProcessandoArquivoLocal] = useState<boolean>(false);
 
   // Carrega o conteúdo textual do IndexedDB se existir com timeout de segurança
   useEffect(() => {
