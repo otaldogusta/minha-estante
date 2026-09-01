@@ -235,7 +235,7 @@ export function LeitorDigital({
   const [modalSalaAberto, setModalSalaAberto] = useState(false);
   const [criandoSala, setCriandoSala] = useState(false);
   const [salaAtivaDoLivro, setSalaAtivaDoLivro] = useState<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null>(null);
-  const ultimaReacaoProcessadaRef = useRef<string | null>(null);
+  const reacoesProcessadasRef = useRef<Set<string>>(new Set());
 
   // Verifica se há alguma sala ativa para este livro
   useEffect(() => {
@@ -294,8 +294,8 @@ export function LeitorDigital({
         for (const p of (res.participantes || [])) {
           if (p.reacao && p.reacaoEm) {
             const reacaoKey = `${p.usuarioId}-${p.reacao}-${p.reacaoEm}`;
-            if (ultimaReacaoProcessadaRef.current !== reacaoKey) {
-              ultimaReacaoProcessadaRef.current = reacaoKey;
+            if (!reacoesProcessadasRef.current.has(reacaoKey)) {
+              reacoesProcessadasRef.current.add(reacaoKey);
               dispararEfeitoReacao(p.reacao, p.nome);
             }
           }
@@ -375,8 +375,6 @@ export function LeitorDigital({
 
   async function handleReagir(emoji: string) {
     if (!codigoSala) return;
-    // Anima localmente no canvas de 60fps sem travar o leitor
-    dispararEfeitoReacao(emoji, "Você");
     try {
       await enviarReacao({ data: { codigo: codigoSala, reacao: emoji } });
     } catch {}
