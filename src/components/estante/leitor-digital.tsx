@@ -728,34 +728,7 @@ export function LeitorDigital({
                   <span>Convidar</span>
                 </button>
 
-                <div className="relative" ref={reacoesRef}>
-                  <button
-                    onClick={() => setMenuReacoesAberto((o) => !o)}
-                    className="spring-bounce flex items-center gap-1.5 rounded-full border border-papel-3 bg-papel px-2.5 sm:px-3 py-1 text-xs font-medium text-tinta transition-all hover:border-amora hover:text-amora cursor-pointer shadow-xs"
-                    title="Reagir ao vivo"
-                  >
-                    <span>❤️</span>
-                    <span className="hidden sm:inline">Reagir</span>
-                  </button>
 
-                  {menuReacoesAberto && (
-                    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 rounded-2xl border border-papel-3 bg-papel p-1.5 shadow-2xl ring-1 ring-tinta/10 animate-in fade-in zoom-in-95">
-                      {REACOES_DISPONIVEIS.map((r) => (
-                        <button
-                          key={r.emoji}
-                          onClick={() => {
-                            handleReagir(r.emoji);
-                            setMenuReacoesAberto(false);
-                          }}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl text-lg hover:bg-papel-2 hover:scale-125 active:scale-95 transition-all cursor-pointer select-none"
-                          title={r.label}
-                        >
-                          {r.emoji}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
                 <button
                   onClick={() => setModalSalaAberto(true)}
@@ -1178,6 +1151,41 @@ export function LeitorDigital({
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Botão Flutuante de Reações */}
+      {codigoSala && dadosSala && (
+        <div 
+          className={`fixed right-6 z-50 flex flex-col items-end gap-3 transition-all duration-300 ${
+            mostrarControles ? "bottom-24" : "bottom-6"
+          }`} 
+          ref={reacoesRef}
+        >
+          {menuReacoesAberto && (
+            <div className="flex flex-col-reverse items-center gap-2 rounded-full border border-papel-3 bg-papel/90 backdrop-blur-md p-2 shadow-2xl ring-1 ring-tinta/10 animate-in slide-in-from-bottom-4 fade-in">
+              {REACOES_DISPONIVEIS.map((r) => (
+                <button
+                  key={r.emoji}
+                  onClick={() => {
+                    handleReagir(r.emoji);
+                    setMenuReacoesAberto(false);
+                  }}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-xl hover:bg-papel-2 hover:scale-110 active:scale-95 transition-all cursor-pointer select-none"
+                  title={r.label}
+                >
+                  {r.emoji}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setMenuReacoesAberto((o) => !o)}
+            className={`spring-bounce flex h-14 w-14 items-center justify-center rounded-full border border-papel-3 bg-papel text-2xl shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${menuReacoesAberto ? 'ring-2 ring-amora ring-offset-2 ring-offset-papel' : ''}`}
+            title="Reagir ao vivo"
+          >
+            ❤️
+          </button>
+        </div>
       )}
 
     </div>
