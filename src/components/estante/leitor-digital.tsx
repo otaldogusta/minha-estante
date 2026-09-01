@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { atualizarProgresso } from "../../lib/api/livros.functions";
 import { notificar } from "../../lib/toast";
@@ -17,10 +18,17 @@ import {
   encerrarSala,
   type SalaLeituraDetalhes,
 } from "../../lib/api/sala-leitura.functions";
-import { SalaLeituraBar } from "./sala-leitura-bar";
 import { ReacoesFlutuantesContainer, dispararEfeitoReacao } from "./reacoes-flutuantes";
 
 type TemaLeitor = "claro" | "sepia" | "noturno";
+
+const REACOES_DISPONIVEIS = [
+  { emoji: "❤️", label: "Amei" },
+  { emoji: "😱", label: "Chocada" },
+  { emoji: "😭", label: "Emocionante" },
+  { emoji: "🔥", label: "Incrível" },
+  { emoji: "💭", label: "Reflexão" },
+];
 
 function paginarTexto(texto: string, limite = 1200): { paginas: string[], mapeamento: { [path: string]: number } } {
   const mapeamento: { [path: string]: number } = {};
@@ -200,6 +208,22 @@ export function LeitorDigital({
   const [paginaAtual, setPaginaAtual] = useState<number>(livro.pagina_atual || 1);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [sincronizado, setSincronizado] = useState<boolean>(false);
+  
+  const [menuReacoesAberto, setMenuReacoesAberto] = useState(false);
+  const reacoesRef = useRef<HTMLDivElement>(null);
+  const [confirmarSaida, setConfirmarSaida] = useState(false);
+
+  useEffect(() => {
+    if (!menuReacoesAberto) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (reacoesRef.current && !reacoesRef.current.contains(e.target as Node)) {
+        setMenuReacoesAberto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuReacoesAberto]);
+
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const [textoLocal, setTextoLocal] = useState<string | null>(null);
@@ -270,6 +294,16 @@ export function LeitorDigital({
       clearInterval(intv);
     };
   }, [livro.id, codigoSala]);
+
+  async function handleCopiarConvite() {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      notificar("Link da sala de leitura copiado! Envie para outros leitores entrarem.", "sucesso");
+    } catch {
+      notificar("Não foi possível copiar o link automaticamente.", "erro");
+    }
+  }
 
   // Polling e sincronização contínua da sala
   useEffect(() => {
@@ -680,37 +714,77 @@ export function LeitorDigital({
           </div>
         </div>
 
-        {/* Controles de Fonte, Tema e Sala Coletiva */}
-        <div className="flex items-center gap-2 sm:gap-3 font-sans">
-          {/* Botão Sala Coletiva */}
-          {codigoSala && dadosSala ? (
-            <button
-              onClick={() => setModalSalaAberto(true)}
-              className="spring-bounce flex items-center gap-1.5 rounded-full bg-amora px-3 py-1 text-xs font-sans font-medium text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs"
-              title="Gerenciar leitura coletiva"
-            >
-              <span>🛋️</span>
-              <span className="hidden sm:inline">Sala ({dadosSala.participantes.length})</span>
-            </button>
-          ) : salaAtivaDoLivro?.temSala && salaAtivaDoLivro.codigo ? (
-            <button
-              onClick={() => handleEntrarSala(salaAtivaDoLivro.codigo!)}
-              className="spring-bounce flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-sans font-medium text-white hover:bg-emerald-700 transition-all cursor-pointer shadow-xs animate-pulse"
-              title={`Entrar na sala de ${salaAtivaDoLivro.hostNome}`}
-            >
-              <span>🛋️</span>
-              <span className="hidden sm:inline">Entrar na Sala ({salaAtivaDoLivro.hostNome})</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setModalSalaAberto(true)}
-              className="spring-bounce flex items-center gap-1.5 rounded-full border border-current/20 px-2.5 py-1 text-xs font-sans font-medium hover:border-amora hover:text-amora transition-all cursor-pointer"
-              title="Criar sala de leitura coletiva sincronizada"
-            >
-              <span>🛋️</span>
-              <span className="hidden sm:inline">Abrir Sala</span>
-            </button>
-          )}
+          {/* Controles de Fonte, Tema e Sala Coletiva */}
+          <div className="flex items-center gap-2 sm:gap-3 font-sans">
+            {/* Botões Sala Coletiva */}
+            {codigoSala && dadosSala ? (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  onClick={handleCopiarConvite}
+                  className="spring-bounce hidden sm:flex items-center gap-1 rounded-full border border-dashed border-amora/50 bg-amora/10 hover:bg-amora hover:text-papel px-2.5 py-1 text-xs font-semibold text-amora transition-all cursor-pointer shadow-xs"
+                  title="Copiar convite da sala"
+                >
+                  <span className="text-sm font-bold leading-none">+</span>
+                  <span>Convidar</span>
+                </button>
+
+                <div className="relative" ref={reacoesRef}>
+                  <button
+                    onClick={() => setMenuReacoesAberto((o) => !o)}
+                    className="spring-bounce flex items-center gap-1.5 rounded-full border border-papel-3 bg-papel px-2.5 sm:px-3 py-1 text-xs font-medium text-tinta transition-all hover:border-amora hover:text-amora cursor-pointer shadow-xs"
+                    title="Reagir ao vivo"
+                  >
+                    <span>❤️</span>
+                    <span className="hidden sm:inline">Reagir</span>
+                  </button>
+
+                  {menuReacoesAberto && (
+                    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 rounded-2xl border border-papel-3 bg-papel p-1.5 shadow-2xl ring-1 ring-tinta/10 animate-in fade-in zoom-in-95">
+                      {REACOES_DISPONIVEIS.map((r) => (
+                        <button
+                          key={r.emoji}
+                          onClick={() => {
+                            handleReagir(r.emoji);
+                            setMenuReacoesAberto(false);
+                          }}
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-lg hover:bg-papel-2 hover:scale-125 active:scale-95 transition-all cursor-pointer select-none"
+                          title={r.label}
+                        >
+                          {r.emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setModalSalaAberto(true)}
+                  className="spring-bounce flex items-center gap-1.5 rounded-full bg-amora px-3 py-1 text-xs font-sans font-medium text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs"
+                  title="Gerenciar leitura coletiva"
+                >
+                  <span>🛋️</span>
+                  <span className="hidden sm:inline">Sala ({dadosSala.participantes.length})</span>
+                </button>
+              </div>
+            ) : salaAtivaDoLivro?.temSala && salaAtivaDoLivro.codigo ? (
+              <button
+                onClick={() => handleEntrarSala(salaAtivaDoLivro.codigo!)}
+                className="spring-bounce flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-sans font-medium text-white hover:bg-emerald-700 transition-all cursor-pointer shadow-xs animate-pulse"
+                title={`Entrar na sala de ${salaAtivaDoLivro.hostNome}`}
+              >
+                <span>🛋️</span>
+                <span className="hidden sm:inline">Entrar na Sala ({salaAtivaDoLivro.hostNome})</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setModalSalaAberto(true)}
+                className="spring-bounce flex items-center gap-1.5 rounded-full border border-current/20 px-2.5 py-1 text-xs font-sans font-medium hover:border-amora hover:text-amora transition-all cursor-pointer"
+                title="Criar sala de leitura coletiva sincronizada"
+              >
+                <span>🛋️</span>
+                <span className="hidden sm:inline">Abrir Sala</span>
+              </button>
+            )}
 
           {/* Ajuste de Fonte */}
           <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 rounded-lg p-1 text-xs">
@@ -760,18 +834,6 @@ export function LeitorDigital({
           </div>
         </div>
       </header>
-
-      {/* Barra de Presença e Sincronização da Sala de Leitura Coletiva */}
-      {codigoSala && dadosSala && (
-        <SalaLeituraBar
-          sala={dadosSala}
-          paginaAtual={paginaAtual}
-          onReagir={handleReagir}
-          onSair={handleSairSala}
-          onEncerrar={handleEncerrarSala}
-          souHost={dadosSala.souHost}
-        />
-      )}
 
       {/* Camada de Reações Flutuantes ao Vivo (Canvas 60fps) */}
       <ReacoesFlutuantesContainer />
@@ -999,14 +1061,20 @@ export function LeitorDigital({
                 <div className="flex items-center justify-end gap-2 pt-2">
                   {dadosSala.souHost ? (
                     <button
-                      onClick={handleEncerrarSala}
+                      onClick={() => {
+                        setModalSalaAberto(false);
+                        setConfirmarSaida(true);
+                      }}
                       className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 transition-all cursor-pointer shadow-xs"
                     >
                       Encerrar Sessão Coletiva
                     </button>
                   ) : (
                     <button
-                      onClick={handleSairSala}
+                      onClick={() => {
+                        setModalSalaAberto(false);
+                        setConfirmarSaida(true);
+                      }}
                       className="rounded-xl border border-papel-3 px-4 py-2 text-xs font-semibold text-tinta hover:bg-papel-2 transition-all cursor-pointer"
                     >
                       Sair da Leitura
@@ -1061,6 +1129,57 @@ export function LeitorDigital({
           </div>
         </div>
       )}
+      {/* Modal de Confirmação de Saída/Encerramento */}
+      {confirmarSaida && dadosSala && createPortal(
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in"
+          onClick={() => setConfirmarSaida(false)}
+        >
+          <div 
+            className="w-full max-w-sm rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-4 animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-rose-500">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <h2 className="text-lg font-bold">
+                {dadosSala.souHost ? "Encerrar Sala?" : "Sair da Sala?"}
+              </h2>
+            </div>
+            
+            <p className="text-sm text-tinta-2 leading-relaxed">
+              {dadosSala.souHost 
+                ? "Você é o host da sessão. Ao encerrar, a leitura coletiva será finalizada para todos os participantes. Deseja mesmo encerrar?" 
+                : "Você está saindo da leitura coletiva. O host e os demais participantes continuarão na sala. Deseja mesmo sair?"}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-papel-3/50">
+              <button
+                type="button"
+                onClick={() => setConfirmarSaida(false)}
+                className="rounded-xl border border-papel-3 px-4 py-2 text-xs font-medium text-tinta hover:bg-papel-2 transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmarSaida(false);
+                  dadosSala.souHost ? handleEncerrarSala() : handleSairSala();
+                }}
+                className="rounded-xl bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
+              >
+                {dadosSala.souHost ? "Sim, encerrar" : "Sim, sair"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }
