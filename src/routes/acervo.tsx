@@ -137,6 +137,7 @@ function PaginaAcervo() {
   const [filtro, setFiltro] = useState<"todos" | "pt" | "en" | "conquistas">("todos");
   const [busca, setBusca] = useState<string>("");
   const [amostraModal, setAmostraModal] = useState<LivroAcervo | null>(null);
+  const [intencaoLeituraModal, setIntencaoLeituraModal] = useState<LivroAcervo | null>(null);
   const [uploadando, setUploadando] = useState<boolean>(false);
 
   const livrosFiltrados = dados.livrosAcervo.filter((l) => {
@@ -415,7 +416,7 @@ function PaginaAcervo() {
                       + Estante
                     </button>
                     <button
-                      onClick={() => handleAdicionar(livro, true)}
+                      onClick={() => setIntencaoLeituraModal(livro)}
                       disabled={adicionandoId === livro.id}
                       className="rounded-lg bg-amora px-3 py-1 text-xs font-medium text-papel hover:bg-amora-escura transition-colors cursor-pointer shadow-xs disabled:opacity-50"
                     >
@@ -452,6 +453,55 @@ function PaginaAcervo() {
           </section>
         )}
       </main>
+
+      {/* Modal Intenção de Leitura */}
+      {intencaoLeituraModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="max-w-sm w-full rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="font-display font-bold text-xl text-tinta text-center mb-2 leading-tight">
+              {intencaoLeituraModal.titulo}
+            </h3>
+            <p className="text-sm text-tinta-2 text-center mb-6 px-2">
+              Como você prefere acessar este livro agora?
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setAmostraModal(intencaoLeituraModal);
+                  setIntencaoLeituraModal(null);
+                }}
+                className="flex flex-col items-center justify-center rounded-xl border border-papel-3 bg-papel-2/50 p-4 hover:border-amora hover:bg-amora/5 transition-colors cursor-pointer group"
+              >
+                <span className="font-semibold text-tinta group-hover:text-amora">Só ver no leitor</span>
+                <span className="text-[11px] text-tinta-3 mt-1.5 text-center leading-relaxed">
+                  Deguste as primeiras páginas no leitor sem adicionar à sua estante pessoal.
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleAdicionar(intencaoLeituraModal, true);
+                  setIntencaoLeituraModal(null);
+                }}
+                className="flex flex-col items-center justify-center rounded-xl bg-amora p-4 text-papel hover:bg-amora-escura transition-colors cursor-pointer shadow-md"
+              >
+                <span className="font-semibold">Adicionar na Estante</span>
+                <span className="text-[11px] opacity-80 mt-1.5 text-center leading-relaxed">
+                  O livro será salvo na sua estante e seu progresso será gravado.
+                </span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIntencaoLeituraModal(null)}
+              className="mt-6 w-full rounded-xl py-2.5 text-sm font-medium text-tinta-3 hover:text-tinta hover:bg-papel-2 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Degustação / Prévia de Trecho */}
       {amostraModal && (
