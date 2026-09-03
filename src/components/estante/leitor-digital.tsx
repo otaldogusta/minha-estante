@@ -282,7 +282,14 @@ export function LeitorDigital({
   const [modalSalaAberto, setModalSalaAberto] = useState(false);
   const [criandoSala, setCriandoSala] = useState(false);
   const [chatAberto, setChatAberto] = useState(false);
+  const [qtdMensagensLidas, setQtdMensagensLidas] = useState(0);
   const [mensagemInput, setMensagemInput] = useState("");
+
+  useEffect(() => {
+    if (chatAberto && dadosSala?.mensagens) {
+      setQtdMensagensLidas(dadosSala.mensagens.length);
+    }
+  }, [chatAberto, dadosSala?.mensagens]);
   const [enviandoMsg, setEnviandoMsg] = useState(false);
   const mensagensEndRef = useRef<HTMLDivElement>(null);
 
@@ -1388,7 +1395,7 @@ export function LeitorDigital({
               title="Abrir Chat"
             >
               <span className="text-2xl opacity-80 group-hover:opacity-100 transition-opacity">💬</span>
-              {dadosSala.mensagens && dadosSala.mensagens.length > 0 && !chatAberto && (
+              {dadosSala.mensagens && dadosSala.mensagens.length > qtdMensagensLidas && !chatAberto && (
                 <span className="absolute top-0 right-0 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amora opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-amora"></span>
