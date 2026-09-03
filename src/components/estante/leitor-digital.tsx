@@ -1023,10 +1023,10 @@ export function LeitorDigital({
         {codigoSala && dadosSala && (
           <aside
             className={`
-              absolute sm:relative right-0 top-0 bottom-0 z-[45]
+              absolute right-0 top-0 bottom-0 z-[45]
               w-full sm:w-[320px] flex flex-col border-l border-inherit bg-inherit
-              transition-all duration-300 ease-in-out font-sans
-              ${chatAberto ? "translate-x-0 shadow-2xl sm:shadow-none" : "translate-x-full sm:hidden"}
+              transition-all duration-300 ease-in-out font-sans shadow-2xl
+              ${chatAberto ? "translate-x-0" : "translate-x-full"}
             `}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-inherit bg-inherit/90">
