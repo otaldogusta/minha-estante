@@ -1162,28 +1162,29 @@ export function LeitorDigital({
                   <p className="text-xs font-semibold text-tinta-2">Leitores na sala:</p>
                   <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                     {dadosSala.participantes.map((p) => (
-                        <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs group/participante">
+                        <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{p.nome}</span>
-                            {p.usuarioId === dadosSala.hostUsuarioId ? (
+                            {p.usuarioId === dadosSala.hostUsuarioId && (
                               <span className="text-[10px] text-amora font-bold">👑 Host</span>
-                            ) : (
-                              dadosSala.souHost && (
-                                <button 
-                                  onClick={() => handleExpulsarParticipante(p.usuarioId, p.nome)}
-                                  className="ml-1 flex h-4 w-4 items-center justify-center rounded-full text-tinta-3 hover:bg-rose-100 hover:text-rose-600 opacity-0 group-hover/participante:opacity-100 transition-all cursor-pointer"
-                                  title={`Remover ${p.nome}`}
-                                >
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                                </button>
-                              )
                             )}
                           </div>
-                        <span className={p.paginaPronta >= paginaAtual ? "text-emerald-500 font-medium" : "text-amber-500"}>
-                          {p.paginaPronta >= paginaAtual ? "✓ Pronto" : "Lendo…"}
-                        </span>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-3">
+                            <span className={p.paginaPronta >= paginaAtual ? "text-emerald-500 font-medium" : "text-amber-500"}>
+                              {p.paginaPronta >= paginaAtual ? "✓ Pronto" : "Lendo…"}
+                            </span>
+                            {dadosSala.souHost && p.usuarioId !== dadosSala.hostUsuarioId && (
+                              <button 
+                                onClick={() => handleExpulsarParticipante(p.usuarioId, p.nome)}
+                                className="flex h-5 w-5 items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-tinta hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
+                                title={`Remover ${p.nome} da sala`}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 </div>
 
