@@ -45,6 +45,16 @@ async function garantirTabelasSalas() {
           UNIQUE(sala_id, usuario_id)
         )
       `).run();
+
+      await db().prepare(`
+        CREATE TABLE IF NOT EXISTS sala_mensagens (
+          id SERIAL PRIMARY KEY,
+          sala_id INTEGER NOT NULL,
+          usuario_id INTEGER NOT NULL,
+          mensagem TEXT NOT NULL,
+          criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
     } else {
       await db().prepare(`
         CREATE TABLE IF NOT EXISTS salas_leitura (
@@ -73,6 +83,16 @@ async function garantirTabelasSalas() {
           reacao TEXT,
           reacao_em TEXT,
           UNIQUE(sala_id, usuario_id)
+        )
+      `).run();
+
+      await db().prepare(`
+        CREATE TABLE IF NOT EXISTS sala_mensagens (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sala_id INTEGER NOT NULL,
+          usuario_id INTEGER NOT NULL,
+          mensagem TEXT NOT NULL,
+          criado_em TEXT DEFAULT (datetime('now'))
         )
       `).run();
     }
