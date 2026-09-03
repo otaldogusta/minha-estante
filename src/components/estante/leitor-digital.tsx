@@ -17,6 +17,8 @@ import {
   marcarPaginaPronta,
   enviarReacao,
   encerrarSala,
+  enviarMensagemSala,
+  type SalaMensagem,
   type SalaLeituraDetalhes,
 } from "../../lib/api/sala-leitura.functions";
 import { ReacoesFlutuantesContainer, dispararEfeitoReacao } from "./reacoes-flutuantes";
@@ -268,6 +270,29 @@ export function LeitorDigital({
   const [dadosSala, setDadosSala] = useState<SalaLeituraDetalhes | null>(null);
   const [modalSalaAberto, setModalSalaAberto] = useState(false);
   const [criandoSala, setCriandoSala] = useState(false);
+  const [chatAberto, setChatAberto] = useState(false);
+  const [mensagemInput, setMensagemInput] = useState("");
+  const [enviandoMsg, setEnviandoMsg] = useState(false);
+  const mensagensEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatAberto) {
+      mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [dadosSala?.mensagens?.length, chatAberto]);
+
+  async function handleEnviarMensagem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mensagemInput.trim() || !codigoSala || enviandoMsg) return;
+    const msg = mensagemInput.trim();
+    setMensagemInput("");
+    setEnviandoMsg(true);
+    try {
+      await enviarMensagemSala({ data: { codigo: codigoSala, mensagem: msg } });
+    } finally {
+      setEnviandoMsg(false);
+    }
+  }
   const [salaAtivaDoLivro, setSalaAtivaDoLivro] = useState<{ temSala: boolean; codigo?: string; hostNome?: string; livroTitulo?: string } | null>(null);
   const reacoesProcessadasRef = useRef<Set<string>>(new Set());
   const primeiraSincronizacaoRef = useRef<boolean>(true);
@@ -839,8 +864,9 @@ export function LeitorDigital({
       {/* Camada de Reações Flutuantes ao Vivo (Canvas 60fps) */}
       <ReacoesFlutuantesContainer />
 
-      {/* Área Principal de Leitura */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Área Principal de Leitura */}
+        <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden relative transition-all duration-300">
         <article
           onClick={handleCardClick}
           onTouchStart={handleTouchStart}
@@ -991,7 +1017,65 @@ export function LeitorDigital({
             )}
           </div>
         </div>
-      </main>
+        </main>
+
+        {/* Chat Sidebar / Overlay */}
+        {codigoSala && dadosSala && (
+          <aside
+            className={`
+              absolute sm:relative right-0 top-0 bottom-0 z-[45]
+              w-full sm:w-[320px] flex flex-col border-l border-inherit bg-inherit
+              transition-all duration-300 ease-in-out font-sans
+              ${chatAberto ? "translate-x-0 shadow-2xl sm:shadow-none" : "translate-x-full sm:hidden"}
+            `}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-inherit bg-inherit/90">
+              <h3 className="font-semibold text-sm">Chat da Sala</h3>
+              <button 
+                onClick={() => setChatAberto(false)}
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {!dadosSala.mensagens || dadosSala.mensagens.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center opacity-50 text-center px-4">
+                  <span className="text-2xl mb-2">💬</span>
+                  <p className="text-xs">Nenhuma mensagem ainda. Mande um oi!</p>
+                </div>
+              ) : (
+                dadosSala.mensagens.map((m) => (
+                  <div key={m.id} className="text-sm">
+                    <span className="font-semibold" style={{ color: "var(--color-amora)" }}>{m.usuarioNome}: </span>
+                    <span className="opacity-90">{m.mensagem}</span>
+                  </div>
+                ))
+              )}
+              <div ref={mensagensEndRef} />
+            </div>
+
+            <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-inherit bg-inherit/90 flex gap-2">
+              <input 
+                type="text"
+                placeholder="Digite algo..."
+                value={mensagemInput}
+                onChange={(e) => setMensagemInput(e.target.value)}
+                maxLength={200}
+                className="flex-1 rounded-full px-4 py-2 text-sm bg-black/5 dark:bg-white/10 outline-none focus:ring-1 focus:ring-amora placeholder:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={!mensagemInput.trim() || enviandoMsg}
+                className="w-9 h-9 rounded-full bg-amora text-white flex items-center justify-center disabled:opacity-50 flex-shrink-0 cursor-pointer"
+              >
+                ➤
+              </button>
+            </form>
+          </aside>
+        )}
+      </div>
 
       {/* Barra Inferior com Fita de Progresso */}
       <footer className={`sticky bottom-0 border-t px-4 py-3 backdrop-blur-md flex items-center justify-center border-inherit bg-inherit/90 transition-all duration-300 ${
@@ -1223,7 +1307,7 @@ export function LeitorDigital({
               </button>
             </div>
           </div>
-        </div>,
+</div>,
         document.body
       )}
 
@@ -1235,6 +1319,21 @@ export function LeitorDigital({
           }`} 
           ref={reacoesRef}
         >
+          {/* Botão de Chat */}
+          <button
+            onClick={() => setChatAberto((o) => !o)}
+            className="group flex h-12 w-12 items-center justify-center rounded-full bg-papel shadow-xl ring-1 ring-tinta/10 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+            title="Abrir Chat"
+          >
+            <span className="text-xl opacity-80 group-hover:opacity-100 transition-opacity">💬</span>
+            {dadosSala.mensagens && dadosSala.mensagens.length > 0 && !chatAberto && (
+              <span className="absolute top-0 right-0 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amora opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amora"></span>
+              </span>
+            )}
+          </button>
+
           {menuReacoesAberto && (
             <div className="flex flex-col-reverse items-center gap-2 rounded-full border border-papel-3 bg-papel/90 backdrop-blur-md p-2 shadow-2xl ring-1 ring-tinta/10 animate-in slide-in-from-bottom-4 fade-in">
               {REACOES_DISPONIVEIS.map((r) => (

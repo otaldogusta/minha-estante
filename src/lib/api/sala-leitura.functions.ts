@@ -92,6 +92,14 @@ function gerarCodigoSala(): string {
   return out;
 }
 
+export type SalaMensagem = {
+  id: number;
+  usuarioId: number;
+  usuarioNome: string;
+  mensagem: string;
+  criadoEm: string;
+};
+
 export type ParticipanteSala = {
   usuarioId: number;
   nome: string;
@@ -120,6 +128,8 @@ export type SalaLeituraDetalhes = {
   participantes: ParticipanteSala[];
   totalProntos: number;
   totalParticipantes: number;
+  mensagens: SalaMensagem[];
+  mensagens: SalaMensagem[];
 };
 
 // 1. Criar ou reativar sala de leitura para um livro
@@ -586,3 +596,42 @@ export const convidarLeitorParaSala = createServerFn({ method: "POST" })
     }
   });
 
+
+
+// 12. Enviar mensagem no chat da sala
+export const enviarMensagemSala = createServerFn({ method: "POST" })
+  .validator(z.object({ codigo: z.string(), mensagem: z.string().min(1).max(500) }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    await garantirTabelasSalas();
+
+    const sala = await db()
+      .prepare("SELECT id FROM salas_leitura WHERE codigo = ? AND status = 'ativa'")
+      .bind(data.codigo)
+      .first<{ id: number }>();
+
+    if (!sala) return { ok: false, erro: "Sala inativa ou nao encontrada" };
+
+    try {
+      await db()
+        .prepare(
+          "INSERT INTO sala_mensagens (sala_id, usuario_id, mensagem) VALUES (?, ?, ?)"
+        )
+        .bind(sala.id, u.id, data.mensagem.trim())
+        .run();
+        
+      // Atualiza ultimo sinal do participante
+      await db()
+        .prepare(
+          `UPDATE sala_participantes 
+           SET ultimo_sinal = datetime('now')
+           WHERE sala_id = ? AND usuario_id = ?`
+        )
+        .bind(sala.id, u.id)
+        .run();
+
+      return { ok: true };
+    } catch (e: any) {
+      return { ok: false, erro: e.message };
+    }
+  });
