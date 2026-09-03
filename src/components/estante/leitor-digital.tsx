@@ -978,7 +978,7 @@ export function LeitorDigital({
             </div>
           )}
 
-          <div className={`text-justify selection:bg-[#7a3b52]/20 flex-1 overflow-y-auto pr-1 min-h-0 flex flex-col justify-start ${
+          <div className={`text-justify selection:bg-[#7a3b52]/20 flex-1 overflow-y-auto pr-1 min-h-0 flex flex-col justify-start transition-all duration-500 ${adiantadoDoHost ? "blur-md select-none opacity-30 pointer-events-none" : ""} ${
             !exibindoCapa && !precisaCarregarArquivo && (textoPaginaAtual || "").trim().startsWith("<") ? "" : "whitespace-pre-line"
           }`}>
             {precisaCarregarArquivo ? (
