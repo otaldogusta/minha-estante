@@ -293,7 +293,14 @@ export function LeitorDigital({
     setMensagemInput("");
     setEnviandoMsg(true);
     try {
-      await enviarMensagemSala({ data: { codigo: codigoSala, mensagem: msg } });
+      const res = await enviarMensagemSala({ data: { codigo: codigoSala, mensagem: msg } });
+      if (!res.ok) {
+        notificar(res.erro || "Erro ao enviar mensagem", "erro");
+        setMensagemInput(msg); // Volta a mensagem
+      }
+    } catch (err: any) {
+      notificar(err.message || "Erro desconhecido", "erro");
+      setMensagemInput(msg);
     } finally {
       setEnviandoMsg(false);
     }

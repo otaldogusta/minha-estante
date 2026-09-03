@@ -303,6 +303,25 @@ export const obterSalaLeitura = createServerFn({ method: "POST" })
 
       const totalProntos = participantes.filter((p) => p.estaProntoNaPaginaAtual).length;
 
+      // Busca as últimas 50 mensagens
+      const mensagensRaw = await db()
+        .prepare(
+          `SELECT m.id, m.usuario_id AS "usuarioId", u.nome AS "usuarioNome", m.mensagem, m.criado_em AS "criadoEm"
+           FROM sala_mensagens m
+           JOIN usuarios u ON u.id = m.usuario_id
+           WHERE m.sala_id = ?
+           ORDER BY m.criado_em DESC
+           LIMIT 50`
+        )
+        .bind(sala.id)
+        .all<{
+          id: number;
+          usuarioId: number;
+          usuarioNome: string;
+          mensagem: string;
+          criadoEm: string;
+        }>();
+
       return {
         id: sala.id,
         codigo: sala.codigo,
@@ -319,6 +338,7 @@ export const obterSalaLeitura = createServerFn({ method: "POST" })
         participantes,
         totalProntos,
         totalParticipantes: participantes.length,
+        mensagens: (mensagensRaw.results || []).reverse(),
       };
     } catch (e) {
       console.error("Erro ao obter sala de leitura:", e);
