@@ -586,6 +586,8 @@ export function LeitorDigital({
   const textoPaginaAtual = exibindoCapa
     ? ""
     : (paginasTexto[paginaTextoEfetiva - 1] || paginasTexto[0] || "");
+    
+  const adiantadoDoHost = codigoSala && dadosSala && !dadosSala.souHost && paginaAtual > dadosSala.paginaAtual;
 
   // Gestos de deslizar (swipe) para mudar de página em dispositivos móveis
   const touchStartX = useRef<number | null>(null);
@@ -726,6 +728,9 @@ export function LeitorDigital({
       if (novaPag > paginaAtual) {
         // Sinaliza prontidão automaticamente ao avançar
         marcarPaginaPronta({ data: { codigo: codigoSala, pagina: paginaAtual } }).catch(() => {});
+      } else if (novaPag < paginaAtual) {
+        // Desmarca prontidão ao voltar (marca como se a pronta fosse a anterior)
+        marcarPaginaPronta({ data: { codigo: codigoSala, pagina: novaPag - 1 } }).catch(() => {});
       }
     }
 
@@ -1035,13 +1040,37 @@ export function LeitorDigital({
                 />
               </div>
             ) : (textoPaginaAtual || "").trim().startsWith("<") ? (
-              <div 
-                dangerouslySetInnerHTML={{ __html: textoPaginaAtual }} 
-                onClick={handleContentClick}
-                className="w-full flex-1 flex flex-col justify-start"
-              />
+              <div className="relative w-full flex-1 flex flex-col justify-start">
+                <div 
+                  dangerouslySetInnerHTML={{ __html: textoPaginaAtual }} 
+                  onClick={handleContentClick}
+                  className={`w-full flex-1 flex flex-col justify-start transition-all duration-300 ${adiantadoDoHost ? 'blur-md select-none opacity-40' : ''}`}
+                />
+                {adiantadoDoHost && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-papel/80 backdrop-blur-md border border-papel-3 px-6 py-4 rounded-2xl shadow-xl text-center max-w-xs animate-in zoom-in-95">
+                      <span className="text-3xl mb-2 block">🛋️</span>
+                      <h4 className="font-bold text-tinta text-lg mb-1">Aguardando Host</h4>
+                      <p className="text-tinta-2 text-xs">Você marcou a página anterior como lida. Aguarde o Host virar a página para todos lerem juntos!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              textoPaginaAtual
+              <div className="relative w-full flex-1 flex flex-col justify-start">
+                <div className={`w-full flex-1 flex flex-col justify-start transition-all duration-300 ${adiantadoDoHost ? 'blur-md select-none opacity-40' : ''}`}>
+                  {textoPaginaAtual}
+                </div>
+                {adiantadoDoHost && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-papel/80 backdrop-blur-md border border-papel-3 px-6 py-4 rounded-2xl shadow-xl text-center max-w-xs animate-in zoom-in-95">
+                      <span className="text-3xl mb-2 block">🛋️</span>
+                      <h4 className="font-bold text-tinta text-lg mb-1">Aguardando Host</h4>
+                      <p className="text-tinta-2 text-xs">Você marcou a página anterior como lida. Aguarde o Host virar a página para todos lerem juntos!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </article>
