@@ -18,6 +18,7 @@ import {
   enviarReacao,
   encerrarSala,
   enviarMensagemSala,
+  expulsarParticipanteSala,
   type SalaMensagem,
   type SalaLeituraDetalhes,
 } from "../../lib/api/sala-leitura.functions";
@@ -356,8 +357,12 @@ export function LeitorDigital({
         const res = await obterSalaLeitura({ data: { codigo: codigoSala! } });
         if (cancelado) return;
 
-        if (!res || res.status === "encerrada") {
-          notificar("A sala de leitura coletiva foi encerrada.", "info");
+        if (!res || res.status === "encerrada" || (res as any).status === "banido") {
+          if ((res as any)?.status === "banido") {
+            notificar("Você foi removido da sala pelo anfitrião.", "aviso");
+          } else {
+            notificar("A sala de leitura coletiva foi encerrada.", "info");
+          }
           setCodigoSala(null);
           setDadosSala(null);
           return;
@@ -469,6 +474,22 @@ export function LeitorDigital({
       setDadosSala(null);
       notificar("Sala de leitura coletiva encerrada.");
     } catch {}
+  }
+
+  async function handleExpulsarParticipante(participanteId: number, nome: string) {
+    if (!codigoSala) return;
+    if (!window.confirm(`Deseja realmente remover ${nome} da sala?`)) return;
+    
+    try {
+      const res = await expulsarParticipanteSala({ data: { codigo: codigoSala, participanteId } });
+      if (res.ok) {
+        notificar(`${nome} foi removido da sala.`, "sucesso");
+      } else {
+        notificar(res.erro || "Não foi possível remover o participante.", "erro");
+      }
+    } catch (e: any) {
+      notificar(e.message || "Erro ao remover.", "erro");
+    }
   }
 
   async function handleReagir(emoji: string) {
@@ -1141,13 +1162,23 @@ export function LeitorDigital({
                   <p className="text-xs font-semibold text-tinta-2">Leitores na sala:</p>
                   <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                     {dadosSala.participantes.map((p) => (
-                      <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{p.nome}</span>
-                          {p.usuarioId === dadosSala.hostUsuarioId && (
-                            <span className="text-[10px] text-amora font-bold">👑 Host</span>
-                          )}
-                        </div>
+                        <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs group/participante">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{p.nome}</span>
+                            {p.usuarioId === dadosSala.hostUsuarioId ? (
+                              <span className="text-[10px] text-amora font-bold">👑 Host</span>
+                            ) : (
+                              dadosSala.souHost && (
+                                <button 
+                                  onClick={() => handleExpulsarParticipante(p.usuarioId, p.nome)}
+                                  className="ml-1 flex h-4 w-4 items-center justify-center rounded-full text-tinta-3 hover:bg-rose-100 hover:text-rose-600 opacity-0 group-hover/participante:opacity-100 transition-all cursor-pointer"
+                                  title={`Remover ${p.nome}`}
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                </button>
+                              )
+                            )}
+                          </div>
                         <span className={p.paginaPronta >= paginaAtual ? "text-emerald-500 font-medium" : "text-amber-500"}>
                           {p.paginaPronta >= paginaAtual ? "✓ Pronto" : "Lendo…"}
                         </span>

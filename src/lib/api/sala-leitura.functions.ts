@@ -29,9 +29,11 @@ async function garantirTabelasSalas() {
           total_paginas INTEGER DEFAULT 1,
           status TEXT DEFAULT 'ativa',
           criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
-          atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP
+          atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+          banidos TEXT DEFAULT '[]'
         )
       `).run();
+      try { await db().prepare("ALTER TABLE salas_leitura ADD COLUMN banidos TEXT DEFAULT '[]'").run(); } catch (e) {}
 
       await db().prepare(`
         CREATE TABLE IF NOT EXISTS sala_participantes (
@@ -69,9 +71,11 @@ async function garantirTabelasSalas() {
           total_paginas INTEGER DEFAULT 1,
           status TEXT DEFAULT 'ativa',
           criado_em TEXT DEFAULT (datetime('now')),
-          atualizado_em TEXT DEFAULT (datetime('now'))
+          atualizado_em TEXT DEFAULT (datetime('now')),
+          banidos TEXT DEFAULT '[]'
         )
       `).run();
+      try { await db().prepare("ALTER TABLE salas_leitura ADD COLUMN banidos TEXT DEFAULT '[]'").run(); } catch (e) {}
 
       await db().prepare(`
         CREATE TABLE IF NOT EXISTS sala_participantes (
@@ -227,7 +231,7 @@ export const obterSalaLeitura = createServerFn({ method: "POST" })
                   s.livro_autor AS "livroAutor", s.livro_capa AS "livroCapa",
                   s.host_usuario_id AS "hostUsuarioId", u.nome AS "hostNome",
                   s.pagina_atual AS "paginaAtual", s.total_paginas AS "totalPaginas",
-                  s.status
+                  s.status, s.banidos
            FROM salas_leitura s
            JOIN usuarios u ON u.id = s.host_usuario_id
            WHERE s.codigo = ?`
@@ -245,9 +249,20 @@ export const obterSalaLeitura = createServerFn({ method: "POST" })
           paginaAtual: number;
           totalPaginas: number;
           status: "ativa" | "encerrada";
+          banidos: string | null;
         }>();
 
       if (!sala) return null;
+
+      // Verifica se o usuário atual foi banido
+      if (u) {
+        try {
+          const banidosIds = sala.banidos ? JSON.parse(sala.banidos) : [];
+          if (banidosIds.includes(u.id)) {
+            return { status: "banido" } as any; // Sinaliza para o frontend
+          }
+        } catch {}
+      }
 
       // Se o usuário logado está consultando a sala, atualiza o sinal de presença dele
       if (u) {
@@ -670,6 +685,27 @@ export const enviarMensagemSala = createServerFn({ method: "POST" })
         .bind(sala.id, u.id)
         .run();
 
+      return { ok: true };
+    } catch (e: any) {
+      return { ok: false, erro: e.message };
+    }
+  });
+
+
+// 13. Expulsar/Banir participante da sala
+export const expulsarParticipanteSala = createServerFn({ method: "POST" })
+  .validator(z.object({ codigo: z.string(), participanteId: z.number().int() }))
+  .handler(async ({ data }) => {
+    const u = await exigirUsuario();
+    const sala = await db().prepare("SELECT id, banidos, host_usuario_id FROM salas_leitura WHERE codigo = ?").bind(data.codigo).first<{ id: number; banidos: string | null; host_usuario_id: number }>();
+    if (!sala) return { ok: false, erro: "Sala n�o encontrada" };
+    if (sala.host_usuario_id !== u.id) return { ok: false, erro: "Apenas o anfitri�o pode remover participantes." };
+
+    try {
+      const banidos = sala.banidos ? JSON.parse(sala.banidos) : [];
+      if (!banidos.includes(data.participanteId)) banidos.push(data.participanteId);
+      await db().prepare("UPDATE salas_leitura SET banidos = ? WHERE id = ?").bind(JSON.stringify(banidos), sala.id).run();
+      await db().prepare("DELETE FROM sala_participantes WHERE sala_id = ? AND usuario_id = ?").bind(sala.id, data.participanteId).run();
       return { ok: true };
     } catch (e: any) {
       return { ok: false, erro: e.message };
