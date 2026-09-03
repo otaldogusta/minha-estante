@@ -321,6 +321,7 @@ export function LeitorDigital({
     
     if (recentes.length >= 3) {
       setCooldownChat(5); // 5s de punição
+      setMensagemInput("");
       return;
     }
     
@@ -1129,7 +1130,7 @@ export function LeitorDigital({
               <input 
                 type="text"
                 placeholder={cooldownChat > 0 ? `Calma, respira e conta até ${cooldownChat}...` : "Digite algo..."}
-                value={mensagemInput}
+                value={cooldownChat > 0 ? "" : mensagemInput}
                 onChange={(e) => setMensagemInput(e.target.value)}
                 disabled={cooldownChat > 0}
                 maxLength={200}
@@ -1453,6 +1454,8 @@ export function LeitorDigital({
     </div>
   );
 }
+
+
 
 
 
