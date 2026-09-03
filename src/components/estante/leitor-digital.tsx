@@ -292,7 +292,7 @@ export function LeitorDigital({
   }, [chatAberto, dadosSala?.mensagens]);
   const [enviandoMsg, setEnviandoMsg] = useState(false);
   const [cooldownChat, setCooldownChat] = useState(0);
-  const [historicoEnvios, setHistoricoEnvios] = useState<number[]>([]);
+  const historicoEnviosRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (cooldownChat <= 0) return;
@@ -317,7 +317,7 @@ export function LeitorDigital({
     if (!mensagemInput.trim() || !codigoSala || enviandoMsg || cooldownChat > 0) return;
     
     const agora = Date.now();
-    const recentes = historicoEnvios.filter(t => agora - t < 5000);
+    const recentes = historicoEnviosRef.current.filter(t => agora - t < 10000);
     
     if (recentes.length >= 3) {
       setCooldownChat(5); // 5s de punição
@@ -327,7 +327,7 @@ export function LeitorDigital({
     const msg = mensagemInput.trim();
     setMensagemInput("");
     setEnviandoMsg(true);
-    setHistoricoEnvios([...recentes, agora]);
+    historicoEnviosRef.current = [...recentes, agora];
     try {
       const res = await enviarMensagemSala({ data: { codigo: codigoSala, mensagem: msg } });
       if (!res.ok) {
@@ -1453,6 +1453,7 @@ export function LeitorDigital({
     </div>
   );
 }
+
 
 
 
