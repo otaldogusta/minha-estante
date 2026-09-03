@@ -1128,7 +1128,7 @@ export function LeitorDigital({
             <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-inherit flex gap-2" style={{ backgroundColor: 'inherit' }}>
               <input 
                 type="text"
-                placeholder={cooldownChat > 0 ? `Aguarde ${cooldownChat}s...` : "Digite algo..."}
+                placeholder={cooldownChat > 0 ? `Calma, respira e conta até ${cooldownChat}...` : "Digite algo..."}
                 value={mensagemInput}
                 onChange={(e) => setMensagemInput(e.target.value)}
                 disabled={cooldownChat > 0}
@@ -1453,6 +1453,7 @@ export function LeitorDigital({
     </div>
   );
 }
+
 
 
 
