@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+ï»¿import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { bindings } from "../bindings.server";
 import { exigirUsuario, usuarioDaSessao } from "../auth.server";
@@ -149,6 +149,7 @@ export type SalaLeituraDetalhes = {
   totalPaginas: number;
   status: "ativa" | "encerrada";
   souHost: boolean;
+  meuUsuarioId: number | null;
   participantes: ParticipanteSala[];
   totalProntos: number;
   totalParticipantes: number;
@@ -350,6 +351,7 @@ export const obterSalaLeitura = createServerFn({ method: "POST" })
         totalPaginas: Number(sala.totalPaginas),
         status: sala.status,
         souHost: u ? u.id === sala.hostUsuarioId : false,
+          meuUsuarioId: u ? u.id : null,
         participantes,
         totalProntos,
         totalParticipantes: participantes.length,
@@ -698,8 +700,8 @@ export const expulsarParticipanteSala = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const u = await exigirUsuario();
     const sala = await db().prepare("SELECT id, banidos, host_usuario_id FROM salas_leitura WHERE codigo = ?").bind(data.codigo).first<{ id: number; banidos: string | null; host_usuario_id: number }>();
-    if (!sala) return { ok: false, erro: "Sala não encontrada" };
-    if (sala.host_usuario_id !== u.id) return { ok: false, erro: "Apenas o anfitrião pode remover participantes." };
+    if (!sala) return { ok: false, erro: "Sala nï¿½o encontrada" };
+    if (sala.host_usuario_id !== u.id) return { ok: false, erro: "Apenas o anfitriï¿½o pode remover participantes." };
 
     try {
       const banidos = sala.banidos ? JSON.parse(sala.banidos) : [];
@@ -711,3 +713,5 @@ export const expulsarParticipanteSala = createServerFn({ method: "POST" })
       return { ok: false, erro: e.message };
     }
   });
+
+

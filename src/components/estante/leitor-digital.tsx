@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { AvatarLeitor } from "./avatar";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -1164,7 +1164,7 @@ export function LeitorDigital({
                     {dadosSala.participantes.map((p) => (
                         <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{p.nome}</span>
+                            <span className="font-medium">{p.nome} {p.usuarioId === dadosSala.meuUsuarioId && <span className="text-tinta-3 text-[10px] font-normal">(Você)</span>}</span>
                             {p.usuarioId === dadosSala.hostUsuarioId && (
                               <span className="text-[10px] text-amora font-bold">👑 Host</span>
                             )}
@@ -1411,3 +1411,4 @@ export function LeitorDigital({
     </div>
   );
 }
+
