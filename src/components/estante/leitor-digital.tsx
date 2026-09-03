@@ -1134,7 +1134,22 @@ export function LeitorDigital({
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amora-clara text-xl select-none">
                   🛋️
                 </span>
-                <h3 className="font-display text-xl font-bold">Leitura Coletiva</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="font-display text-xl font-bold">Leitura Coletiva</h3>
+                  {codigoSala && (
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(codigoSala);
+                        notificar("Código copiado!", "sucesso");
+                      }}
+                      className="group flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold text-amora hover:bg-amora/10 transition-colors cursor-pointer border-b border-dashed border-amora/50 hover:border-amora"
+                      title="Copiar código"
+                    >
+                      código {codigoSala}
+                      <svg className="h-3 w-3 opacity-60 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </button>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setModalSalaAberto(false)}
@@ -1146,20 +1161,11 @@ export function LeitorDigital({
 
             {codigoSala && dadosSala ? (
               <div className="space-y-4">
-                <div className="rounded-xl border border-amora/30 bg-amora-clara/40 p-4 space-y-2">
-                  <p className="text-xs font-semibold text-amora uppercase tracking-wider">
-                    Sessão em Andamento · Código: {codigoSala}
-                  </p>
-                  <p className="text-sm font-medium text-tinta">
-                    {dadosSala.souHost ? "👑 Você é o Moderador/Host desta leitura coletiva." : `Host: ${dadosSala.hostNome}`}
-                  </p>
-                  <p className="text-xs text-tinta-2">
-                    {dadosSala.participantes.length} leitor(es) conectado(s) na página {dadosSala.paginaAtual}.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-tinta-2">Leitores na sala:</p>
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between text-xs text-tinta-2 border-b border-papel-3 pb-2">
+                    <span className="font-semibold">Leitores na sala ({dadosSala.participantes.length})</span>
+                    <span>Página atual: <span className="font-bold text-tinta">{dadosSala.paginaAtual}</span></span>
+                  </div>
                   <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                     {dadosSala.participantes.map((p) => (
                         <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs">
@@ -1411,4 +1417,5 @@ export function LeitorDigital({
     </div>
   );
 }
+
 
