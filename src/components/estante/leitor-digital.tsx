@@ -291,6 +291,14 @@ export function LeitorDigital({
     }
   }, [chatAberto, dadosSala?.mensagens]);
   const [enviandoMsg, setEnviandoMsg] = useState(false);
+  const [cooldownChat, setCooldownChat] = useState(0);
+  const [historicoEnvios, setHistoricoEnvios] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (cooldownChat <= 0) return;
+    const timer = setTimeout(() => setCooldownChat((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldownChat]);
   const mensagensEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -306,10 +314,20 @@ export function LeitorDigital({
 
   async function handleEnviarMensagem(e: React.FormEvent) {
     e.preventDefault();
-    if (!mensagemInput.trim() || !codigoSala || enviandoMsg) return;
+    if (!mensagemInput.trim() || !codigoSala || enviandoMsg || cooldownChat > 0) return;
+    
+    const agora = Date.now();
+    const recentes = historicoEnvios.filter(t => agora - t < 5000);
+    
+    if (recentes.length >= 3) {
+      setCooldownChat(5); // 5s de punição
+      return;
+    }
+    
     const msg = mensagemInput.trim();
     setMensagemInput("");
     setEnviandoMsg(true);
+    setHistoricoEnvios([...recentes, agora]);
     try {
       const res = await enviarMensagemSala({ data: { codigo: codigoSala, mensagem: msg } });
       if (!res.ok) {
@@ -1110,15 +1128,16 @@ export function LeitorDigital({
             <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-inherit flex gap-2" style={{ backgroundColor: 'inherit' }}>
               <input 
                 type="text"
-                placeholder="Digite algo..."
+                placeholder={cooldownChat > 0 ? `Aguarde ${cooldownChat}s...` : "Digite algo..."}
                 value={mensagemInput}
                 onChange={(e) => setMensagemInput(e.target.value)}
+                disabled={cooldownChat > 0}
                 maxLength={200}
-                className="flex-1 rounded-full px-4 py-2 text-sm bg-black/5 dark:bg-white/10 outline-none focus:ring-1 focus:ring-amora placeholder:opacity-50"
+                className="flex-1 rounded-full px-4 py-2 text-sm bg-black/5 dark:bg-white/10 outline-none focus:ring-1 focus:ring-amora placeholder:opacity-50 disabled:opacity-50"
               />
               <button
                 type="submit"
-                disabled={!mensagemInput.trim() || enviandoMsg}
+                disabled={!mensagemInput.trim() || enviandoMsg || cooldownChat > 0}
                 className="w-9 h-9 rounded-full bg-amora text-white flex items-center justify-center disabled:opacity-50 flex-shrink-0 cursor-pointer"
               >
                 ➤
