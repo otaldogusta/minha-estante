@@ -1013,7 +1013,7 @@ export function LeitorDigital({
 
         {/* Botões de navegação e ação */}
         <div className={`mt-3 sm:mt-4 flex-shrink-0 flex flex-col gap-4 font-sans transition-all duration-300 ${
-          mostrarControles ? "opacity-100 max-h-40 translate-y-0" : "opacity-0 max-h-0 translate-y-4 overflow-hidden pointer-events-none mt-0"
+          mostrarControles ? "opacity-100 max-h-[200px] translate-y-0" : "opacity-0 max-h-0 translate-y-4 overflow-hidden pointer-events-none mt-0"
         }`}>
           <div className="flex items-center justify-between gap-4">
             <button
@@ -1166,7 +1166,7 @@ export function LeitorDigital({
                     <span className="font-semibold">Leitores na sala ({dadosSala.participantes.length})</span>
                     <span>Página atual: <span className="font-bold text-tinta">{dadosSala.paginaAtual}</span></span>
                   </div>
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
                     {dadosSala.participantes.map((p) => (
                         <div key={p.usuarioId} className="flex items-center justify-between rounded-lg bg-papel-2 px-3 py-2 text-xs">
                           <div className="flex items-center gap-2">
@@ -1417,6 +1417,7 @@ export function LeitorDigital({
     </div>
   );
 }
+
 
 
 
