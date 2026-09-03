@@ -276,8 +276,13 @@ export function LeitorDigital({
   const mensagensEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (chatAberto) {
-      mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatAberto && mensagensEndRef.current) {
+      // scrollIntoView can cause the whole page to flick/shift. 
+      // A safer way is to scroll the parent container.
+      const parent = mensagensEndRef.current.parentElement;
+      if (parent) {
+        parent.scrollTop = parent.scrollHeight;
+      }
     }
   }, [dadosSala?.mensagens?.length, chatAberto]);
 
@@ -866,7 +871,7 @@ export function LeitorDigital({
 
       <div className="flex-1 flex overflow-hidden relative">
         {/* Área Principal de Leitura */}
-        <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden relative transition-all duration-300">
+        <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 sm:py-6 flex flex-col justify-between overflow-hidden relative">
         <article
           onClick={handleCardClick}
           onTouchStart={handleTouchStart}
@@ -1025,7 +1030,7 @@ export function LeitorDigital({
             className={`
               absolute right-0 top-0 bottom-0 z-[45]
               w-full sm:w-[320px] flex flex-col border-l border-inherit bg-inherit
-              transition-all duration-300 ease-in-out font-sans shadow-2xl
+              transition-transform duration-300 ease-in-out font-sans shadow-2xl
               ${chatAberto ? "translate-x-0" : "translate-x-full"}
             `}
           >
