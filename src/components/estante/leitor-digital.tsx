@@ -1145,7 +1145,7 @@ export function LeitorDigital({
                       className="group flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold text-amora hover:bg-amora/10 transition-colors cursor-pointer border-b border-dashed border-amora/50 hover:border-amora"
                       title="Copiar código"
                     >
-                      código {codigoSala}
+                      {codigoSala.toUpperCase()}
                       <svg className="h-3 w-3 opacity-60 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                     </button>
                   )}
@@ -1417,5 +1417,6 @@ export function LeitorDigital({
     </div>
   );
 }
+
 
 
