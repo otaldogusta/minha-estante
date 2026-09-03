@@ -1036,12 +1036,13 @@ export function LeitorDigital({
           <aside
             className={`
               absolute right-0 top-0 bottom-0 z-[45]
-              w-full sm:w-[320px] flex flex-col border-l border-inherit bg-inherit
-              transition-transform duration-300 ease-in-out font-sans shadow-2xl
+              w-full sm:w-[320px] flex flex-col border-l
+              transition-transform duration-300 ease-in-out font-sans shadow-2xl backdrop-blur-md
+              ${papelCard[tema]}
               ${chatAberto ? "translate-x-0" : "translate-x-full"}
             `}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-inherit bg-inherit/90">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-inherit">
               <h3 className="font-semibold text-sm">Chat da Sala</h3>
               <button 
                 onClick={() => setChatAberto(false)}
@@ -1068,7 +1069,7 @@ export function LeitorDigital({
               <div ref={mensagensEndRef} />
             </div>
 
-            <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-inherit bg-inherit/90 flex gap-2">
+            <form onSubmit={handleEnviarMensagem} className="p-3 border-t border-inherit flex gap-2" style={{ backgroundColor: 'inherit' }}>
               <input 
                 type="text"
                 placeholder="Digite algo..."
@@ -1319,32 +1320,34 @@ export function LeitorDigital({
               </button>
             </div>
           </div>
-</div>,
+        </div>,
         document.body
       )}
 
       {/* Botão Flutuante de Reações */}
       {codigoSala && dadosSala && (
         <div 
-          className={`fixed right-6 z-50 flex flex-col items-end gap-3 transition-all duration-300 ${
+          className={`fixed z-50 flex flex-col items-end gap-3 transition-all duration-300 ease-in-out ${
             mostrarControles ? "bottom-24" : "bottom-6"
-          }`} 
+          } ${chatAberto ? "right-6 sm:right-[340px]" : "right-6"}`} 
           ref={reacoesRef}
         >
           {/* Botão de Chat */}
-          <button
-            onClick={() => setChatAberto((o) => !o)}
-            className="group flex h-12 w-12 items-center justify-center rounded-full bg-papel shadow-xl ring-1 ring-tinta/10 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
-            title="Abrir Chat"
-          >
-            <span className="text-xl opacity-80 group-hover:opacity-100 transition-opacity">💬</span>
-            {dadosSala.mensagens && dadosSala.mensagens.length > 0 && !chatAberto && (
-              <span className="absolute top-0 right-0 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amora opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amora"></span>
-              </span>
-            )}
-          </button>
+          {!chatAberto && (
+            <button
+              onClick={() => setChatAberto((o) => !o)}
+              className="group flex h-12 w-12 items-center justify-center rounded-full bg-papel shadow-xl ring-1 ring-tinta/10 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+              title="Abrir Chat"
+            >
+              <span className="text-xl opacity-80 group-hover:opacity-100 transition-opacity">💬</span>
+              {dadosSala.mensagens && dadosSala.mensagens.length > 0 && !chatAberto && (
+                <span className="absolute top-0 right-0 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amora opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amora"></span>
+                </span>
+              )}
+            </button>
+          )}
 
           {menuReacoesAberto && (
             <div className="flex flex-col-reverse items-center gap-2 rounded-full border border-papel-3 bg-papel/90 backdrop-blur-md p-2 shadow-2xl ring-1 ring-tinta/10 animate-in slide-in-from-bottom-4 fade-in">
