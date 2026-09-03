@@ -1336,10 +1336,10 @@ export function LeitorDigital({
           {!chatAberto && (
             <button
               onClick={() => setChatAberto((o) => !o)}
-              className="group flex h-12 w-12 items-center justify-center rounded-full bg-papel shadow-xl ring-1 ring-tinta/10 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+              className="group flex h-14 w-14 items-center justify-center rounded-full bg-papel shadow-xl ring-1 ring-tinta/10 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
               title="Abrir Chat"
             >
-              <span className="text-xl opacity-80 group-hover:opacity-100 transition-opacity">💬</span>
+              <span className="text-2xl opacity-80 group-hover:opacity-100 transition-opacity">💬</span>
               {dadosSala.mensagens && dadosSala.mensagens.length > 0 && !chatAberto && (
                 <span className="absolute top-0 right-0 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amora opacity-75"></span>
