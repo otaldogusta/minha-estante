@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useClickOutside, useEscapeKey } from "../../lib/hooks";
 import { AvatarLeitor } from "./avatar";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { atualizarProgresso } from "../../lib/api/livros.functions";
@@ -215,20 +216,29 @@ export function LeitorDigital({
   
   const [menuReacoesAberto, setMenuReacoesAberto] = useState(false);
   const reacoesRef = useRef<HTMLDivElement>(null);
+  const modalSalaRef = useRef<HTMLDivElement>(null);
+  const confirmarSaidaRef = useRef<HTMLDivElement>(null);
   const [confirmarSaida, setConfirmarSaida] = useState(false);
   const [codigoConviteInput, setCodigoConviteInput] = useState("");
   const [abaSalaModal, setAbaSalaModal] = useState<"criar" | "entrar">("criar");
 
-  useEffect(() => {
-    if (!menuReacoesAberto) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (reacoesRef.current && !reacoesRef.current.contains(e.target as Node)) {
-        setMenuReacoesAberto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuReacoesAberto]);
+  useClickOutside(reacoesRef, () => {
+    if (menuReacoesAberto) setMenuReacoesAberto(false);
+  });
+
+  useClickOutside(modalSalaRef, () => {
+    if (modalSalaAberto) setModalSalaAberto(false);
+  });
+  useEscapeKey(() => {
+    if (modalSalaAberto) setModalSalaAberto(false);
+  });
+
+  useClickOutside(confirmarSaidaRef, () => {
+    if (confirmarSaida) setConfirmarSaida(false);
+  });
+  useEscapeKey(() => {
+    if (confirmarSaida) setConfirmarSaida(false);
+  });
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1128,7 +1138,7 @@ export function LeitorDigital({
       {/* Modal de Abertura / Gestão da Sala de Leitura Coletiva */}
       {modalSalaAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-5 animate-in zoom-in-95">
+          <div ref={modalSalaRef} className="w-full max-w-md rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl text-tinta space-y-5 animate-in zoom-in-95">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amora-clara text-xl select-none">

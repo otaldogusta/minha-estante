@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useClickOutside, useEscapeKey } from "../lib/hooks";
 import { Cabecalho } from "../components/estante/cabecalho";
 import {
   obterConquistasEAcervo,
@@ -138,6 +139,13 @@ function PaginaAcervo() {
   const [busca, setBusca] = useState<string>("");
   const [amostraModal, setAmostraModal] = useState<LivroAcervo | null>(null);
   const [intencaoLeituraModal, setIntencaoLeituraModal] = useState<LivroAcervo | null>(null);
+  const amostraRef = useRef<HTMLDivElement>(null);
+  const intencaoLeituraRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(amostraRef, () => { if (amostraModal) setAmostraModal(null); });
+  useEscapeKey(() => { if (amostraModal) setAmostraModal(null); });
+  useClickOutside(intencaoLeituraRef, () => { if (intencaoLeituraModal) setIntencaoLeituraModal(null); });
+  useEscapeKey(() => { if (intencaoLeituraModal) setIntencaoLeituraModal(null); });
   const [uploadando, setUploadando] = useState<boolean>(false);
 
   const livrosFiltrados = dados.livrosAcervo.filter((l) => {
@@ -457,7 +465,7 @@ function PaginaAcervo() {
       {/* Modal Intenção de Leitura */}
       {intencaoLeituraModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="max-w-sm w-full rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div ref={intencaoLeituraRef} className="max-w-sm w-full rounded-2xl border border-papel-3 bg-papel p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <h3 className="font-display font-bold text-xl text-tinta text-center mb-2 leading-tight">
               {intencaoLeituraModal.titulo}
             </h3>
@@ -506,7 +514,7 @@ function PaginaAcervo() {
       {/* Modal de Degustação / Prévia de Trecho */}
       {amostraModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="max-w-lg w-full rounded-2xl border border-papel-3 bg-papel p-6 sm:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div ref={amostraRef} className="max-w-lg w-full rounded-2xl border border-papel-3 bg-papel p-6 sm:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-amora">
