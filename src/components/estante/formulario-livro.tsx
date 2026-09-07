@@ -380,7 +380,8 @@ function verificarAlteracao(v: ValoresLivro, i: ValoresLivro) {
     normStr(v.resenha) !== normStr(i.resenha) ||
     normBool(v.adaptacao) !== normBool(i.adaptacao) ||
     normBool(v.vi_adaptacao) !== normBool(i.vi_adaptacao) ||
-    normBool(v.privado) !== normBool(i.privado)
+    normBool(v.privado) !== normBool(i.privado) ||
+    normStr(v.arquivo_url) !== normStr(i.arquivo_url)
   );
 }
 
@@ -463,6 +464,7 @@ export function FormularioLivro({
           sinopse: v.sinopse || null,
           pagina_atual: v.pagina_atual ?? null,
           privado: !!v.privado,
+          arquivo_url: v.arquivo_url || null,
         },
       });
       notificar("Alterações salvas com sucesso!");
@@ -742,7 +744,16 @@ export function FormularioLivro({
               Já assisti
             </label>
           )}
-          <label className="flex items-center gap-2 text-sm text-tinta-2 cursor-pointer">
+          <label className={rotulo}>
+            Link do Arquivo (URL pública)
+            <input
+              className={`${campo} mt-1`}
+              value={v.arquivo_url ?? ""}
+              onChange={(e) => set("arquivo_url", e.target.value || null)}
+              placeholder="Ex: https://drive.google.com/file/... (para leitura em grupo)"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-tinta-2 cursor-pointer mt-4">
             <input
               type="checkbox"
               checked={!!v.privado}
