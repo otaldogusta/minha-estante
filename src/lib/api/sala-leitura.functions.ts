@@ -229,7 +229,7 @@ export const obterSalaLeitura = createServerFn({ method: "POST" })
       const sala = await db()
         .prepare(
           `SELECT s.id, s.codigo, s.livro_id AS "livroId", s.livro_titulo AS "livroTitulo", 
-                  s.livro_autor AS "livroAutor", s.livro_capa AS "livroCapa",
+                  s.livro_autor AS "livroAutor", NULL AS "livroCapa",
                   s.host_usuario_id AS "hostUsuarioId", u.nome AS "hostNome",
                   s.pagina_atual AS "paginaAtual", s.total_paginas AS "totalPaginas",
                   s.status, s.banidos
@@ -399,7 +399,7 @@ export const listarSalasAtivas = createServerFn({ method: "POST" }).handler(asyn
     const { results } = await db()
       .prepare(
         `SELECT s.codigo, s.livro_id AS "livroId", s.livro_titulo AS "livroTitulo", 
-                s.livro_autor AS "livroAutor", s.livro_capa AS "livroCapa",
+                s.livro_autor AS "livroAutor", NULL AS "livroCapa",
                 u.nome AS "hostNome", s.host_usuario_id AS "hostUsuarioId",
                 (SELECT COUNT(*) FROM sala_participantes sp WHERE sp.sala_id = s.id) AS "numParticipantes"
          FROM salas_leitura s
@@ -713,5 +713,6 @@ export const expulsarParticipanteSala = createServerFn({ method: "POST" })
       return { ok: false, erro: e.message };
     }
   });
+
 
 

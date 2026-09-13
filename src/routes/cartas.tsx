@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 
 import {
@@ -63,13 +63,13 @@ function Lacre() {
 function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
   const router = useRouter();
   const jaLida = carta.lida === 1;
-  // Já lidas começam recolhidas; novas começam abertas
+  // JÃ¡ lidas comeÃ§am recolhidas; novas comeÃ§am abertas
   const [expandida, setExpandida] = useState(!jaLida);
   const [marcando, setMarcando] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
 
-  // Detecta se a carta é um convite de leitura coletiva
+  // Detecta se a carta Ã© um convite de leitura coletiva
   let livroIdSala: number | null = null;
   const matchTag = carta.corpo?.match(/\[SALA_LEITURA:(\d+)\]/);
   if (matchTag) {
@@ -79,7 +79,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
   }
 
   const corpoVisual = carta.corpo ? carta.corpo.replace(/\[SALA_LEITURA:\d+\]/g, "").trim() : "";
-  const ehConviteCineminha = Boolean(livroIdSala) || (corpoVisual.includes("Sessão Coletiva") || corpoVisual.includes("Modo Cineminha"));
+  const ehConviteCineminha = Boolean(livroIdSala) || (corpoVisual.includes("SessÃ£o Coletiva") || corpoVisual.includes("Modo Cineminha"));
 
   async function abrirELer() {
     setExpandida(true);
@@ -108,9 +108,9 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
         <div className="flex items-center gap-4">
           <Lacre />
           <div className="min-w-0">
-            <p className="font-display italic text-tinta">Uma carta de {carta.remetente} está lacrada</p>
+            <p className="font-display italic text-tinta">Uma carta de {carta.remetente} estÃ¡ lacrada</p>
             <p className="mt-0.5 text-sm text-tinta-2">
-              Ela se abre quando você terminar <span className="font-medium text-amora">{carta.livro_titulo}</span>.
+              Ela se abre quando vocÃª terminar <span className="font-medium text-amora">{carta.livro_titulo}</span>.
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
     );
   }
 
-  // Carta nova — ainda não lida, fechada como envelope
+  // Carta nova â€” ainda nÃ£o lida, fechada como envelope
   if (!jaLida && !expandida) {
     return (
       <button
@@ -129,7 +129,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
           <Lacre />
           <div className="min-w-0 flex-1">
             <p className="font-display text-lg italic text-amora-escura">
-              {ehConviteCineminha ? `🛋️ Convite de Cineminha de ${carta.remetente}` : `Carta nova de ${carta.remetente}`}
+              {ehConviteCineminha ? `ðŸ›‹ï¸ Convite de Cineminha de ${carta.remetente}` : `Carta nova de ${carta.remetente}`}
             </p>
             <p className="mt-0.5 text-sm text-amora-escura/70">
               {carta.livro_titulo ? `Desbloqueada por "${carta.livro_titulo}". ` : ""}Toque para abrir
@@ -146,7 +146,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
   // Carta aberta (lida ou acabou de abrir)
   return (
     <div className="rounded-2xl border border-[#d9c9a8] bg-[#fdfaf1] overflow-hidden transition-all shadow-xs">
-      {/* Cabeçalho clicável para recolher/expandir */}
+      {/* CabeÃ§alho clicÃ¡vel para recolher/expandir */}
       <button
         onClick={() => setExpandida((v) => !v)}
         className="w-full flex items-center justify-between gap-3 px-6 pt-5 pb-3 text-left group cursor-pointer"
@@ -157,7 +157,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
           </p>
           {!expandida && corpoVisual && (
             <p className="text-sm text-[#9a8c78] truncate min-w-0">
-              — {corpoVisual.slice(0, 60)}{corpoVisual.length > 60 ? "…" : ""}
+              â€” {corpoVisual.slice(0, 60)}{corpoVisual.length > 60 ? "â€¦" : ""}
             </p>
           )}
         </div>
@@ -173,7 +173,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
         </div>
       </button>
 
-      {/* Corpo expansível */}
+      {/* Corpo expansÃ­vel */}
       {expandida && (
         <div className="px-6 pb-6">
           {carta.livro_titulo && (
@@ -189,22 +189,22 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
                   params={{ livroId: String(livroIdSala) }}
                   className="spring-bounce inline-flex items-center gap-2 rounded-xl bg-amora px-5 py-2.5 text-xs font-semibold text-papel hover:bg-amora-escura shadow-md transition-all active:scale-98 cursor-pointer"
                 >
-                  <span>🛋️</span>
-                  <span>Aceitar Convite e Entrar no Cineminha →</span>
+                  <span>ðŸ›‹ï¸</span>
+                  <span>Aceitar Convite e Entrar no Cineminha â†’</span>
                 </Link>
               ) : (
                 <Link
                   to="/"
                   className="spring-bounce inline-flex items-center gap-2 rounded-xl bg-amora px-5 py-2.5 text-xs font-semibold text-papel hover:bg-amora-escura shadow-md transition-all active:scale-98 cursor-pointer"
                 >
-                  <span>🛋️</span>
-                  <span>Ver Sala Ativa na Estante →</span>
+                  <span>ðŸ›‹ï¸</span>
+                  <span>Ver Sala Ativa na Estante â†’</span>
                 </Link>
               )}
             </div>
           )}
 
-          {/* Ações da carta recebida */}
+          {/* AÃ§Ãµes da carta recebida */}
           <div className="mt-4 pt-3 border-t border-[#d9c9a8]/60 flex items-center gap-3 text-xs">
             {!confirmandoExclusao ? (
               <button
@@ -225,7 +225,7 @@ function CartaRecebidaCard({ carta }: { carta: CartaRecebida }) {
                   disabled={excluindo}
                   className="rounded bg-red-600 px-2.5 py-1 text-papel font-medium hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-60"
                 >
-                  {excluindo ? "Excluindo..." : "Confirmar exclusão"}
+                  {excluindo ? "Excluindo..." : "Confirmar exclusÃ£o"}
                 </button>
                 <button
                   onClick={() => setConfirmandoExclusao(false)}
@@ -261,7 +261,7 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
 
   return (
     <div className="rounded-2xl border border-papel-3 card-surface overflow-hidden">
-      {/* Cabeçalho clicável */}
+      {/* CabeÃ§alho clicÃ¡vel */}
       <button
         onClick={() => setExpandida((v) => !v)}
         className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left group"
@@ -270,11 +270,11 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
           <span className="text-sm text-tinta-2 shrink-0">Para</span>
           <span className="text-sm font-medium text-tinta shrink-0">{carta.destinatario}</span>
           {carta.livro_titulo && (
-            <span className="text-xs text-tinta-3 truncate">· até terminar "{carta.livro_titulo}"</span>
+            <span className="text-xs text-tinta-3 truncate">Â· atÃ© terminar "{carta.livro_titulo}"</span>
           )}
           {!expandida && (
             <span className="text-xs text-tinta-3 truncate min-w-0">
-              — {carta.corpo.slice(0, 50)}{carta.corpo.length > 50 ? "…" : ""}
+              â€” {carta.corpo.slice(0, 50)}{carta.corpo.length > 50 ? "â€¦" : ""}
             </span>
           )}
         </div>
@@ -305,7 +305,7 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
         </div>
       </button>
 
-      {/* Corpo expansível */}
+      {/* Corpo expansÃ­vel */}
       {expandida && (
         <div className="border-t border-papel-3/60 px-5 pb-4 pt-3">
           <p className="font-num text-[11px] text-tinta-3 mb-2">{dataLonga(carta.criado_em)}</p>
@@ -344,7 +344,7 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <button onClick={excluir} className="rounded bg-amora-escura px-2 py-0.5 text-papel cursor-pointer">
-                    confirmar exclusão
+                    confirmar exclusÃ£o
                   </button>
                   <button onClick={() => setExcluindo(false)} className="text-tinta-2 underline cursor-pointer">
                     cancelar
@@ -362,16 +362,6 @@ function CartaEnviadaCard({ carta }: { carta: CartaEnviada }) {
 function PaginaCartas() {
   const { recebidas, enviadas, destinatarios, livros } = Route.useLoaderData();
   const router = useRouter();
-
-  // Polling para sincronizar cartas em tempo real a cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        router.invalidate();
-      }
-    }, 30000); // 30 segundos
-    return () => clearInterval(interval);
-  }, [router]);
   const [aba, setAba] = useState<"recebidas" | "enviadas" | "escrever">("recebidas");
   const [para, setPara] = useState<number[]>([]);
   const [busca, setBusca] = useState("");
@@ -405,7 +395,7 @@ function PaginaCartas() {
         router.invalidate();
       }
     } catch {
-      setAviso("Não foi possível enviar. Tente de novo.");
+      setAviso("NÃ£o foi possÃ­vel enviar. Tente de novo.");
     } finally {
       setEnviando(false);
     }
@@ -443,7 +433,7 @@ function PaginaCartas() {
       <Cabecalho paginaAtiva="cartas" />
       <main className="mx-auto max-w-2xl px-4 sm:px-6">
         <h1 className="mt-10 font-display text-3xl font-semibold tracking-tight text-tinta">Cartas</h1>
-        <p className="mt-1 text-tinta-2">Palavras trocadas entre leitores. Algumas só se abrem no fim de um livro.</p>
+        <p className="mt-1 text-tinta-2">Palavras trocadas entre leitores. Algumas sÃ³ se abrem no fim de um livro.</p>
 
         <div className="mt-6 flex flex-wrap gap-2">
           <button onClick={() => setAba("recebidas")} className={abaCls(aba === "recebidas")}>
@@ -459,11 +449,11 @@ function PaginaCartas() {
 
         {aba === "recebidas" && (
           <div className="mt-6 space-y-4">
-            {/* Barra de ações em massa */}
+            {/* Barra de aÃ§Ãµes em massa */}
             {recebidas.length > 0 && novas > 0 && (
               <div className="flex items-center justify-between rounded-xl bg-papel-2/80 border border-papel-3 px-4 py-2.5">
                 <span className="text-xs text-tinta-2">
-                  {novas} carta{novas > 1 ? "s" : ""} não lida{novas > 1 ? "s" : ""}
+                  {novas} carta{novas > 1 ? "s" : ""} nÃ£o lida{novas > 1 ? "s" : ""}
                 </span>
                 <button
                   onClick={async () => {
@@ -472,13 +462,13 @@ function PaginaCartas() {
                   }}
                   className="text-xs font-medium text-amora hover:text-amora-escura transition-colors cursor-pointer"
                 >
-                  ✓ Marcar todas como lidas
+                  âœ“ Marcar todas como lidas
                 </button>
               </div>
             )}
             {recebidas.length === 0 && (
               <div className="rounded-2xl border border-dashed border-tinta-3 p-8 text-center text-tinta-2">
-                Nenhuma carta ainda. Elas aparecem aqui quando alguém escrever pra você.
+                Nenhuma carta ainda. Elas aparecem aqui quando alguÃ©m escrever pra vocÃª.
               </div>
             )}
             {recebidas.map((c) => (
@@ -491,7 +481,7 @@ function PaginaCartas() {
           <div className="mt-6 space-y-4">
             {enviadas.length === 0 && (
               <div className="rounded-2xl border border-dashed border-tinta-3 p-8 text-center text-tinta-2">
-                Você ainda não enviou nenhuma carta.
+                VocÃª ainda nÃ£o enviou nenhuma carta.
               </div>
             )}
             {enviadas.map((c) => (
@@ -508,7 +498,7 @@ function PaginaCartas() {
               enviar();
             }}
           >
-            {/* Multi-select de destinatários */}
+            {/* Multi-select de destinatÃ¡rios */}
             <div>
               <label className="block text-sm font-medium text-tinta-2 mb-1">Para</label>
               <div ref={wrapRef} className="relative">
@@ -560,7 +550,7 @@ function PaginaCartas() {
                   />
                 </div>
 
-                {/* Dropdown de sugestões */}
+                {/* Dropdown de sugestÃµes */}
                 {listaAberta && destinatariosFiltrados.length > 0 && (
                   <ul
                     role="listbox"
@@ -610,7 +600,7 @@ function PaginaCartas() {
               <textarea
                 value={corpo}
                 onChange={(e) => setCorpo(e.target.value)}
-                placeholder="Escreva com calma. Cartas não têm pressa."
+                placeholder="Escreva com calma. Cartas nÃ£o tÃªm pressa."
                 className="mt-1 min-h-40 w-full rounded-lg border border-papel-3 bg-papel px-3 py-2.5 font-display leading-relaxed text-tinta placeholder:font-ui placeholder:text-tinta-3 focus:border-amora focus:outline-none"
               />
             </label>
@@ -627,7 +617,7 @@ function PaginaCartas() {
                   .filter((l) => para.includes(l.usuario_id))
                   .map((l) => (
                     <option key={l.id} value={l.id}>
-                      Só abrir quando terminar: {l.titulo} {l.status === "lendo" ? "(lendo agora)" : "(quer ler)"}
+                      SÃ³ abrir quando terminar: {l.titulo} {l.status === "lendo" ? "(lendo agora)" : "(quer ler)"}
                     </option>
                   ))}
               </select>
@@ -655,3 +645,5 @@ function PaginaCartas() {
     </div>
   );
 }
+
+

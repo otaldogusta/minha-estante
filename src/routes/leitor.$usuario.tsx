@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 
 import { obterPerfilPublico } from "../lib/api/livros.functions";
@@ -18,16 +18,6 @@ export const Route = createFileRoute("/leitor/$usuario")({
 function PaginaPerfil() {
   const perfil = Route.useLoaderData();
   const router = useRouter();
-
-  // Polling para sincronizar o perfil e status de presença em tempo real
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        router.invalidate();
-      }
-    }, 10000); // 10 segundos
-    return () => clearInterval(interval);
-  }, [router]);
 
   const { livros } = perfil;
 
@@ -53,7 +43,7 @@ function PaginaPerfil() {
       <Cabecalho paginaAtiva="leitores" />
       <main className="mx-auto max-w-6xl px-4 sm:px-6">
         <Link to="/leitores" className="mt-8 inline-block text-sm text-tinta-2 hover:text-amora">
-          ← leitores
+          â† leitores
         </Link>
 
         <div className="mt-6 flex items-center gap-5">
@@ -69,8 +59,8 @@ function PaginaPerfil() {
         <div className="mt-8 grid grid-cols-3 gap-y-6 border-y border-papel-3 py-6">
           {[
             [String(lidos.length), "livros lidos"],
-            [paginas.toLocaleString("pt-BR"), "páginas"],
-            [notaMedia ? notaFmt(notaMedia) : "sem notas", "nota média"],
+            [paginas.toLocaleString("pt-BR"), "pÃ¡ginas"],
+            [notaMedia ? notaFmt(notaMedia) : "sem notas", "nota mÃ©dia"],
           ].map(([v, r]) => (
             <div key={r} className="text-center">
               <p className="font-num text-2xl text-tinta md:text-3xl">{v}</p>
@@ -122,7 +112,7 @@ function PaginaPerfil() {
                           <span className="font-num text-[11px] text-tinta-3">{dias === 0 ? "1 dia" : `${dias}d`}</span>
                         )}
                       </div>
-                      {l.palavra && <p className="mt-0.5 truncate font-display text-xs italic text-amora">“{l.palavra}”</p>}
+                      {l.palavra && <p className="mt-0.5 truncate font-display text-xs italic text-amora">â€œ{l.palavra}â€</p>}
                     </div>
                   </div>
                 );
@@ -147,11 +137,13 @@ function PaginaPerfil() {
 
         {livros.length === 0 && (
           <div className="mt-10 rounded-2xl border border-dashed border-tinta-3 p-10 text-center">
-            <p className="font-display text-2xl text-tinta">A estante de {perfil.nome} ainda está vazia</p>
-            <p className="mt-2 text-tinta-2">Ou os livros estão guardados no modo privado.</p>
+            <p className="font-display text-2xl text-tinta">A estante de {perfil.nome} ainda estÃ¡ vazia</p>
+            <p className="mt-2 text-tinta-2">Ou os livros estÃ£o guardados no modo privado.</p>
           </div>
         )}
       </main>
     </div>
   );
 }
+
+

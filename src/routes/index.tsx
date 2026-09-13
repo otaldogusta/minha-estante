@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -25,7 +25,7 @@ import { notificar } from "../lib/toast";
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     await exigirLogin();
-    // A dona da primeira estante vê a carta de boas-vindas antes de tudo.
+    // A dona da primeira estante vÃª a carta de boas-vindas antes de tudo.
     const status = await cartaStatus();
     if (status.dona && !status.vista) throw redirect({ to: "/carta" });
   },
@@ -91,7 +91,7 @@ function ModalConfirmacaoAcao({
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-lg font-bold text-tinta">{titulo}</h3>
             <p className="mt-1.5 text-sm text-tinta-2 leading-relaxed">
-              {descricao} <strong className="font-semibold text-tinta">“{nomeLivro}”</strong>?
+              {descricao} <strong className="font-semibold text-tinta">â€œ{nomeLivro}â€</strong>?
             </p>
           </div>
         </div>
@@ -145,7 +145,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
     setExecutandoAcao(true);
     try {
       await alterarStatusLivro({ data: { id: livro.id, status: "quero_ler" } });
-      notificar(`Leitura de "${livro.titulo}" pausada — movido para Quero Ler`, "info");
+      notificar(`Leitura de "${livro.titulo}" pausada â€” movido para Quero Ler`, "info");
       setModalAcao(null);
       await router.invalidate();
     } catch {
@@ -200,13 +200,13 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
   function trocarCard(novoIndex: number, dir: "next" | "prev") {
     if (animState !== "visible") return;
     setDirecao(dir);
-    // 1) dispara o exit na direção correta
+    // 1) dispara o exit na direÃ§Ã£o correta
     setAnimState(dir === "next" ? "exit-left" : "exit-right");
     setTimeout(() => {
-      // 2) troca o conteúdo e posiciona o enter no lado oposto (fora da tela)
+      // 2) troca o conteÃºdo e posiciona o enter no lado oposto (fora da tela)
       setIndexAtivo(novoIndex);
       setAnimState(dir === "next" ? "enter-right" : "enter-left");
-      // 3) no próximo frame, anima para visible
+      // 3) no prÃ³ximo frame, anima para visible
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setAnimState("visible");
@@ -228,11 +228,11 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
     trocarCard(idx, idx > seguroIndex ? "next" : "prev");
   }
 
-  // Livros adicionais para o efeito visual de cartas empilhadas atrás
+  // Livros adicionais para o efeito visual de cartas empilhadas atrÃ¡s
   const proximoLivro1 = totalLendo > 1 ? livros[(seguroIndex + 1) % totalLendo] : null;
   const proximoLivro2 = totalLendo > 2 ? livros[(seguroIndex + 2) % totalLendo] : null;
 
-  // Classes de animação para o conteúdo interno
+  // Classes de animaÃ§Ã£o para o conteÃºdo interno
   const contentAnimClass = {
     visible:      "opacity-100 translate-x-0  scale-100",
     "exit-left":  "opacity-0   -translate-x-6 scale-[0.97]",
@@ -244,7 +244,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
   return (
     <section className="surgir mx-auto mt-6 max-w-6xl px-4 sm:px-6">
 
-      {/* Controles de navegação — sempre estáveis, fora da área animada */}
+      {/* Controles de navegaÃ§Ã£o â€” sempre estÃ¡veis, fora da Ã¡rea animada */}
       <div className="flex items-center justify-between gap-2 mb-4">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-amora-clara/60 px-3 py-1 text-xs font-semibold text-amora">
           <span className="h-2 w-2 rounded-full bg-amora animate-pulse" />
@@ -270,7 +270,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                 title="Livro anterior"
                 className="flex h-7 w-7 items-center justify-center rounded-full text-tinta-2 transition-colors hover:bg-amora-clara/50 hover:text-amora active:scale-95 cursor-pointer"
               >
-                ‹
+                â€¹
               </button>
 
               <div className="flex items-center gap-1 px-1">
@@ -291,39 +291,39 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
 
               <button
                 onClick={proximoLivro}
-                aria-label="Próximo livro"
-                title="Próximo livro"
+                aria-label="PrÃ³ximo livro"
+                title="PrÃ³ximo livro"
                 className="flex h-7 w-7 items-center justify-center rounded-full text-tinta-2 transition-colors hover:bg-amora-clara/50 hover:text-amora active:scale-95 cursor-pointer"
               >
-                ›
+                â€º
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Conteúdo animado — sem card, sem borda, sem fundo */}
+      {/* ConteÃºdo animado â€” sem card, sem borda, sem fundo */}
       <div
         className={`group transition-all duration-[240ms] ease-out will-change-transform ${contentAnimClass}`}
       >
-        {/* Layout: pilha de capas à esquerda + info à direita */}
+        {/* Layout: pilha de capas Ã  esquerda + info Ã  direita */}
         <div className="flex items-start gap-5 sm:gap-8">
 
           {/* Stack 3D de Capas dos livros */}
           <div className="relative w-28 sm:w-40 md:w-44 shrink-0">
-            {/* Capa 2 — atrás de tudo */}
+            {/* Capa 2 â€” atrÃ¡s de tudo */}
             {proximoLivro2 && (
               <div className="absolute inset-0 translate-x-5 translate-y-1 rotate-6 scale-90 opacity-50 transition-transform duration-300 group-hover:rotate-8 group-hover:translate-x-6">
                 <CapaLivro titulo={proximoLivro2.titulo} autor={proximoLivro2.autor} capa={proximoLivro2.capa} />
               </div>
             )}
-            {/* Capa 1 — intermediária */}
+            {/* Capa 1 â€” intermediÃ¡ria */}
             {proximoLivro1 && (
               <div className="absolute inset-0 translate-x-2.5 translate-y-0.5 rotate-3 scale-95 opacity-80 transition-transform duration-300 group-hover:rotate-5 group-hover:translate-x-4">
                 <CapaLivro titulo={proximoLivro1.titulo} autor={proximoLivro1.autor} capa={proximoLivro1.capa} />
               </div>
             )}
-            {/* Capa ativa — frente com Ações Rápidas no Hover */}
+            {/* Capa ativa â€” frente com AÃ§Ãµes RÃ¡pidas no Hover */}
             <div className="group/capa-ativa relative z-10 block">
               <Link
                 to="/livro/$livroId"
@@ -333,7 +333,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                 <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
               </Link>
 
-              {/* Botões de Ação Rápida Flutuantes no Hover da Capa */}
+              {/* BotÃµes de AÃ§Ã£o RÃ¡pida Flutuantes no Hover da Capa */}
               <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover/capa-ativa:opacity-100 transition-all duration-200 z-30">
                 <button
                   type="button"
@@ -394,7 +394,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
             <div className="mt-3.5 space-y-0.5 text-xs text-tinta-2 font-num">
               {livro.inicio && (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-tinta-3">Início:</span>
+                  <span className="text-tinta-3">InÃ­cio:</span>
                   <span>{dataCurta(livro.inicio)}</span>
                   {diasLendo !== null && (
                     <span className="text-tinta-3">
@@ -406,7 +406,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
               {livro.paginas && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-tinta-3">Tamanho:</span>
-                  <span>{livro.paginas} páginas</span>
+                  <span>{livro.paginas} pÃ¡ginas</span>
                 </div>
               )}
             </div>
@@ -414,9 +414,9 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
             {/* Barra de progresso */}
             <div className="mt-5">
               <div className="flex items-center justify-between text-xs font-semibold text-tinta-2 mb-1.5 font-num">
-                <span>{progresso}% concluído</span>
+                <span>{progresso}% concluÃ­do</span>
                 {livro.paginas && (
-                  <span>{livro.pagina_atual || 0} / {livro.paginas} págs</span>
+                  <span>{livro.pagina_atual || 0} / {livro.paginas} pÃ¡gs</span>
                 )}
               </div>
               
@@ -427,7 +427,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-papel-3/20 pt-3">
                 {/* Lado Esquerdo: Atualizar Progresso */}
                 <div className="flex items-center gap-2 text-xs text-tinta-2">
-                  <span>Atualizar pág:</span>
+                  <span>Atualizar pÃ¡g:</span>
                   <input
                     inputMode="numeric"
                     value={pagina}
@@ -435,7 +435,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                     onKeyDown={(e) => e.key === "Enter" && salvarPagina()}
                     className="w-12 rounded-lg border border-papel-3 bg-papel px-2 py-1 text-center font-num text-xs text-tinta focus:border-amora focus:outline-none"
                     placeholder="0"
-                    aria-label="Página atual"
+                    aria-label="PÃ¡gina atual"
                   />
                   {pagina !== (livro.pagina_atual?.toString() ?? "") && (
                     <button
@@ -448,7 +448,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                   )}
                 </div>
 
-                {/* Lado Direito: Ações e Conclusão */}
+                {/* Lado Direito: AÃ§Ãµes e ConclusÃ£o */}
                 <div className="flex items-center gap-3.5 text-xs font-medium">
                   <button
                     type="button"
@@ -477,7 +477,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
                     search={{ concluir: true }}
                     className="font-semibold text-amora hover:text-amora-escura transition-colors"
                   >
-                    Concluir →
+                    Concluir â†’
                   </Link>
                 </div>
               </div>
@@ -486,7 +486,7 @@ function CartaoLendoAgora({ livros }: { livros: Livro[] }) {
         </div>
       </div>
 
-      {/* Modal de Confirmação Oficial do App */}
+      {/* Modal de ConfirmaÃ§Ã£o Oficial do App */}
       <ModalConfirmacaoAcao
         aberto={modalAcao !== null}
         tipo={modalAcao || "excluir"}
@@ -529,7 +529,7 @@ function ModalPlanejamentoMes({
   const [adicionandoId, setAdicionandoId] = useState<string | null>(null);
   const anoAtual = new Date().getFullYear();
 
-  // Livros concluídos/iniciados neste mês no banco
+  // Livros concluÃ­dos/iniciados neste mÃªs no banco
   const livrosDoMes = useMemo(() => {
     return livros.filter((l) => {
       if (l.status === "lido" && l.ano_leitura === anoAtual) {
@@ -543,13 +543,13 @@ function ModalPlanejamentoMes({
     });
   }, [livros, mesIndex, anoAtual]);
 
-  // Livros marcados manualmente para o planejamento deste mês
+  // Livros marcados manualmente para o planejamento deste mÃªs
   const idsPlanejadosDoMes = planejados[mesIndex] || [];
   const livrosPlanejados = useMemo(() => {
     return livros.filter((l) => idsPlanejadosDoMes.includes(l.id));
   }, [livros, idsPlanejadosDoMes]);
 
-  // Livros disponíveis para adicionar ao mês (estante)
+  // Livros disponÃ­veis para adicionar ao mÃªs (estante)
   const livrosDisponiveis = useMemo(() => {
     return livros.filter(
       (l) => !idsPlanejadosDoMes.includes(l.id) && !livrosDoMes.some((lm) => lm.id === l.id)
@@ -580,7 +580,7 @@ function ModalPlanejamentoMes({
     }
   }
 
-  // Adiciona um livro novo encontrado na web diretamente como "Quero Ler" e planeja para o mês
+  // Adiciona um livro novo encontrado na web diretamente como "Quero Ler" e planeja para o mÃªs
   async function planejarLivroExterno(r: ResultadoBusca) {
     setAdicionandoId(r.titulo);
     try {
@@ -603,7 +603,7 @@ function ModalPlanejamentoMes({
       if (novoLivro?.id) {
         onAlternarPlanejado(novoLivro.id, mesIndex);
         await router.invalidate();
-        notificar(`"${r.titulo}" adicionado à sua estante e planejado para ${nomeMes}!`, "sucesso");
+        notificar(`"${r.titulo}" adicionado Ã  sua estante e planejado para ${nomeMes}!`, "sucesso");
         setSelecionandoLivro(false);
         setTermoBusca("");
         setResultadosExternos(null);
@@ -616,7 +616,7 @@ function ModalPlanejamentoMes({
     }
   }
 
-  // Bloqueio do scroll da página de trás & suporte à tecla ESC
+  // Bloqueio do scroll da pÃ¡gina de trÃ¡s & suporte Ã  tecla ESC
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const onKeyDown = (e: KeyboardEvent) => {
@@ -664,18 +664,18 @@ function ModalPlanejamentoMes({
 
         {/* Content */}
         <div className="relative z-10 mt-4 overflow-y-auto pr-1 space-y-6 flex-1 min-h-0">
-          {/* Seção 1: Livros lidos/em leitura no mês */}
+          {/* SeÃ§Ã£o 1: Livros lidos/em leitura no mÃªs */}
           <div>
             <h3 className="text-xs font-semibold text-tinta-2 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
-              Leituras do Mês ({livrosDoMes.length})
+              Leituras do MÃªs ({livrosDoMes.length})
             </h3>
             {livrosDoMes.length === 0 ? (
               <p className="text-xs text-tinta-3 italic bg-papel-3/30 rounded-xl p-3 text-center border border-papel-3/40">
-                Nenhum livro concluído ou iniciado neste mês ainda.
+                Nenhum livro concluÃ­do ou iniciado neste mÃªs ainda.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -693,7 +693,7 @@ function ModalPlanejamentoMes({
                       <p className="font-medium text-xs text-tinta truncate group-hover:text-amora">{l.titulo}</p>
                       <p className="text-[11px] text-tinta-3 truncate">{l.autor}</p>
                       <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                        {l.status === "lido" ? "✓ Concluído" : "Lendo agora"}
+                        {l.status === "lido" ? "âœ“ ConcluÃ­do" : "Lendo agora"}
                       </span>
                     </div>
                   </Link>
@@ -702,7 +702,7 @@ function ModalPlanejamentoMes({
             )}
           </div>
 
-          {/* Seção 2: Livros Planejados para o Mês */}
+          {/* SeÃ§Ã£o 2: Livros Planejados para o MÃªs */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold text-tinta-2 uppercase tracking-wide flex items-center gap-1.5">
@@ -724,7 +724,7 @@ function ModalPlanejamentoMes({
               </button>
             </div>
 
-            {/* Menu de Busca e Seleção de Livro para Planejar */}
+            {/* Menu de Busca e SeleÃ§Ã£o de Livro para Planejar */}
             {selecionandoLivro && (
               <div className="mb-4 p-3.5 rounded-2xl border border-amora/30 bg-amora/5 space-y-3 surgir">
                 <div>
@@ -755,7 +755,7 @@ function ModalPlanejamentoMes({
                 {/* Resultados da Web */}
                 {buscandoExterno && (
                   <div className="py-4 text-center text-xs text-tinta-2 font-medium animate-pulse">
-                    Buscando livros no catálogo do Google Livros e Open Library...
+                    Buscando livros no catÃ¡logo do Google Livros e Open Library...
                   </div>
                 )}
 
@@ -783,7 +783,7 @@ function ModalPlanejamentoMes({
                               )}
                               <div className="min-w-0 flex-1">
                                 <p className="font-medium text-xs text-tinta truncate">{r.titulo}</p>
-                                <p className="text-[11px] text-tinta-3 truncate">{r.autor} {r.ano ? `• ${r.ano}` : ""}</p>
+                                <p className="text-[11px] text-tinta-3 truncate">{r.autor} {r.ano ? `â€¢ ${r.ano}` : ""}</p>
                               </div>
                             </div>
                             <button
@@ -809,7 +809,7 @@ function ModalPlanejamentoMes({
                     </p>
                     {livrosEstanteFiltrados.length === 0 ? (
                       <p className="text-xs text-tinta-3 italic">
-                        {termoBusca ? "Nenhum livro da sua estante coincide com a busca." : "Todos os seus livros já foram alocados!"}
+                        {termoBusca ? "Nenhum livro da sua estante coincide com a busca." : "Todos os seus livros jÃ¡ foram alocados!"}
                       </p>
                     ) : (
                       <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
@@ -838,7 +838,7 @@ function ModalPlanejamentoMes({
 
             {livrosPlanejados.length === 0 ? (
               <p className="text-xs text-tinta-3 italic bg-papel-3/30 rounded-xl p-3 text-center border border-papel-3/40">
-                Nenhum livro planejado para {nomeMes} ainda. Clique no botão acima para escolher ou buscar o que você quer ler neste mês!
+                Nenhum livro planejado para {nomeMes} ainda. Clique no botÃ£o acima para escolher ou buscar o que vocÃª quer ler neste mÃªs!
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -861,7 +861,7 @@ function ModalPlanejamentoMes({
                       type="button"
                       onClick={() => onAlternarPlanejado(lp.id, mesIndex)}
                       className="p-1.5 text-tinta-3 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer"
-                      title="Remover do planejamento deste mês"
+                      title="Remover do planejamento deste mÃªs"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="18" y1="6" x2="6" y2="18" />
@@ -882,7 +882,7 @@ function ModalPlanejamentoMes({
             onClick={onClose}
             className="rounded-xl bg-amora px-5 py-2 text-xs font-semibold text-papel hover:bg-amora-escura transition-all cursor-pointer shadow-xs active:scale-98"
           >
-            Concluído
+            ConcluÃ­do
           </button>
         </div>
       </div>
@@ -933,7 +933,7 @@ function MetaLeituraMinimalista({
       if (typeof window !== "undefined") {
         localStorage.setItem("minha-estante-planejamento-2026", JSON.stringify(proximo));
       }
-      notificar(jaExiste ? "Livro removido do mês!" : "Livro planejado para o mês!");
+      notificar(jaExiste ? "Livro removido do mÃªs!" : "Livro planejado para o mÃªs!");
       return proximo;
     });
   }
@@ -955,11 +955,11 @@ function MetaLeituraMinimalista({
   const metaEsperada = Math.round(meta * fracaoAno);
   const diferenca = lidosAno - metaEsperada;
 
-  // Projeção estimada para 31 de dezembro
+  // ProjeÃ§Ã£o estimada para 31 de dezembro
   const ritmoMensal = mesAtual > 0 ? lidosAno / mesAtual : 0;
   const projecaoFinalAno = Math.round(ritmoMensal * 12);
 
-  // Cálculo da trilha de 12 meses (Bklit Sparkdots)
+  // CÃ¡lculo da trilha de 12 meses (Bklit Sparkdots)
   const NOMES_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const livrosPorMes = useMemo(() => {
     const contagem = Array(12).fill(0);
@@ -990,7 +990,7 @@ function MetaLeituraMinimalista({
 
   if (diferenca > 0) {
     badgeRitmo = {
-      texto: `+${diferenca} à frente`,
+      texto: `+${diferenca} Ã  frente`,
       classe: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
       icone: (
         <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-emerald-500 fill-emerald-500/20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1024,7 +1024,7 @@ function MetaLeituraMinimalista({
         <div className="relative z-10 flex items-center justify-between gap-3">
           <span className="font-display text-sm font-semibold text-tinta">Meta {new Date().getFullYear()}</span>
 
-          {/* Edição Inline de Livros Lidos / Meta (Sem botão extra) */}
+          {/* EdiÃ§Ã£o Inline de Livros Lidos / Meta (Sem botÃ£o extra) */}
           {editando ? (
             <form
               onSubmit={(e) => {
@@ -1102,7 +1102,7 @@ function MetaLeituraMinimalista({
               />
             </div>
 
-            {/* Marcador Visual de Ritmo Esperado (Ponteiro do Mês Atual) */}
+            {/* Marcador Visual de Ritmo Esperado (Ponteiro do MÃªs Atual) */}
             <div
               className="absolute top-0 bottom-0 w-0.5 bg-tinta/70 z-20 shadow-[0_0_6px_rgba(255,255,255,0.8)]"
               style={{ left: `${Math.min(100, Math.round(fracaoAno * 100))}%` }}
@@ -1122,7 +1122,7 @@ function MetaLeituraMinimalista({
                   <strong className="text-tinta font-num">{Math.round(fracaoAno * 100)}% ({metaEsperada} livros)</strong>
                 </p>
                 <p className="flex justify-between border-t border-papel-3/40 pt-1">
-                  <span>Projeção até 31/12:</span>
+                  <span>ProjeÃ§Ã£o atÃ© 31/12:</span>
                   <strong className="text-amora font-num">~{projecaoFinalAno} livros</strong>
                 </p>
               </div>
@@ -1130,7 +1130,7 @@ function MetaLeituraMinimalista({
           )}
         </div>
 
-        {/* Trilha Minimalista de 12 Meses (Bklit Sparkdots sem números, z-40 para flutuar sobre a barra de progresso) */}
+        {/* Trilha Minimalista de 12 Meses (Bklit Sparkdots sem nÃºmeros, z-40 para flutuar sobre a barra de progresso) */}
         <div className="relative mt-4 flex items-center justify-between pt-2 border-t border-papel-3/40 z-40">
           {NOMES_MESES.map((nomeMes, idx) => {
             const mesIndex = idx + 1;
@@ -1169,7 +1169,7 @@ function MetaLeituraMinimalista({
                   <div className="rounded-lg border border-papel-3 bg-papel/95 backdrop-blur-xl px-2.5 py-1 text-[10px] font-medium text-tinta shadow-xl">
                     <span>{nomeMes}</span>
                     <span className="text-tinta-3 ml-1">
-                      • {totalNoMes} lidos {totalPlanejados > 0 ? `, ${totalPlanejados} planejados` : ""}
+                      â€¢ {totalNoMes} lidos {totalPlanejados > 0 ? `, ${totalPlanejados} planejados` : ""}
                     </span>
                   </div>
                 </div>
@@ -1179,7 +1179,7 @@ function MetaLeituraMinimalista({
         </div>
       </div>
 
-      {/* Modal de Detalhes e Planejamento do Mês Escolhido via Portal */}
+      {/* Modal de Detalhes e Planejamento do MÃªs Escolhido via Portal */}
       {mesSelecionadoModal !== null &&
         typeof document !== "undefined" &&
         createPortal(
@@ -1202,8 +1202,8 @@ function FaixaNumeros({ livros }: { livros: Livro[] }) {
   const est = calcularEstatisticas(livros, anoAtual);
   const itens = [
     { rotulo: `livros em ${anoAtual}`, valor: String(est.livros) },
-    { rotulo: "páginas", valor: est.paginas.toLocaleString("pt-BR") },
-    { rotulo: "nota média", valor: est.notaMedia ? notaFmt(est.notaMedia) : "sem nota" },
+    { rotulo: "pÃ¡ginas", valor: est.paginas.toLocaleString("pt-BR") },
+    { rotulo: "nota mÃ©dia", valor: est.notaMedia ? notaFmt(est.notaMedia) : "sem nota" },
     { rotulo: "investidos", valor: brl(est.gasto) },
   ];
   return (
@@ -1275,7 +1275,7 @@ function CardLivro({ livro }: { livro: Livro }) {
           <div className="relative">
             <CapaLivro titulo={livro.titulo} autor={livro.autor} capa={livro.capa} />
 
-            {/* Botões de Ação Rápida no Hover da Capa */}
+            {/* BotÃµes de AÃ§Ã£o RÃ¡pida no Hover da Capa */}
             <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30">
               {livro.status === "lendo" && (
                 <button
@@ -1323,12 +1323,12 @@ function CardLivro({ livro }: { livro: Livro }) {
               <Estrelas nota={livro.nota} className="text-[11px]" />
               {dias !== null && <span className="font-num text-[11px] text-tinta-3">{dias === 0 ? "1 dia" : `${dias}d`}</span>}
             </div>
-            {livro.palavra && <p className="mt-0.5 truncate font-display text-xs italic text-amora">“{livro.palavra}”</p>}
+            {livro.palavra && <p className="mt-0.5 truncate font-display text-xs italic text-amora">â€œ{livro.palavra}â€</p>}
           </div>
         </Link>
       </div>
 
-      {/* Modal de Confirmação Oficial do App */}
+      {/* Modal de ConfirmaÃ§Ã£o Oficial do App */}
       <ModalConfirmacaoAcao
         aberto={modalAcao !== null}
         tipo={modalAcao || "excluir"}
@@ -1352,16 +1352,6 @@ function PaginaEstante() {
   const livros = Route.useLoaderData();
   const router = useRouter();
 
-  // Polling para sincronizar livros e progresso em tempo real a cada 45 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        router.invalidate();
-      }
-    }, 45000); // 45 segundos
-    return () => clearInterval(interval);
-  }, [router]);
-
   const [busca, setBusca] = useState("");
   const [genero, setGenero] = useState<string | null>(null);
   const [limiteExibicao, setLimiteExibicao] = useState(24);
@@ -1370,7 +1360,7 @@ function PaginaEstante() {
       const salvo = localStorage.getItem("minha-estante-modo-view");
       if (salvo === "estante" || salvo === "lista" || salvo === "capas") return salvo;
     }
-    return "estante"; // Padrão realista
+    return "estante"; // PadrÃ£o realista
   });
 
   const alterarModoView = (novoModo: ModoVisualizacao) => {
@@ -1380,7 +1370,7 @@ function PaginaEstante() {
     }
   };
 
-  // Resetar o limite quando a busca ou gênero mudarem
+  // Resetar o limite quando a busca ou gÃªnero mudarem
   useEffect(() => {
     setLimiteExibicao(24);
   }, [busca, genero]);
@@ -1464,7 +1454,8 @@ function PaginaEstante() {
       } catch {}
     }
     carregarSalas();
-    const intv = setInterval(carregarSalas, 8000);
+    // Reduzido para 30s para economizar banda
+    const intv = setInterval(carregarSalas, 30000);
     return () => {
       ativo = false;
       clearInterval(intv);
@@ -1481,7 +1472,7 @@ function PaginaEstante() {
           <div className="rounded-2xl border border-amora/40 bg-gradient-to-r from-amora-clara/90 via-papel-2 to-amora-clara/50 p-4 sm:p-5 shadow-md flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
             <div className="flex items-center gap-3.5 min-w-0">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amora/20 text-2xl shadow-xs shrink-0 select-none">
-                🛋️
+                ðŸ›‹ï¸
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1494,7 +1485,7 @@ function PaginaEstante() {
                   </span>
                 </div>
                 <p className="mt-1 font-display text-base sm:text-lg font-bold text-tinta truncate">
-                  Lendo "{salasAtivas[0].livroTitulo}" · {salasAtivas[0].numParticipantes || 1} leitor(es) na sala
+                  Lendo "{salasAtivas[0].livroTitulo}" Â· {salasAtivas[0].numParticipantes || 1} leitor(es) na sala
                 </p>
               </div>
             </div>
@@ -1504,7 +1495,7 @@ function PaginaEstante() {
               className="spring-bounce inline-flex items-center justify-center gap-2 rounded-full bg-amora px-5 py-2.5 text-xs sm:text-sm font-semibold text-papel hover:bg-amora-escura shadow-md transition-all active:scale-95 shrink-0 cursor-pointer"
             >
               <span>Entrar no Cineminha</span>
-              <span>→</span>
+              <span>â†’</span>
             </Link>
           </div>
         </section>
@@ -1516,7 +1507,7 @@ function PaginaEstante() {
         <section className="surgir mx-auto mt-8 max-w-6xl px-4 sm:px-6">
           <div className="rounded-2xl border border-dashed border-tinta-3 p-8 text-center">
             <p className="font-display text-2xl text-tinta">Nenhuma leitura em andamento</p>
-            <p className="mt-2 text-tinta-2">Escolha o próximo livro e comece um novo capítulo.</p>
+            <p className="mt-2 text-tinta-2">Escolha o prÃ³ximo livro e comece um novo capÃ­tulo.</p>
           </div>
         </section>
       )}
@@ -1533,7 +1524,7 @@ function PaginaEstante() {
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar título ou autor"
+            placeholder="Buscar tÃ­tulo ou autor"
             aria-label="Buscar na estante"
             className="w-full max-w-xs rounded-full border border-papel-3 bg-papel-2/70 px-4 py-2 text-sm text-tinta placeholder:text-tinta-3 focus:border-amora focus:bg-papel focus:outline-none transition-colors"
           />
@@ -1565,8 +1556,8 @@ function PaginaEstante() {
 
         {porAno.length === 0 && livros.length === 0 && (
           <div className="mt-10 rounded-2xl border border-dashed border-tinta-3 p-10 text-center">
-            <p className="font-display text-2xl text-tinta">Sua estante começa com o primeiro livro</p>
-            <p className="mt-2 text-tinta-2">Toque em "Adicionar livro" e conte o que você está lendo.</p>
+            <p className="font-display text-2xl text-tinta">Sua estante comeÃ§a com o primeiro livro</p>
+            <p className="mt-2 text-tinta-2">Toque em "Adicionar livro" e conte o que vocÃª estÃ¡ lendo.</p>
           </div>
         )}
         {porAno.length === 0 && livros.length > 0 && (
@@ -1578,7 +1569,7 @@ function PaginaEstante() {
           <EstanteRealista livros={filtrados} />
         )}
 
-        {/* MODO CAPAS (Grade de Capas Padrão) */}
+        {/* MODO CAPAS (Grade de Capas PadrÃ£o) */}
         {modoView === "capas" &&
           porAnoLimitado.map(([ano, doAno, totalDoAno]) => (
             <section key={ano} className="mt-10">
@@ -1614,12 +1605,12 @@ function PaginaEstante() {
                   )}
                   <div className="min-w-0">
                     <h4 className="font-semibold text-sm text-tinta group-hover:text-amora transition-colors truncate">{l.titulo}</h4>
-                    <p className="text-xs text-tinta-2 truncate">{l.autor || "Autor não informado"}</p>
+                    <p className="text-xs text-tinta-2 truncate">{l.autor || "Autor nÃ£o informado"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-num text-tinta-2">
                   <span>{l.ano_leitura || "-"}</span>
-                  <span className="text-amber-400 font-bold">{l.nota ? `★ ${l.nota}` : "-"}</span>
+                  <span className="text-amber-400 font-bold">{l.nota ? `â˜… ${l.nota}` : "-"}</span>
                 </div>
               </Link>
             ))}
@@ -1651,3 +1642,4 @@ function PaginaEstante() {
     </div>
   );
 }
+
