@@ -1,18 +1,18 @@
-import { createServerFn } from "@tanstack/react-start";
+﻿import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { bindings } from "../bindings.server";
-import { exigirUsuario } from "../auth.server";
+import { exigirUsuario, usuarioDaSessao } from "../auth.server";
 import type { Livro } from "../livros";
 import { matchSearch } from "../utils";
 
 function db() {
   const { DB } = bindings();
-  if (!DB) throw new Error("Banco de dados indisponível");
+  if (!DB) throw new Error("Banco de dados indisponÃ­vel");
   return DB;
 }
 
-// Sempre a estante do usuário logado.
+// Sempre a estante do usuÃ¡rio logado.
 export const listarLivros = createServerFn({ method: "POST" }).handler(async () => {
   const u = await exigirUsuario();
   const { results } = await db()
@@ -43,13 +43,13 @@ export const obterLivroParaLeitura = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const u = await exigirUsuario();
-      // 1. Tenta carregar o livro da própria estante do usuário
+      // 1. Tenta carregar o livro da prÃ³pria estante do usuÃ¡rio
       let livro = await db()
         .prepare("SELECT * FROM livros WHERE id = ? AND usuario_id = ?")
         .bind(data.id, u.id)
         .first<Livro>();
 
-      // 2. Se não estiver na estante dele, permite leitura do livro compartilhado na casa
+      // 2. Se nÃ£o estiver na estante dele, permite leitura do livro compartilhado na casa
       if (!livro) {
         livro = await db()
           .prepare("SELECT * FROM livros WHERE id = ?")
@@ -159,7 +159,7 @@ export const excluirLivro = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Atualização rápida do marcador de página (cartão "Lendo agora").
+// AtualizaÃ§Ã£o rÃ¡pida do marcador de pÃ¡gina (cartÃ£o "Lendo agora").
 export const atualizarProgresso = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number().int(), pagina_atual: z.number().int().min(0).max(20000) }))
   .handler(async ({ data }) => {
@@ -182,7 +182,7 @@ export const alterarStatusLivro = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ------- Perfis públicos -------
+// ------- Perfis pÃºblicos -------
 
 export type StatusPresenca = "online" | "lendo" | "ocupado" | "invisivel" | "offline";
 
@@ -208,7 +208,7 @@ function parseUtcDate(val: any): Date | null {
     let d = new Date(s);
     if (!isNaN(d.getTime())) return d;
 
-    // 2. Se for formato SQLite "YYYY-MM-DD HH:MM:SS" (sem fuso e com espaço)
+    // 2. Se for formato SQLite "YYYY-MM-DD HH:MM:SS" (sem fuso e com espaÃ§o)
     const sqlFormat = s.replace(" ", "T");
     d = new Date(sqlFormat.includes("+") || sqlFormat.includes("Z") ? sqlFormat : sqlFormat + "Z");
     if (!isNaN(d.getTime())) return d;
@@ -285,7 +285,7 @@ export const listarLeitores = createServerFn({ method: "POST" }).handler(async (
 
       const customStatus = statusCustomVal as StatusPresenca | null;
 
-      // Um usuário é considerado ativo se fez alguma requisição/acesso nos últimos 5 minutos
+      // Um usuÃ¡rio Ã© considerado ativo se fez alguma requisiÃ§Ã£o/acesso nos Ãºltimos 5 minutos
       let estaAtivo = false;
       const dt = parseUtcDate(ultimoAcessoVal);
       if (dt) {
@@ -325,7 +325,7 @@ export const listarLeitores = createServerFn({ method: "POST" }).handler(async (
   }
 });
 
-// Perfil público: apenas livros não privados, sem valores gastos.
+// Perfil pÃºblico: apenas livros nÃ£o privados, sem valores gastos.
 export const obterPerfilPublico = createServerFn({ method: "POST" })
   .validator(z.object({ usuario: z.string().min(1).max(80) }))
   .handler(async ({ data }) => {
@@ -334,9 +334,9 @@ export const obterPerfilPublico = createServerFn({ method: "POST" })
       .prepare("SELECT id, nome, usuario FROM usuarios WHERE usuario = ?")
       .bind(data.usuario.trim().toLowerCase())
       .first<{ id: number; nome: string; usuario: string }>();
-    if (!dono) throw new Error("Leitor não encontrado");
+    if (!dono) throw new Error("Leitor nÃ£o encontrado");
 
-    // Status de presença do leitor
+    // Status de presenÃ§a do leitor
     let presencaRow: { statusCustom: string | null; ultimoAcesso: any } | null = null;
     try {
       presencaRow = await db()
@@ -348,7 +348,7 @@ export const obterPerfilPublico = createServerFn({ method: "POST" })
         .bind(dono.id)
         .first<{ statusCustom: string | null; ultimoAcesso: any }>();
     } catch {
-      // Fallback se colunas/tabelas ainda não existirem
+      // Fallback se colunas/tabelas ainda nÃ£o existirem
     }
 
     const customStatus = (presencaRow?.statusCustom ?? (presencaRow as any)?.statuscustom) as StatusPresenca | null;
@@ -503,7 +503,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
     const u = await exigirUsuario();
     // Usa id do usuario (imutavel) em vez do username (pode mudar)
     if (u.id !== 1) {
-      throw new Error("Não autorizado");
+      throw new Error("NÃ£o autorizado");
     }
 
     const cb = Date.now();
@@ -512,7 +512,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       { signal: AbortSignal.timeout(10000) }
     );
     if (!res.ok) {
-      throw new Error("Não foi possível acessar a planilha do Google");
+      throw new Error("NÃ£o foi possÃ­vel acessar a planilha do Google");
     }
 
     const text = await res.text();
@@ -533,7 +533,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
           const resenha = row[0]?.trim();
           const titulo = row[1]?.trim();
           if (titulo && resenha) {
-            // Normaliza acentos para matching robusto (E==e, a==ã, etc.)
+            // Normaliza acentos para matching robusto (E==e, a==Ã£, etc.)
             const chaveNorm = titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
             mapaResenhas.set(chaveNorm, resenha);
           }
@@ -541,7 +541,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       }
     } catch { /* ignora erros na segunda aba, nao bloqueia o sync */ }
 
-    // Mapeamento dinâmico de cabeçalho
+    // Mapeamento dinÃ¢mico de cabeÃ§alho
     const headers = rows[1] ? rows[1].map(h => h.trim().toLowerCase()) : [];
     const getIndexLoose = (names: string[], defaultIdx: number) => {
       for (const name of names) {
@@ -551,21 +551,21 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       return defaultIdx;
     };
 
-    const idxTitulo = getIndexLoose(["título", "titulo"], 0);
+    const idxTitulo = getIndexLoose(["tÃ­tulo", "titulo"], 0);
     const idxAutor = getIndexLoose(["autor"], 1);
-    const idxPais = getIndexLoose(["local", "país", "pais"], 2);
-    const idxGenero = getIndexLoose(["gênero", "genero"], 4);
+    const idxPais = getIndexLoose(["local", "paÃ­s", "pais"], 2);
+    const idxGenero = getIndexLoose(["gÃªnero", "genero"], 4);
     const idxEditora = getIndexLoose(["editora"], 5);
     const idxAno = getIndexLoose(["ano"], 6);
-    const idxPaginas = getIndexLoose(["pág", "pag"], 7);
+    const idxPaginas = getIndexLoose(["pÃ¡g", "pag"], 7);
     const idxLido = getIndexLoose(["lido"], 8);
     const idxLeitura = getIndexLoose(["leitura"], 9);
-    const idxInicio = getIndexLoose(["início", "inicio"], 10);
+    const idxInicio = getIndexLoose(["inÃ­cio", "inicio"], 10);
     const idxFim = getIndexLoose(["fim"], 11);
     const idxNota = getIndexLoose(["nota"], 13);
     const idxPalavra = getIndexLoose(["palavra"], 14);
     const idxResenha = getIndexLoose(["resenha"], 15);
-    const idxAdaptacao = getIndexLoose(["adaptação", "adaptacao"], 16);
+    const idxAdaptacao = getIndexLoose(["adaptaÃ§Ã£o", "adaptacao"], 16);
     const idxVi = getIndexLoose(["vi?", "vi"], 17);
     const idxValor = getIndexLoose(["valor"], 18);
     const idxCapa = getIndexLoose(["capa", "link", "imagem", "cover"], -1);
@@ -597,7 +597,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       criado_em: string;
     }> = [];
 
-    // O cabeçalho é a segunda linha (index 1), dados começam no index 2
+    // O cabeÃ§alho Ã© a segunda linha (index 1), dados comeÃ§am no index 2
     for (let i = 2; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length === 0) continue;
@@ -607,9 +607,9 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
 
       if (!titulo || !autor) continue;
       if (
-        titulo.toUpperCase().startsWith("TOTAL/MÉDIA") ||
-        titulo.toUpperCase().startsWith("MÁXIMO") ||
-        titulo.toUpperCase().startsWith("MÍNIMO")
+        titulo.toUpperCase().startsWith("TOTAL/MÃ‰DIA") ||
+        titulo.toUpperCase().startsWith("MÃXIMO") ||
+        titulo.toUpperCase().startsWith("MÃNIMO")
       ) {
         continue;
       }
@@ -625,13 +625,13 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       const fimStr = row[idxFim]?.trim();
 
       let status: "quero_ler" | "lendo" | "lido" | "abandonado" = "quero_ler";
-      let formato = "Físico";
+      let formato = "FÃ­sico";
 
       if (lidoVal) {
         status = "lido";
         if (lidoVal === "K") formato = "Kindle";
         else if (lidoVal === "S") formato = "Audiobook";
-        else formato = "Físico";
+        else formato = "FÃ­sico";
       } else if (inicioStr && inicioStr !== "0") {
         status = "lendo";
         formato = "Kindle";
@@ -712,7 +712,7 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
     }
 
     if (livrosParaInserir.length === 0) {
-      throw new Error("Nenhum livro válido encontrado na planilha");
+      throw new Error("Nenhum livro vÃ¡lido encontrado na planilha");
     }
 
     const database = db();
@@ -723,14 +723,14 @@ export const sincronizarPlanilhaGoogle = createServerFn({ method: "POST" })
       .bind(u.id)
       .all<{ titulo: string; autor: string; capa: string | null; sinopse: string | null; resenha: string | null }>();
 
-    // Mapa de chave (titulo+autor em minúsculas) → dados enriquecidos existentes
+    // Mapa de chave (titulo+autor em minÃºsculas) â†’ dados enriquecidos existentes
     const mapaExistentes = new Map<string, { capa: string | null; sinopse: string | null; resenha: string | null }>();
     for (const l of livrosExistentes) {
       const chave = `${l.titulo.toLowerCase()}|||${l.autor.toLowerCase()}`;
       mapaExistentes.set(chave, { capa: l.capa, sinopse: l.sinopse, resenha: l.resenha });
     }
 
-    // Enriquecer livros da planilha com dados já existentes no site + resenhas da segunda aba
+    // Enriquecer livros da planilha com dados jÃ¡ existentes no site + resenhas da segunda aba
     for (const l of livrosParaInserir) {
       const chave = `${l.titulo.toLowerCase()}|||${l.autor.toLowerCase()}`;
       const existente = mapaExistentes.get(chave);
@@ -866,7 +866,7 @@ async function fetchOpenLibrary(query: string): Promise<string | null> {
 }
 
 /**
- * Busca capa com estratégias precisas priorizando Editora BR:
+ * Busca capa com estratÃ©gias precisas priorizando Editora BR:
  * 1. iTunes BR com titulo + autor + editora
  * 2. iTunes BR com titulo + autor
  * 3. Open Library com titulo normalizado + editora
@@ -876,27 +876,27 @@ async function fetchCapaGoogleBooks(titulo: string, autor: string, editora?: str
   const tituloNorm = normTitle(titulo);
   const ed = editora?.trim() || "";
 
-  // Estratégia 1: iTunes BR com titulo + autor + editora
+  // EstratÃ©gia 1: iTunes BR com titulo + autor + editora
   if (ed) {
     const r0 = await fetchITunes(`${titulo} ${autor} ${ed}`, titulo, true);
     if (r0) return r0;
   }
 
-  // Estratégia 2: iTunes BR com titulo + autor
+  // EstratÃ©gia 2: iTunes BR com titulo + autor
   const r1 = await fetchITunes(`${titulo} ${autor}`, titulo, true);
   if (r1) return r1;
 
-  // Estratégia 3: Open Library com titulo normalizado + editora
+  // EstratÃ©gia 3: Open Library com titulo normalizado + editora
   if (ed) {
     const r2 = await fetchOpenLibrary(`${tituloNorm} ${ed}`);
     if (r2) return r2;
   }
 
-  // Estratégia 4: Open Library com titulo normalizado + autor
+  // EstratÃ©gia 4: Open Library com titulo normalizado + autor
   const r3 = await fetchOpenLibrary(`${tituloNorm} ${autor}`);
   if (r3) return r3;
 
-  // Estratégia 5: Open Library somente com titulo normalizado
+  // EstratÃ©gia 5: Open Library somente com titulo normalizado
   const r4 = await fetchOpenLibrary(tituloNorm);
   if (r4) return r4;
 
@@ -984,3 +984,38 @@ export const obterStatusLeitores = createServerFn({ method: "POST" }).handler(as
   }
   return resultados;
 });
+export const obterStatusLeitor = createServerFn({ method: "POST" })
+  .validator(z.object({ usuario: z.string().min(1).max(80) }))
+  .handler(async ({ data }) => {
+    const dono = await db()
+      .prepare("SELECT id FROM usuarios WHERE usuario = ?")
+      .bind(data.usuario.trim().toLowerCase())
+      .first<{ id: number }>();
+    if (!dono) return "offline";
+
+    let presencaRow: { statusCustom: string | null; ultimoAcesso: any } | null = null;
+    try {
+      presencaRow = await db()
+        .prepare(`SELECT status_presenca AS statusCustom, COALESCE(ultimo_acesso, (SELECT MAX(ultimo_acesso) FROM sessoes WHERE usuario_id = usuarios.id)) AS ultimoAcesso FROM usuarios WHERE id = ?`)
+        .bind(dono.id)
+        .first<{ statusCustom: string | null; ultimoAcesso: any }>();
+    } catch {}
+    
+    const customStatus = (presencaRow?.statusCustom ?? (presencaRow as any)?.statuscustom) as StatusPresenca | null;
+    const ultimoAcessoVal = presencaRow?.ultimoAcesso ?? (presencaRow as any)?.ultimoacesso;
+
+    let estaAtivo = false;
+    const dt = parseUtcDate(ultimoAcessoVal);
+    if (dt) {
+      const agora = new Date();
+      if (Math.abs(agora.getTime() - dt.getTime()) <= 5 * 60 * 1000) estaAtivo = true;
+    }
+
+    if (customStatus === "invisivel") return "offline";
+    if (estaAtivo) {
+      if (customStatus === "lendo" || customStatus === "ocupado") return customStatus;
+      return "online";
+    }
+    return "offline";
+  });
+

@@ -444,13 +444,30 @@ export function LeitorDigital({
       }
     }
 
-    sincronizar();
-    const interval = setInterval(sincronizar, 1500); // 1.5s para resposta ágil
-    return () => {
-      cancelado = true;
-      clearInterval(interval);
-    };
-  }, [codigoSala, paginaAtual]);
+          let timeoutId: any;
+      async function sincronizarWrapper() {
+        if (document.visibilityState === "visible") {
+          await sincronizar();
+        }
+        if (!cancelado) timeoutId = setTimeout(sincronizarWrapper, 1500);
+      }
+      
+      timeoutId = setTimeout(sincronizarWrapper, 0);
+      
+      const onVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+          clearTimeout(timeoutId);
+          sincronizarWrapper();
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+
+      return () => {
+        cancelado = true;
+        clearTimeout(timeoutId);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      };
+    }, [codigoSala, paginaAtual]);
 
   async function handleAbrirSala() {
     setCriandoSala(true);
@@ -1468,6 +1485,8 @@ export function LeitorDigital({
     </div>
   );
 }
+
+
 
 
 

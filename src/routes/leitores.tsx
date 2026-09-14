@@ -120,10 +120,12 @@ function PaginaLeitores() {
   const { leitores, convites, sessao } = Route.useLoaderData();
   const router = useRouter();
 
-  const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
+    const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
   useEffect(() => {
     let ativo = true;
-    const interval = setInterval(async () => {
+    let timeoutId: any;
+    
+    async function agendarProximo() {
       if (document.visibilityState === "visible") {
         await registrarPresencaAtiva().catch(() => {});
         try {
@@ -131,8 +133,24 @@ function PaginaLeitores() {
           if (ativo && res) setLiveStatuses(res);
         } catch {}
       }
-    }, 25000);
-    return () => { ativo = false; clearInterval(interval); };
+      if (ativo) timeoutId = setTimeout(agendarProximo, 25000);
+    }
+    
+    timeoutId = setTimeout(agendarProximo, 25000);
+    
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(timeoutId);
+        agendarProximo();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    
+    return () => { 
+      ativo = false; 
+      clearTimeout(timeoutId); 
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
   const [modalAberto, setModalAberto] = useState(false);
   const usuarioLogado = sessao?.autenticado ? sessao.usuario : null;
@@ -358,10 +376,12 @@ function ModalConvites({
 }) {
   const router = useRouter();
 
-  const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
+    const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
   useEffect(() => {
     let ativo = true;
-    const interval = setInterval(async () => {
+    let timeoutId: any;
+    
+    async function agendarProximo() {
       if (document.visibilityState === "visible") {
         await registrarPresencaAtiva().catch(() => {});
         try {
@@ -369,8 +389,24 @@ function ModalConvites({
           if (ativo && res) setLiveStatuses(res);
         } catch {}
       }
-    }, 25000);
-    return () => { ativo = false; clearInterval(interval); };
+      if (ativo) timeoutId = setTimeout(agendarProximo, 25000);
+    }
+    
+    timeoutId = setTimeout(agendarProximo, 25000);
+    
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(timeoutId);
+        agendarProximo();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    
+    return () => { 
+      ativo = false; 
+      clearTimeout(timeoutId); 
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
   const [localConvites, setLocalConvites] = useState(convites);
   const [gerando, setGerando] = useState(false);
@@ -544,6 +580,7 @@ function ModalConvites({
     </div>
   );
 }
+
 
 
 

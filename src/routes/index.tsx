@@ -1445,22 +1445,35 @@ function PaginaEstante() {
     numParticipantes: number;
   }>>([]);
 
-  useEffect(() => {
-    let ativo = true;
-    async function carregarSalas() {
-      try {
-        const s = await listarSalasAtivas();
-        if (ativo && Array.isArray(s)) setSalasAtivas(s);
-      } catch {}
-    }
-    carregarSalas();
-    // Reduzido para 30s para economizar banda
-    const intv = setInterval(carregarSalas, 30000);
-    return () => {
-      ativo = false;
-      clearInterval(intv);
-    };
-  }, []);
+      useEffect(() => {
+      let ativo = true;
+      let timeoutId: any;
+      async function carregarSalas() {
+        if (document.visibilityState === "visible") {
+          try {
+            const s = await listarSalasAtivas();
+            if (ativo && Array.isArray(s)) setSalasAtivas(s);
+          } catch {}
+        }
+        if (ativo) timeoutId = setTimeout(carregarSalas, 30000);
+      }
+      
+      timeoutId = setTimeout(carregarSalas, 0); // initial fetch
+      
+      const onVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+          clearTimeout(timeoutId);
+          carregarSalas();
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      
+      return () => {
+        ativo = false;
+        clearTimeout(timeoutId);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      };
+    }, []);
 
   return (
     <div className="min-h-dvh pb-24">
@@ -1642,4 +1655,5 @@ function PaginaEstante() {
     </div>
   );
 }
+
 

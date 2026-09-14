@@ -376,10 +376,12 @@ function PaginaCartas() {
 
   const novas = recebidas.filter((c) => Boolean(c.desbloqueada) && c.lida === 0).length;
 
-  const lastHash = useRef("");
+    const lastHash = useRef("");
   useEffect(() => {
     let ativo = true;
-    const interval = setInterval(async () => {
+    let timeoutId: any;
+    
+    async function agendarProximo() {
       if (document.visibilityState === "visible") {
         try {
           const res = await checarNovasCartas();
@@ -391,8 +393,24 @@ function PaginaCartas() {
           lastHash.current = hash;
         } catch {}
       }
-    }, 30000);
-    return () => { ativo = false; clearInterval(interval); };
+      if (ativo) timeoutId = setTimeout(agendarProximo, 30000);
+    }
+    
+    timeoutId = setTimeout(agendarProximo, 30000);
+    
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(timeoutId);
+        agendarProximo();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    
+    return () => { 
+      ativo = false; 
+      clearTimeout(timeoutId); 
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [router]);
 
   async function enviar() {
@@ -531,7 +549,7 @@ function PaginaCartas() {
                 >
                   {/* Pills dos selecionados */}
                   {para.map((id) => {
-                    const d = destinatarios.find((x) => x.id === id);
+                    const d = destinatarios.find((x: any) => x.id === id);
                     if (!d) return null;
                     return (
                       <span key={id} className="inline-flex items-center gap-1 rounded-full bg-amora-clara pl-2.5 pr-1 py-0.5 text-xs font-medium text-amora-escura">
@@ -576,7 +594,7 @@ function PaginaCartas() {
                     role="listbox"
                     className="absolute z-50 mt-1 w-full rounded-xl border border-papel-3 bg-papel shadow-xl overflow-auto max-h-52 text-sm"
                   >
-                    {destinatariosFiltrados.map((d) => {
+                    {destinatariosFiltrados.map((d: any) => {
                       const selecionado = para.includes(d.id);
                       return (
                         <li
@@ -664,6 +682,8 @@ function PaginaCartas() {
     </div>
   );
 }
+
+
 
 
 

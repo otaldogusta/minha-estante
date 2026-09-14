@@ -1,7 +1,7 @@
 ﻿import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
-import { obterPerfilPublico, obterStatusLeitores } from "../lib/api/livros.functions";
+import { obterPerfilPublico, obterStatusLeitor } from "../lib/api/livros.functions";
 import { diasDeLeitura, notaFmt } from "../lib/livros";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { CapaLivro } from "../components/estante/capa-livro";
@@ -19,18 +19,36 @@ function PaginaPerfil() {
   const perfil = Route.useLoaderData();
   const router = useRouter();
 
-  const [liveStatus, setLiveStatus] = useState<string>(perfil.statusPresenca);
+    const [liveStatus, setLiveStatus] = useState<string>(perfil.statusPresenca);
   useEffect(() => {
     let ativo = true;
-    const interval = setInterval(async () => {
+    let timeoutId: any;
+    
+    async function agendarProximo() {
       if (document.visibilityState === "visible") {
         try {
-          const s = await obterStatusLeitores();
-          if (ativo && s && s[perfil.usuario]) setLiveStatus(s[perfil.usuario]);
+          const s = await obterStatusLeitor({ data: { usuario: perfil.usuario } });
+          if (ativo && s) setLiveStatus(s);
         } catch {}
       }
-    }, 15000);
-    return () => { ativo = false; clearInterval(interval); };
+      if (ativo) timeoutId = setTimeout(agendarProximo, 15000);
+    }
+    
+    timeoutId = setTimeout(agendarProximo, 15000);
+    
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(timeoutId);
+        agendarProximo();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    
+    return () => { 
+      ativo = false; 
+      clearTimeout(timeoutId); 
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [perfil.usuario]);
 
   const { livros } = perfil;
@@ -61,7 +79,7 @@ function PaginaPerfil() {
         </Link>
 
         <div className="mt-6 flex items-center gap-5">
-          <AvatarLeitor nome={perfil.nome} status={liveStatus} tamanho="lg" />
+          <AvatarLeitor nome={perfil.nome} status={liveStatus as any} tamanho="lg" />
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight text-tinta">{perfil.nome}</h1>
             <p className="mt-0.5 text-sm text-tinta-2">
@@ -159,6 +177,9 @@ function PaginaPerfil() {
     </div>
   );
 }
+
+
+
 
 
 
