@@ -236,3 +236,11 @@ export const cartasDesbloqueadasPorLivro = createServerFn({ method: "POST" })
       .all<{ id: number; remetente: string }>();
     return results;
   });
+export const checarNovasCartas = createServerFn({ method: "POST" }).handler(async () => {
+  const u = await exigirUsuario();
+  const res = await db().prepare(`
+    SELECT COUNT(*) as total, SUM(CASE WHEN lida = 1 THEN 1 ELSE 0 END) as lidas, MAX(criado_em) as ultima
+    FROM cartas WHERE para_usuario_id = ? OR de_usuario_id = ?
+  `).bind(u.id, u.id).first<{ total: number, lidas: number, ultima: string }>();
+  return res || { total: 0, lidas: 0, ultima: "" };
+});

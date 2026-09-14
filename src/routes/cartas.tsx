@@ -12,6 +12,7 @@ import {
   lerCarta,
   type CartaRecebida,
   type CartaEnviada,
+  checarNovasCartas,
 } from "../lib/api/cartas.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { exigirLogin } from "../lib/exigir-login";
@@ -375,6 +376,25 @@ function PaginaCartas() {
 
   const novas = recebidas.filter((c) => Boolean(c.desbloqueada) && c.lida === 0).length;
 
+  const lastHash = useRef("");
+  useEffect(() => {
+    let ativo = true;
+    const interval = setInterval(async () => {
+      if (document.visibilityState === "visible") {
+        try {
+          const res = await checarNovasCartas();
+          if (!ativo) return;
+          const hash = `${res.total}-${res.lidas}-${res.ultima}`;
+          if (lastHash.current && lastHash.current !== hash) {
+            router.invalidate();
+          }
+          lastHash.current = hash;
+        } catch {}
+      }
+    }, 30000);
+    return () => { ativo = false; clearInterval(interval); };
+  }, [router]);
+
   async function enviar() {
     if (para.length === 0 || !corpo.trim()) return;
     setEnviando(true);
@@ -416,12 +436,12 @@ function PaginaCartas() {
 
   function togglePara(id: number) {
     setPara((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x: any) => x !== id) : [...prev, id]
     );
     setLivroId(null);
   }
 
-  const destinatariosFiltrados = destinatarios.filter((d) =>
+  const destinatariosFiltrados = destinatarios.filter((d: any) =>
     !busca || matchSearch(busca, d.nome)
   );
 
@@ -613,9 +633,8 @@ function PaginaCartas() {
                 className="mt-1 w-full rounded-lg border border-papel-3 bg-papel px-3 py-2.5 text-tinta focus:border-amora focus:outline-none"
               >
                 <option value="">Entregar agora</option>
-                {livros
-                  .filter((l) => para.includes(l.usuario_id))
-                  .map((l) => (
+                {livros.filter((l: any) => para.includes(l.usuario_id))
+                  .map((l: any) => (
                     <option key={l.id} value={l.id}>
                       SÃ³ abrir quando terminar: {l.titulo} {l.status === "lendo" ? "(lendo agora)" : "(quer ler)"}
                     </option>
@@ -645,5 +664,10 @@ function PaginaCartas() {
     </div>
   );
 }
+
+
+
+
+
 
 

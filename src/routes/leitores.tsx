@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-import { listarLeitores, registrarPresencaAtiva, type StatusPresenca } from "../lib/api/livros.functions";
+import { listarLeitores, registrarPresencaAtiva, obterStatusLeitores, type StatusPresenca } from "../lib/api/livros.functions";
 import { listarConvites, criarConvite, revogarConvite, sessaoAtual, removerLeitor } from "../lib/api/auth.functions";
 import { Cabecalho } from "../components/estante/cabecalho";
 import { AvatarLeitor } from "../components/estante/avatar";
@@ -119,6 +119,21 @@ function PontoPresenca({ status, eVoce }: { status: StatusPresenca; eVoce: boole
 function PaginaLeitores() {
   const { leitores, convites, sessao } = Route.useLoaderData();
   const router = useRouter();
+
+  const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let ativo = true;
+    const interval = setInterval(async () => {
+      if (document.visibilityState === "visible") {
+        await registrarPresencaAtiva().catch(() => {});
+        try {
+          const res = await obterStatusLeitores();
+          if (ativo && res) setLiveStatuses(res);
+        } catch {}
+      }
+    }, 25000);
+    return () => { ativo = false; clearInterval(interval); };
+  }, []);
   const [modalAberto, setModalAberto] = useState(false);
   const usuarioLogado = sessao?.autenticado ? sessao.usuario : null;
 
@@ -190,10 +205,10 @@ function PaginaLeitores() {
                       nome={nome}
                       status={
                         eVoce
-                          ? l.statusPresenca === "invisivel"
+                          ? (liveStatuses[l.usuario] || l.statusPresenca) === "invisivel"
                             ? "offline"
-                            : l.statusPresenca === "ocupado" || l.statusPresenca === "lendo"
-                            ? l.statusPresenca
+                            : (liveStatuses[l.usuario] || l.statusPresenca) === "ocupado" || (liveStatuses[l.usuario] || l.statusPresenca) === "lendo"
+                            ? (liveStatuses[l.usuario] || l.statusPresenca) as StatusPresenca
                             : "online"
                           : l.statusPresenca
                       }
@@ -210,8 +225,8 @@ function PaginaLeitores() {
                           </span>
                         )}
                         {(() => {
-                          const statusEfetivo = eVoce ? "online" : l.statusPresenca;
-                          const textoStatus = formatarVistoPorUltimo(l.ultimoAcesso, l.statusPresenca, eVoce);
+                          const statusEfetivo = eVoce ? "online" : (liveStatuses[l.usuario] || l.statusPresenca);
+                          const textoStatus = formatarVistoPorUltimo(l.ultimoAcesso, (liveStatuses[l.usuario] || l.statusPresenca) as any, eVoce);
                           const isOnline = statusEfetivo === "online";
                           const isLendo = statusEfetivo === "lendo";
                           const isOcupado = statusEfetivo === "ocupado";
@@ -342,6 +357,21 @@ function ModalConvites({
   }>;
 }) {
   const router = useRouter();
+
+  const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let ativo = true;
+    const interval = setInterval(async () => {
+      if (document.visibilityState === "visible") {
+        await registrarPresencaAtiva().catch(() => {});
+        try {
+          const res = await obterStatusLeitores();
+          if (ativo && res) setLiveStatuses(res);
+        } catch {}
+      }
+    }, 25000);
+    return () => { ativo = false; clearInterval(interval); };
+  }, []);
   const [localConvites, setLocalConvites] = useState(convites);
   const [gerando, setGerando] = useState(false);
   const [copiado, setCopiado] = useState<string | null>(null);
@@ -514,4 +544,8 @@ function ModalConvites({
     </div>
   );
 }
+
+
+
+
 

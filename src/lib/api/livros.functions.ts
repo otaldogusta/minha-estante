@@ -954,3 +954,33 @@ export const buscarCapaOriginal = createServerFn({ method: "POST" })
     return { url };
   });
 
+export const obterStatusLeitores = createServerFn({ method: "POST" }).handler(async () => {
+  let presencas: any[] = [];
+  try {
+    presencas = await db().prepare(`
+      SELECT id, usuario, status_presenca AS statusCustom,
+             COALESCE(ultimo_acesso, (SELECT MAX(ultimo_acesso) FROM sessoes WHERE usuario_id = usuarios.id)) AS ultimoAcesso
+      FROM usuarios
+    `).all();
+  } catch {}
+
+  const resultados: Record<string, string> = {};
+  for (const p of presencas) {
+    const customStatus = (p.statusCustom ?? p.statuscustom) as StatusPresenca | null;
+    const ultimoAcessoVal = p.ultimoAcesso ?? p.ultimoacesso;
+    let estaAtivo = false;
+    const dt = parseUtcDate(ultimoAcessoVal);
+    if (dt) {
+      const diffMs = Math.abs(new Date().getTime() - dt.getTime());
+      if (diffMs <= 5 * 60 * 1000) estaAtivo = true;
+    }
+    let status = "offline";
+    if (customStatus === "invisivel") status = "offline";
+    else if (estaAtivo) {
+      if (customStatus === "lendo" || customStatus === "ocupado") status = customStatus;
+      else status = "online";
+    }
+    resultados[p.usuario] = status;
+  }
+  return resultados;
+});
