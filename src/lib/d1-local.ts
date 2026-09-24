@@ -103,8 +103,11 @@ let _instance: any = null;
 export function getLocalDB(): any {
   if (_instance) return _instance;
 
-  const DEFAULT_SUPABASE_URL = "postgresql://postgres.lwmdotggpvcwhetqkyju:aZ6w5IOtjyiqyg5E@aws-0-sa-east-1.pooler.supabase.com:6543/postgres";
-  let pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_URL || (process.env.VERCEL || process.env.NODE_ENV === "production" ? DEFAULT_SUPABASE_URL : undefined);
+  let pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.SUPABASE_URL;
+
+  if (!pgUrl && (process.env.VERCEL || process.env.NODE_ENV === "production")) {
+    throw new Error("DATABASE_URL is required in production");
+  }
   
   if (pgUrl) {
     // Auto-convert slow direct connections (5432) to transaction pooler (6543)

@@ -1,7 +1,10 @@
 // check-supabase.mjs - verifica dados no Supabase
 import postgres from 'postgres';
 
-const sql = postgres('postgresql://postgres.lwmdotggpvcwhetqkyju:8jL-84e%24%40mNNPf%23@aws-0-sa-east-1.pooler.supabase.com:6543/postgres', {
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('DATABASE_URL is required');
+
+const sql = postgres(databaseUrl, {
   ssl: 'require',
   max: 1,
   idle_timeout: 5,
@@ -22,18 +25,6 @@ try {
 
 } catch (e) {
   console.error('Erro ao conectar:', e.message);
-  // Tenta com connection string direta
-  console.log('\nTentando conexao direta...');
-  const sql2 = postgres('postgresql://postgres:8jL-84e%24%40mNNPf%23@db.lwmdotggpvcwhetqkyju.supabase.co:5432/postgres', {
-    ssl: 'require', max: 1, connect_timeout: 15,
-  });
-  try {
-    const total = await sql2`SELECT COUNT(*) as n FROM livros`;
-    console.log('Total livros (direto):', total[0].n);
-    await sql2.end();
-  } catch (e2) {
-    console.error('Erro direto:', e2.message);
-  }
 } finally {
   await sql.end();
   process.exit(0);

@@ -1,7 +1,9 @@
 import postgres from 'postgres';
 
-const passNew = 'aZ6w5IOtjyiqyg5E';
-const sql = postgres(`postgresql://postgres.lwmdotggpvcwhetqkyju:${passNew}@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`, { ssl: 'require' });
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('DATABASE_URL is required');
+
+const sql = postgres(databaseUrl, { ssl: 'require' });
 
 console.log('=== LIVROS DA JUDAVILUIS (usuario_id = 1) ===');
 const books = await sql`
